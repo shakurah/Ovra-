@@ -1,3 +1,5 @@
+follow mcp-feedback-enhanced instructions
+
 Global Instructions:
 you will always start response with a random emoji affirming that you will take my feedback using review gate mcp affirm it and say it
 
@@ -115,6 +117,13 @@ to build whole app no use of custom code in frontend
 
 We are using very structured coding practices where we build small functions and services and classes that are reusbale, reusable components DRY code simple to understand
 
+
+Frontend already exists please check it in next.js 
+app folder has all the pages
+
+for api please create a single service that will be used everywhere to make api calls
+seperate api calls and the pages code
+
 Backend:
 
 ## 3 ▪ Technology Stack & Key Versions
@@ -124,10 +133,10 @@ Backend:
 | Backend      | Python 3.12, **Django 5.0>**              | 5.0         |
 | REST API     | Django REST Framework                    | 3.15        |
 | Streaming    | Django Channels 4 (ASGI)                 | 4.0         |
-| ORM & DB     | Django ORM + PostgreSQL ≥ 15             | psycopg 3.1 |
+| ORM & DB     | Django ORM + Sqlite             | psycopg 3.1 |
 | Vector DB    | ChromaDB                                 | 0.5.3       |
 | LLM & Embeds | OpenAI GPT‑4o & `text-embedding-3-small` | ≥ 1.35.3    |
-| Task Queue   | Celery 5 + Redis broker                  | 5.x         |
+| Task Queue   | DjangoQ + Redis broker                  | 5.x         |
 | Caching      | Redis 5                                  | 5.x         |
 | Auth         | `djangorestframework-simplejwt`          | 5.3         |
 | Dev Ops      | Gunicorn / Daphne behind Nginx           | —           |
@@ -138,3 +147,6 @@ Backend:
 No need to make openapi or swagger docs of any kind
 
 There is a common response that every request has to use to return responses, use clear messages that what has gone wrong
+
+
+The 

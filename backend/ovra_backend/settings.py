@@ -47,6 +47,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'corsheaders',
     'channels',
+    'django_q',
     'drf_spectacular',
     'django_prometheus',
     'django_structlog',
@@ -103,7 +104,10 @@ ASGI_APPLICATION = 'ovra_backend.asgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
 DATABASES = {
-    'default': env.db('POSTGRES_DSN', default='postgresql://user:pass@localhost:5432/ovra_tax')
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
+    }
 }
 
 # Redis configuration
@@ -119,13 +123,23 @@ CHANNEL_LAYERS = {
     },
 }
 
-# Celery configuration
-CELERY_BROKER_URL = env('CELERY_BROKER_URL', default=REDIS_URL)
-CELERY_RESULT_BACKEND = env('CELERY_RESULT_BACKEND', default=REDIS_URL)
-CELERY_ACCEPT_CONTENT = ['json']
-CELERY_TASK_SERIALIZER = 'json'
-CELERY_RESULT_SERIALIZER = 'json'
-CELERY_TIMEZONE = 'UTC'
+# Django Q configuration
+Q_CLUSTER = {
+    'name': 'ovra_backend',
+    'workers': 4,
+    'recycle': 500,
+    'timeout': 60,
+    'compress': True,
+    'save_limit': 250,
+    'queue_limit': 500,
+    'cpu_affinity': 1,
+    'label': 'Django Q',
+    'redis': {
+        'host': env('REDIS_HOST', default='localhost'),
+        'port': env.int('REDIS_PORT', default=6379),
+        'db': env.int('REDIS_DB', default=0),
+    }
+}
 
 # Cache configuration
 CACHES = {

@@ -27,17 +27,6 @@ class User(AbstractUser):
     )
 
     # User preferences and metadata
-    phone_number = models.CharField(_('phone number'), max_length=20, blank=True)
-    profession = models.CharField(
-        _('profession'),
-        max_length=100,
-        blank=True,
-        help_text=_('e.g., Artist, Cultural Professional, Freelancer')
-    )
-    company_name = models.CharField(_('company name'), max_length=200, blank=True)
-
-    # Account settings
-    is_verified = models.BooleanField(_('email verified'), default=False)
     preferred_language = models.CharField(
         _('preferred language'),
         max_length=10,
@@ -45,20 +34,7 @@ class User(AbstractUser):
         default='es'
     )
 
-    # Subscription and usage tracking
-    subscription_type = models.CharField(
-        _('subscription type'),
-        max_length=20,
-        choices=[
-            ('free', _('Free Trial')),
-            ('basic', _('Basic')),
-            ('premium', _('Premium')),
-            ('enterprise', _('Enterprise'))
-        ],
-        default='free'
-    )
-    trial_queries_used = models.PositiveIntegerField(_('trial queries used'), default=0)
-    trial_queries_limit = models.PositiveIntegerField(_('trial queries limit'), default=10)
+
 
     # Timestamps
     created_at = models.DateTimeField(_('created at'), auto_now_add=True)
@@ -76,7 +52,6 @@ class User(AbstractUser):
         indexes = [
             models.Index(fields=['email']),
             models.Index(fields=['created_at']),
-            models.Index(fields=['subscription_type']),
         ]
 
     def __str__(self):
@@ -87,23 +62,7 @@ class User(AbstractUser):
         """Return the user's display name (full name or email)."""
         return self.full_name if self.full_name else self.email.split('@')[0]
 
-    @property
-    def has_trial_queries_remaining(self):
-        """Check if user has trial queries remaining."""
-        return self.trial_queries_used < self.trial_queries_limit
 
-    @property
-    def trial_queries_remaining(self):
-        """Get number of trial queries remaining."""
-        return max(0, self.trial_queries_limit - self.trial_queries_used)
-
-    def use_trial_query(self):
-        """Increment trial queries used counter."""
-        if self.has_trial_queries_remaining:
-            self.trial_queries_used += 1
-            self.save(update_fields=['trial_queries_used'])
-            return True
-        return False
 
     def get_full_name(self):
         """Return the user's full name."""
