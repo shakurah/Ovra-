@@ -1,0 +1,140 @@
+Global Instructions:
+you will always start response with a random emoji affirming that you will take my feedback using review gate mcp affirm it and say it
+
+By saying this you mean that you will take my feedback using review gate at every step and take my feedback at everystep
+
+build an awesome looking professional corporate aesthetic app that is a chat bot for legal questions of users create login, landing, signup, chat page and user credits page # 🛠️ Comprehensive AI Engine Prompt – Build "Ovra AI Tax Assistant" (MVP v1.0, **Django + React**)
+
+OVRA — Specialized Conversational Assistant
+
+Smart. Tailored. Ready to serve your expertise.
+
+This is a AI Powered ledidlation chatbot system that answers questions using law it has in memory and openai
+
+Develop an AI-powered Spanish-language tax assistant accessible via a public,
+
+embeddable URL. The assistant is aimed at freelancers and professionals in the
+
+arts and cultural sectors in Spain. It must use OpenAI GPT-4, reference official
+
+Spanish legal documents and BOE articles, provide accurate and referenced
+
+answers, and be structured to support a future evolution into a Langchain-based
+
+multi-agent system.
+
+2. Initial Legal Coverage
+
+The system must respond to any question from a cultural or artistic professional in
+
+Spain related to the following legal texts:
+
+• VAT Law
+
+• Personal Income Tax Law (IRPF)
+
+• Corporate Income Tax Law
+
+• Statute of Self-Employed Workers
+
+• Invoicing Regulation
+
+• General Tax Law
+
+All documents will be indexed by article and tagged with metadata compatible with
+
+Langchain for semantic retrieval and multi-agent interaction.
+
+Prepared for future inclusion (v1.1):
+
+• VAT Regulation
+
+• Spanish Accounting Plan (PGC)
+
+• EU VAT Directives (relevant excerpts)
+
+• Taxation of foreign income (non-residents)
+
+• Inheritance and Gift Tax (if applicable to artistic entities)
+
+## 1 ▪ High‑Level Product Requirements
+
+
+
+
+1. **Spanish natural‑language interface** – Accept questions in plain Spanish.
+
+2. **Legal‑grade answers** – Generate concise GPT‑4 responses quoting and inline‑referencing Spanish fiscal law articles.
+
+3. **Covered Legislation (initial corpus)**
+
+
+
+
+   * Ley del IVA (VAT)
+
+   * Ley del IRPF (Personal Income Tax)
+
+   * Ley del Impuesto sobre Sociedades (Corporate Tax)
+
+   * Estatuto del Trabajador Autónomo
+
+   * Reglamento de Facturación
+
+   * Ley General Tributaria
+
+I'm sharing the documentation for connecting to the BOE API from Spain, where all official legal texts are published. This will allow you to access the official laws directly from the Spanish government's official bulletin
+
+4. BOE Integration and Semantic Retrieval
+The system must integrate with the official BOE API:
+https://www.boe.es/datosabiertos/api/api.php
+It must:
+• Support daily synchronization of legal content
+• Allow semantic retrieval of relevant articles
+• Be prepared for scaling to regional, European, and doctrinal sources
+5. Admin Panel
+• Admin-only access
+• Chronological view of submitted questions
+• CSV/Excel export
+• Optional dashboard with usage analytics
+• Designed to evolve into a FAQ-based training and feedback system
+6. User Interface
+• Clean, chat-based interface
+• Real-time GPT-4 responses
+• Visible legal references
+• Optional features:
+o Copy-to-clipboard
+o User feedback
+o Email capture for future CRM
+
+
+
+Frontend:
+Always follow exisitn coding style unless you feel an improvement, must use shadcn and radix ui 
+to build whole app no use of custom code in frontend
+
+We are using very structured coding practices where we build small functions and services and classes that are reusbale, reusable components DRY code simple to understand
+
+Backend:
+
+## 3 ▪ Technology Stack & Key Versions
+
+| Layer        | Tech / Lib                               | Min Version |
+| ------------ | ---------------------------------------- | ----------- |
+| Backend      | Python 3.12, **Django 5.0>**              | 5.0         |
+| REST API     | Django REST Framework                    | 3.15        |
+| Streaming    | Django Channels 4 (ASGI)                 | 4.0         |
+| ORM & DB     | Django ORM + PostgreSQL ≥ 15             | psycopg 3.1 |
+| Vector DB    | ChromaDB                                 | 0.5.3       |
+| LLM & Embeds | OpenAI GPT‑4o & `text-embedding-3-small` | ≥ 1.35.3    |
+| Task Queue   | Celery 5 + Redis broker                  | 5.x         |
+| Caching      | Redis 5                                  | 5.x         |
+| Auth         | `djangorestframework-simplejwt`          | 5.3         |
+| Dev Ops      | Gunicorn / Daphne behind Nginx           | —           |
+| Testing      | pytest‑django 8.0, pytest‑asyncio        | —           |
+| Lint & Style | ruff, black, mypy                        | —           |
+
+
+No need to make openapi or swagger docs of any kind
+
+There is a common response that every request has to use to return responses, use clear messages that what has gone wrong

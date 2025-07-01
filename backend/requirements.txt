@@ -1,0 +1,66 @@
+# Django core
+Django==5.0.14
+djangorestframework==3.16.0
+
+# Authentication
+djangorestframework-simplejwt==5.5.0
+
+# Environment & Configuration
+django-environ==0.12.0
+
+# Database
+# psycopg[binary]==3.1.18
+# psycopg2-binary==2.9.10
+
+# Redis & Caching
+redis==5.1.1
+django-redis==5.4.0
+
+# Celery
+celery==5.5.3
+
+# Channels & WebSockets
+channels==4.2.2
+channels-redis==4.2.1
+daphne==4.2.0
+
+# CORS
+django-cors-headers==4.7.0
+
+# Security
+django-csp==4.0
+argon2-cffi==25.1.0
+
+# API Documentation
+drf-spectacular==0.28.0
+
+# Monitoring & Logging
+django-prometheus==2.3.1
+django-structlog==8.1.0
+python-json-logger==2.0.7
+
+# OpenAI & Vector Store
+openai==1.35.3
+# chromadb==0.5.3  # Commented out due to C++ build requirements
+# tiktoken==0.7.0  # Commented out due to C++ build requirements
+
+# Rate Limiting
+django-ratelimit==4.1.0
+django-ipware==7.0.1
+
+# Development & Testing
+pytest-django==4.8.0
+pytest-asyncio==0.23.0
+httpx==0.27.0
+
+# Code Quality
+ruff==0.1.0
+black==23.1.0
+mypy==1.7.0
+django-stubs==4.2.0
+
+# Production Server
+gunicorn==23.0.0
+
+# Task Runner
+taskipy==1.13.0
