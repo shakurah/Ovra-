@@ -17,7 +17,7 @@ python manage.py collectstatic --noinput
 # Create Gunicorn configuration
 cat > gunicorn.conf.py << 'EOF'
 # Gunicorn configuration file
-bind = "127.0.0.1:8000"
+bind = "0.0.0.0:8000"
 workers = 3
 worker_class = "sync"
 worker_connections = 1000

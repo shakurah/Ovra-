@@ -12,6 +12,8 @@ import { Scale, Eye, EyeOff, CheckCircle, AlertCircle } from "lucide-react"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import Link from "next/link"
 import { useAuth } from "@/contexts/auth-context"
+import { useLanguage } from "@/contexts/language-context"
+import { toastService } from "@/lib/services"
 import { getValidationErrors } from "@/utils/api"
 
 export default function SignupPage() {
@@ -28,6 +30,7 @@ export default function SignupPage() {
   const [error, setError] = useState("")
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
   const { register, isLoading } = useAuth()
+  const { t } = useLanguage()
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({
@@ -42,11 +45,11 @@ export default function SignupPage() {
     setFieldErrors({})
 
     if (formData.password !== formData.confirmPassword) {
-      setError("Las contraseñas no coinciden")
+      setError(t("auth.error.passwords.mismatch"))
       return
     }
     if (!acceptTerms) {
-      setError("Debes aceptar los términos y condiciones")
+      setError(t("auth.error.accept.terms"))
       return
     }
 
@@ -56,14 +59,17 @@ export default function SignupPage() {
         full_name: `${formData.firstName} ${formData.lastName}`.trim(),
         password: formData.password,
         confirm_password: formData.confirmPassword,
-        preferred_language: 'es'
+        preferred_language: 'en'
       })
+      toastService.success(t("auth.signup.success"))
     } catch (err) {
       const validationErrors = getValidationErrors(err)
       if (Object.keys(validationErrors).length > 0) {
         setFieldErrors(validationErrors)
       } else {
-        setError(err instanceof Error ? err.message : "Error al crear la cuenta")
+        const errorMessage = err instanceof Error ? err.message : t("auth.error.create.account")
+        setError(errorMessage)
+        toastService.error(errorMessage)
       }
     }
   }
@@ -77,13 +83,13 @@ export default function SignupPage() {
             <Scale className="h-10 w-10 text-blue-600" />
             <span className="text-3xl font-bold text-gray-900">Ovra AI</span>
           </Link>
-          <p className="text-gray-600 mt-2">Únete a miles de profesionales</p>
+          <p className="text-gray-600 mt-2">{t("auth.signup.subtitle")}</p>
         </div>
 
         <Card className="shadow-xl border-0">
           <CardHeader className="space-y-1">
-            <CardTitle className="text-2xl font-bold text-center">Crear Cuenta</CardTitle>
-            <CardDescription className="text-center">Comienza tu prueba gratuita de 7 días</CardDescription>
+            <CardTitle className="text-2xl font-bold text-center">{t("auth.signup.title")}</CardTitle>
+            <CardDescription className="text-center">{t("auth.signup.subtitle")}</CardDescription>
           </CardHeader>
           <CardContent>
             {error && (
@@ -95,7 +101,7 @@ export default function SignupPage() {
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="firstName">Nombre</Label>
+                  <Label htmlFor="firstName">{t("auth.signup.first.name")}</Label>
                   <Input
                     id="firstName"
                     name="firstName"
@@ -107,7 +113,7 @@ export default function SignupPage() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="lastName">Apellidos</Label>
+                  <Label htmlFor="lastName">{t("auth.signup.last.name")}</Label>
                   <Input
                     id="lastName"
                     name="lastName"
@@ -121,7 +127,7 @@ export default function SignupPage() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="email">Correo Electrónico</Label>
+                <Label htmlFor="email">{t("auth.signup.email")}</Label>
                 <Input
                   id="email"
                   name="email"
@@ -135,7 +141,7 @@ export default function SignupPage() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="password">Contraseña</Label>
+                <Label htmlFor="password">{t("auth.signup.password")}</Label>
                 <div className="relative">
                   <Input
                     id="password"
@@ -164,7 +170,7 @@ export default function SignupPage() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="confirmPassword">Confirmar Contraseña</Label>
+                <Label htmlFor="confirmPassword">{t("auth.signup.confirm.password")}</Label>
                 <div className="relative">
                   <Input
                     id="confirmPassword"
@@ -199,19 +205,12 @@ export default function SignupPage() {
                   onCheckedChange={(checked) => setAcceptTerms(checked as boolean)}
                 />
                 <Label htmlFor="terms" className="text-sm text-gray-600">
-                  Acepto los{" "}
-                  <Link href="/terms" className="text-blue-600 hover:underline">
-                    términos y condiciones
-                  </Link>{" "}
-                  y la{" "}
-                  <Link href="/privacy" className="text-blue-600 hover:underline">
-                    política de privacidad
-                  </Link>
+                  {t("auth.signup.terms")}
                 </Label>
               </div>
 
               <Button type="submit" className="w-full h-11" disabled={isLoading || !acceptTerms}>
-                {isLoading ? "Creando cuenta..." : "Crear Cuenta Gratuita"}
+                {isLoading ? `${t("auth.signup.submit")}...` : t("auth.signup.submit")}
               </Button>
             </form>
 
@@ -235,9 +234,9 @@ export default function SignupPage() {
             </div>
 
             <p className="text-center text-sm text-gray-600 mt-6">
-              ¿Ya tienes una cuenta?{" "}
+              {t("auth.signup.have.account")}{" "}
               <Link href="/login" className="text-blue-600 hover:underline font-medium">
-                Inicia sesión aquí
+                {t("auth.signup.login.link")}
               </Link>
             </p>
           </CardContent>

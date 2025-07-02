@@ -119,27 +119,27 @@ class ChatAPIView(APIView):
             
             return APIResponse.success(
                 data=response_data,
-                message="Respuesta generada exitosamente"
+                message="Response generated successfully"
             )
             
         except OpenAIException as e:
             logger.error(f"OpenAI error: {str(e)}")
             return APIResponse.error(
-                message="Error al procesar la pregunta con el servicio de IA",
+                message="Error processing question with AI service",
                 error_code="OPENAI_ERROR",
                 status=status.HTTP_503_SERVICE_UNAVAILABLE
             )
         except VectorStoreException as e:
             logger.error(f"Vector store error: {str(e)}")
             return APIResponse.error(
-                message="Error al buscar información legal relevante",
+                message="Error searching for relevant legal information",
                 error_code="VECTOR_STORE_ERROR",
                 status=status.HTTP_503_SERVICE_UNAVAILABLE
             )
         except Exception as e:
             logger.error(f"Unexpected error in chat: {str(e)}", exc_info=True)
             return APIResponse.server_error(
-                message="Error inesperado al procesar la pregunta"
+                message="Unexpected error processing question"
             )
 
 
@@ -169,13 +169,13 @@ class ChatSessionListView(ListAPIView):
                 total=queryset.count(),
                 page=int(request.GET.get('page', 1)),
                 page_size=int(request.GET.get('page_size', 20)),
-                message="Sesiones recuperadas exitosamente"
+                message="Sessions retrieved successfully"
             )
         
         serializer = self.get_serializer(queryset, many=True)
         return APIResponse.success(
             data=serializer.data,
-            message="Sesiones recuperadas exitosamente"
+            message="Sessions retrieved successfully"
         )
 
 
@@ -214,11 +214,11 @@ class ChatSessionDetailView(RetrieveAPIView):
             
             return APIResponse.success(
                 data=response_data,
-                message="Sesión recuperada exitosamente"
+                message="Session retrieved successfully"
             )
         except ChatSession.DoesNotExist:
             return APIResponse.not_found(
-                message="Sesión no encontrada"
+                message="Session not found"
             )
 
 
@@ -261,13 +261,13 @@ class ChatHistoryView(ListAPIView):
                 total=queryset.count(),
                 page=int(request.GET.get('page', 1)),
                 page_size=int(request.GET.get('page_size', 20)),
-                message="Historial recuperado exitosamente"
+                message="History retrieved successfully"
             )
         
         serializer = self.get_serializer(queryset, many=True)
         return APIResponse.success(
             data=serializer.data,
-            message="Historial recuperado exitosamente"
+            message="History retrieved successfully"
         )
 
 
@@ -283,7 +283,7 @@ class UpdateChatRatingView(APIView):
         if not serializer.is_valid():
             return APIResponse.validation_error(
                 errors=serializer.errors,
-                message="Datos de calificación inválidos"
+                message="Invalid rating data"
             )
         
         try:
@@ -296,11 +296,11 @@ class UpdateChatRatingView(APIView):
             chat_log.save(update_fields=['user_rating'])
             
             return APIResponse.success(
-                message="Calificación actualizada exitosamente",
+                message="Rating updated successfully",
                 data={'rating': chat_log.user_rating}
             )
             
         except ChatLog.DoesNotExist:
             return APIResponse.not_found(
-                message="Chat no encontrado"
+                message="Chat not found"
             )

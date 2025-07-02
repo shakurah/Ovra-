@@ -2,7 +2,7 @@
  * API utilities and helper functions
  */
 
-import type { ApiError } from '@/services/api'
+import type { ApiError } from '@/lib/services'
 
 /**
  * Extract error message from API error
@@ -27,7 +27,7 @@ export function getErrorMessage(error: unknown): string {
     }
   }
   
-  return 'Ha ocurrido un error inesperado'
+  return 'An unexpected error occurred'
 }
 
 /**
@@ -118,14 +118,14 @@ export function validateFile(
   if (!allowedTypes.includes(file.type)) {
     return {
       valid: false,
-      error: 'Tipo de archivo no permitido. Solo se permiten imágenes JPEG, PNG, GIF y WebP.'
+      error: 'File type not allowed. Only JPEG, PNG, GIF and WebP images are allowed.'
     }
   }
   
   if (file.size > maxSize) {
     return {
       valid: false,
-      error: `El archivo es demasiado grande. Tamaño máximo: ${formatFileSize(maxSize)}`
+      error: `File is too large. Maximum size: ${formatFileSize(maxSize)}`
     }
   }
   

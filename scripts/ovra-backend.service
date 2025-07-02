@@ -1,0 +1,22 @@
+[Unit]
+Description=Ovra AI Django Backend Service
+After=network.target
+Wants=network.target
+
+[Service]
+Type=simple
+User=ali
+Group=ali
+WorkingDirectory=/home/ali/development/ovra_ai/backend
+Environment=PATH=/home/ali/development/ovra_ai/backend/venv/bin:/usr/local/bin:/usr/bin:/bin
+Environment=PYTHONPATH=/home/ali/development/ovra_ai/backend
+Environment=DJANGO_SETTINGS_MODULE=ovra_backend.settings
+ExecStartPre=/home/ali/development/ovra_ai/backend/venv/bin/python manage.py migrate --check
+ExecStart=/home/ali/development/ovra_ai/backend/venv/bin/python manage.py runserver localhost:8000
+Restart=always
+RestartSec=3
+StandardOutput=append:/home/ali/development/ovra_ai/logs/backend.log
+StandardError=append:/home/ali/development/ovra_ai/logs/backend.log
+
+[Install]
+WantedBy=multi-user.target

@@ -150,3 +150,7 @@ There is a common response that every request has to use to return responses, us
 
 
 follow mcp-feedback-enhanced instructions and call interactive_feedback after every code change, code run, code failuter and step
+
+always restart services systemctl restart ovra-frontend and ovra-backend when you fix code
+
+default language is english but we have a toggle on frontend which changes the frontend langauge.

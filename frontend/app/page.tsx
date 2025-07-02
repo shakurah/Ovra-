@@ -3,9 +3,8 @@
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Input } from "@/components/ui/input"
-import { ThemeToggle } from "@/components/theme-toggle"
-import { LanguageToggle } from "@/components/language-toggle"
+import { SharedHeader } from "@/components/shared-header"
+import { SharedFooter } from "@/components/shared-footer"
 import { useLanguage } from "@/contexts/language-context"
 import {
   CheckCircle,
@@ -14,9 +13,6 @@ import {
   Zap,
   Users,
   BookOpen,
-  Scale,
-  Search,
-  User,
   BarChart3,
   Clock,
   Target,
@@ -31,67 +27,7 @@ export default function LandingPage() {
 
   return (
     <div className="min-h-screen bg-background transition-colors">
-      {/* Navigation */}
-      <nav className="bg-background/80 backdrop-blur-sm border-b border-border sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center space-x-8">
-              <div className="flex items-center space-x-2">
-                <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-                  <Scale className="h-5 w-5 text-primary-foreground" />
-                </div>
-                <span className="text-xl font-bold text-foreground">OVRA AI</span>
-              </div>
-
-              <div className="hidden md:flex items-center space-x-6">
-                <Link
-                  href="/chat"
-                  className="flex items-center space-x-2 text-muted-foreground hover:text-foreground transition-colors"
-                >
-                  <MessageSquare className="h-4 w-4" />
-                  <span>{t("nav.chat")}</span>
-                </Link>
-                <Link
-                  href="/analytics"
-                  className="flex items-center space-x-2 text-muted-foreground hover:text-foreground transition-colors"
-                >
-                  <BarChart3 className="h-4 w-4" />
-                  <span>{t("nav.analytics")}</span>
-                </Link>
-                <Link
-                  href="/history"
-                  className="flex items-center space-x-2 text-muted-foreground hover:text-foreground transition-colors"
-                >
-                  <Clock className="h-4 w-4" />
-                  <span>{t("nav.history")}</span>
-                </Link>
-              </div>
-            </div>
-
-            <div className="flex items-center space-x-4">
-              <div className="hidden md:flex items-center space-x-3">
-                <div className="relative">
-                  <Search className="h-4 w-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" />
-                  <Input placeholder={t("nav.search")} className="pl-10 w-48 h-9 bg-muted/50 border-border" />
-                </div>
-                <LanguageToggle />
-                <ThemeToggle />
-                <Link href="/login">
-                  <Button variant="ghost" size="sm" className="text-muted-foreground">
-                    <User className="h-4 w-4 mr-1" />
-                    {t("nav.signin")}
-                  </Button>
-                </Link>
-              </div>
-              <Link href="/signup">
-                <Button size="sm" className="bg-primary hover:bg-primary/90">
-                  {t("nav.signup")}
-                </Button>
-              </Link>
-            </div>
-          </div>
-        </div>
-      </nav>
+      <SharedHeader />
 
       {/* Hero Section */}
       <section className="py-20 px-4 sm:px-6 lg:px-8">
@@ -413,100 +349,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="bg-background border-t border-border py-12">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid md:grid-cols-4 gap-8">
-            <div>
-              <div className="flex items-center space-x-2 mb-4">
-                <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-                  <Scale className="h-5 w-5 text-primary-foreground" />
-                </div>
-                <span className="text-xl font-bold text-foreground">OVRA AI</span>
-              </div>
-              <p className="text-muted-foreground">{t("footer.description")}</p>
-            </div>
-            <div>
-              <h3 className="font-semibold mb-4 text-foreground">{t("footer.product")}</h3>
-              <ul className="space-y-2 text-muted-foreground">
-                <li>
-                  <Link href="/features" className="hover:text-foreground transition-colors">
-                    {t("footer.features")}
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/pricing" className="hover:text-foreground transition-colors">
-                    {t("footer.pricing")}
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/api" className="hover:text-foreground transition-colors">
-                    {t("footer.api")}
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/docs" className="hover:text-foreground transition-colors">
-                    {t("footer.documentation")}
-                  </Link>
-                </li>
-              </ul>
-            </div>
-            <div>
-              <h3 className="font-semibold mb-4 text-foreground">{t("footer.legal")}</h3>
-              <ul className="space-y-2 text-muted-foreground">
-                <li>
-                  <Link href="/terms" className="hover:text-foreground transition-colors">
-                    {t("footer.terms")}
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/privacy" className="hover:text-foreground transition-colors">
-                    {t("footer.privacy")}
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/cookies" className="hover:text-foreground transition-colors">
-                    {t("footer.cookies")}
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/gdpr" className="hover:text-foreground transition-colors">
-                    {t("footer.gdpr")}
-                  </Link>
-                </li>
-              </ul>
-            </div>
-            <div>
-              <h3 className="font-semibold mb-4 text-foreground">{t("footer.support")}</h3>
-              <ul className="space-y-2 text-muted-foreground">
-                <li>
-                  <Link href="/help" className="hover:text-foreground transition-colors">
-                    {t("footer.help")}
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/contact" className="hover:text-foreground transition-colors">
-                    {t("footer.contact")}
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/status" className="hover:text-foreground transition-colors">
-                    {t("footer.status")}
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/community" className="hover:text-foreground transition-colors">
-                    {t("footer.community")}
-                  </Link>
-                </li>
-              </ul>
-            </div>
-          </div>
-          <div className="border-t border-border mt-8 pt-8 text-center text-muted-foreground">
-            <p>&copy; 2024 OVRA AI. {t("footer.rights")}</p>
-          </div>
-        </div>
-      </footer>
+      <SharedFooter />
     </div>
   )
 }

@@ -1,0 +1,17 @@
+{
+  "mcpServers": {
+    "mcp-feedback-enhanced": {
+      "command": "uvx",
+      "args": [
+        "mcp-feedback-enhanced@latest"
+      ],
+      "env": {
+        "MCP_WEB_PORT": "8787",
+		"MCP_WEB_HOST": "true"
+      },
+	  "autoApprove":[
+	  "interactive_feedback"
+	  ]
+    }
+  }
+}

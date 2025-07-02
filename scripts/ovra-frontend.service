@@ -1,0 +1,22 @@
+[Unit]
+Description=Ovra AI Next.js Frontend Service
+After=network.target
+Wants=network.target
+
+[Service]
+Type=simple
+User=ali
+Group=ali
+WorkingDirectory=/home/ali/development/ovra_ai/frontend
+Environment=PATH=/usr/local/bin:/usr/bin:/bin
+Environment=NODE_ENV=development
+Environment=HOST=localhost
+Environment=PORT=3000
+ExecStart=/usr/bin/npm run dev
+Restart=always
+RestartSec=3
+StandardOutput=append:/home/ali/development/ovra_ai/logs/frontend.log
+StandardError=append:/home/ali/development/ovra_ai/logs/frontend.log
+
+[Install]
+WantedBy=multi-user.target

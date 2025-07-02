@@ -5,13 +5,9 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
-import { ThemeToggle } from "@/components/theme-toggle"
-import { LanguageToggle } from "@/components/language-toggle"
-import { ProtectedRoute } from "@/components/protected-route"
+import { ProtectedLayout } from "@/components/protected-layout"
 import { useLanguage } from "@/contexts/language-context"
 import {
-  Scale,
-  ArrowLeft,
   Search,
   Filter,
   Download,
@@ -21,7 +17,6 @@ import {
   ChevronDown,
   Calendar,
 } from "lucide-react"
-import Link from "next/link"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 
 function HistoryPageContent() {
@@ -107,39 +102,8 @@ function HistoryPageContent() {
   })
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="bg-card border-b border-border">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <div className="flex items-center space-x-4">
-              <Link href="/chat">
-                <Button variant="ghost" size="sm">
-                  <ArrowLeft className="h-4 w-4 mr-2" />
-                  {t("nav.chat")}
-                </Button>
-              </Link>
-              <div className="flex items-center space-x-2">
-                <Scale className="h-8 w-8 text-primary" />
-                <span className="text-2xl font-bold text-foreground">Ovra AI</span>
-              </div>
-            </div>
-            <div className="flex items-center space-x-2">
-              <LanguageToggle />
-              <ThemeToggle />
-              <Badge
-                variant="outline"
-                className="text-blue-600 border-blue-200 dark:text-blue-400 dark:border-blue-800"
-              >
-                <Clock className="h-3 w-3 mr-1" />
-                {t("history.title")}
-              </Badge>
-            </div>
-          </div>
-        </div>
-      </header>
-
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <ProtectedLayout title={t("history.title")} credits={47}>
+      <div className="p-6 max-w-7xl mx-auto">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-foreground mb-2">{t("history.title")}</h1>
           <p className="text-muted-foreground">{t("history.subtitle")}</p>
@@ -271,14 +235,10 @@ function HistoryPageContent() {
           </div>
         )}
       </div>
-    </div>
+    </ProtectedLayout>
   )
 }
 
 export default function HistoryPage() {
-  return (
-    <ProtectedRoute>
-      <HistoryPageContent />
-    </ProtectedRoute>
-  )
+  return <HistoryPageContent />
 }

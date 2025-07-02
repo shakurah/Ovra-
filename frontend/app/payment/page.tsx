@@ -8,11 +8,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
-import { ThemeToggle } from "@/components/theme-toggle"
-import { LanguageToggle } from "@/components/language-toggle"
+import { ProtectedLayout } from "@/components/protected-layout"
 import { useLanguage } from "@/contexts/language-context"
-import { Scale, ArrowLeft, CreditCard, Shield, Lock, CheckCircle } from "lucide-react"
-import Link from "next/link"
+import { CreditCard, Shield, Lock, CheckCircle } from "lucide-react"
 import { useRouter } from "next/navigation"
 
 export default function PaymentPage() {
@@ -73,39 +71,8 @@ export default function PaymentPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="bg-card border-b border-border">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <div className="flex items-center space-x-4">
-              <Link href="/credits">
-                <Button variant="ghost" size="sm">
-                  <ArrowLeft className="h-4 w-4 mr-2" />
-                  {t("credits.title")}
-                </Button>
-              </Link>
-              <div className="flex items-center space-x-2">
-                <Scale className="h-8 w-8 text-primary" />
-                <span className="text-2xl font-bold text-foreground">Ovra AI</span>
-              </div>
-            </div>
-            <div className="flex items-center space-x-2">
-              <LanguageToggle />
-              <ThemeToggle />
-              <Badge
-                variant="outline"
-                className="text-green-600 border-green-200 dark:text-green-400 dark:border-green-800"
-              >
-                <Shield className="h-3 w-3 mr-1" />
-                {t("payment.secure")}
-              </Badge>
-            </div>
-          </div>
-        </div>
-      </header>
-
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <ProtectedLayout title={t("payment.title")} credits={47}>
+      <div className="p-6 max-w-4xl mx-auto">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-foreground mb-2">{t("payment.title")}</h1>
           <p className="text-muted-foreground">{t("payment.subtitle")}</p>
@@ -316,6 +283,6 @@ export default function PaymentPage() {
           </div>
         </div>
       </div>
-    </div>
+    </ProtectedLayout>
   )
 }

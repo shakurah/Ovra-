@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { authService, userService, type LoginRequest, type RegisterRequest, type User } from '@/services/api'
+import { authService, userService, type LoginRequest, type RegisterRequest, type User } from '@/lib/services'
 import { getErrorMessage, isAuthError } from '@/utils/api'
 
 
@@ -41,38 +41,48 @@ export function AuthProvider({ children }: AuthProviderProps) {
   // Initialize auth state from localStorage
   useEffect(() => {
     const initializeAuth = async () => {
+      console.log('AuthContext: Initializing auth state...')
       try {
-        const storedUser = authService.getStoredUser()
+        const storedUser = authService.getCurrentUser()
         const accessToken = authService.getStoredToken()
 
+        console.log('AuthContext: Stored user:', !!storedUser, 'Access token:', !!accessToken)
+
         if (storedUser && accessToken) {
+          console.log('AuthContext: Setting user from localStorage')
           setUser(storedUser)
 
-          // Optionally verify token and refresh user data
+          // Try to get fresh user data to verify token is still valid
           try {
-            await authService.verifyToken()
+            console.log('AuthContext: Fetching fresh user data...')
             const freshUserData = await userService.getProfile()
+            console.log('AuthContext: Token valid, updated user data')
             setUser(freshUserData)
           } catch (error) {
-            // If token is invalid, try to refresh
-            if (isAuthError(error)) {
-              try {
-                await authService.refreshToken()
-                const freshUserData = await userService.getProfile()
-                setUser(freshUserData)
-              } catch (refreshError) {
-                // If refresh fails, clear auth state
-                await authService.logout()
-                setUser(null)
-              }
+            console.log('AuthContext: Failed to fetch user data, trying token refresh:', error)
+            // If getting user data fails, try to refresh token
+            try {
+              console.log('AuthContext: Attempting token refresh...')
+              await authService.refreshToken()
+              const freshUserData = await userService.getProfile()
+              console.log('AuthContext: Token refreshed successfully')
+              setUser(freshUserData)
+            } catch (refreshError) {
+              console.log('AuthContext: Token refresh failed, clearing auth state')
+              // If refresh fails, clear auth state
+              await authService.logout()
+              setUser(null)
             }
           }
+        } else {
+          console.log('AuthContext: No stored user or token found')
         }
       } catch (error) {
-        console.error('Error initializing auth:', error)
+        console.error('AuthContext: Error initializing auth:', error)
         await authService.logout()
         setUser(null)
       } finally {
+        console.log('AuthContext: Auth initialization complete, isLoading = false')
         setIsLoading(false)
       }
     }

@@ -7,13 +7,10 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
 import { Switch } from "@/components/ui/switch"
-import { ThemeToggle } from "@/components/theme-toggle"
-import { LanguageToggle } from "@/components/language-toggle"
-import { ProtectedRoute } from "@/components/protected-route"
+import { ProtectedLayout } from "@/components/protected-layout"
 import { useLanguage } from "@/contexts/language-context"
+import { toastService } from "@/lib/services"
 import {
-  Scale,
-  ArrowLeft,
   User,
   CreditCard,
   Shield,
@@ -24,7 +21,6 @@ import {
   Trash2,
   AlertTriangle,
 } from "lucide-react"
-import Link from "next/link"
 
 function AccountPageContent() {
   const { t } = useLanguage()
@@ -62,50 +58,42 @@ function AccountPageContent() {
     { id: "notifications", label: t("account.notifications"), icon: Bell },
   ]
 
-  const handleProfileSave = () => {
-    // Handle profile save
-    console.log("Profile saved:", profileData)
+  const handleProfileSave = async () => {
+    try {
+      // TODO: Replace with actual API call
+      // await userService.updateProfile(profileData)
+      console.log("Profile saved:", profileData)
+      toastService.success(t("account.profile.saved"))
+    } catch (error) {
+      toastService.handleApiError(error, t("account.profile.save.error"))
+    }
   }
 
-  const handlePasswordChange = () => {
-    // Handle password change
-    console.log("Password change requested")
+  const handlePasswordChange = async () => {
+    if (passwordData.newPassword !== passwordData.confirmPassword) {
+      toastService.error(t("account.password.mismatch"))
+      return
+    }
+
+    if (passwordData.newPassword.length < 8) {
+      toastService.error(t("account.password.too.short"))
+      return
+    }
+
+    try {
+      // TODO: Replace with actual API call
+      // await userService.changePassword(passwordData)
+      console.log("Password change requested")
+      toastService.success(t("account.password.changed"))
+      setPasswordData({ currentPassword: "", newPassword: "", confirmPassword: "" })
+    } catch (error) {
+      toastService.handleApiError(error, t("account.password.change.error"))
+    }
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="bg-card border-b border-border">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <div className="flex items-center space-x-4">
-              <Link href="/chat">
-                <Button variant="ghost" size="sm">
-                  <ArrowLeft className="h-4 w-4 mr-2" />
-                  {t("nav.chat")}
-                </Button>
-              </Link>
-              <div className="flex items-center space-x-2">
-                <Scale className="h-8 w-8 text-primary" />
-                <span className="text-2xl font-bold text-foreground">Ovra AI</span>
-              </div>
-            </div>
-            <div className="flex items-center space-x-2">
-              <LanguageToggle />
-              <ThemeToggle />
-              <Badge
-                variant="outline"
-                className="text-purple-600 border-purple-200 dark:text-purple-400 dark:border-purple-800"
-              >
-                <User className="h-3 w-3 mr-1" />
-                {t("account.title")}
-              </Badge>
-            </div>
-          </div>
-        </div>
-      </header>
-
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <ProtectedLayout title={t("account.title")} credits={47}>
+      <div className="p-6 max-w-7xl mx-auto">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-foreground mb-2">{t("account.title")}</h1>
           <p className="text-muted-foreground">{t("account.subtitle")}</p>
@@ -456,14 +444,10 @@ function AccountPageContent() {
           </div>
         </div>
       </div>
-    </div>
+    </ProtectedLayout>
   )
 }
 
 export default function AccountPage() {
-  return (
-    <ProtectedRoute>
-      <AccountPageContent />
-    </ProtectedRoute>
-  )
+  return <AccountPageContent />
 }

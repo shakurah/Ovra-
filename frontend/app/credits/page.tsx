@@ -5,14 +5,35 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
-import { ProtectedRoute } from "@/components/protected-route"
-import { Scale, CreditCard, Zap, Clock, CheckCircle, ArrowLeft, Sparkles } from "lucide-react"
-import Link from "next/link"
+import { ProtectedLayout } from "@/components/protected-layout"
+import { toastService } from "@/lib/services"
+import { useLanguage } from "@/contexts/language-context"
+import { CreditCard, Zap, Clock, CheckCircle, Sparkles } from "lucide-react"
 
 function CreditsPageContent() {
+  const { t } = useLanguage()
   const [currentCredits] = useState(47)
   const [totalCredits] = useState(200)
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null)
+
+  const handlePurchase = async () => {
+    if (!selectedPlan) {
+      toastService.error(t("credits.select.plan"))
+      return
+    }
+
+    const selectedPackage = creditPackages.find(pkg => pkg.id === selectedPlan)
+    if (!selectedPackage) return
+
+    try {
+      // TODO: Replace with actual payment API call
+      // await paymentService.purchaseCredits(selectedPlan)
+      toastService.success(t("credits.purchase.success", { credits: selectedPackage.credits }))
+      setSelectedPlan(null)
+    } catch (error) {
+      toastService.handleApiError(error, t("credits.purchase.error"))
+    }
+  }
 
   const creditPackages = [
     {
@@ -75,32 +96,8 @@ function CreditsPageContent() {
   ]
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <div className="flex items-center space-x-4">
-              <Link href="/chat">
-                <Button variant="ghost" size="sm">
-                  <ArrowLeft className="h-4 w-4 mr-2" />
-                  Volver al Chat
-                </Button>
-              </Link>
-              <div className="flex items-center space-x-2">
-                <Scale className="h-8 w-8 text-blue-600" />
-                <span className="text-2xl font-bold text-gray-900">Ovra AI</span>
-              </div>
-            </div>
-            <Badge variant="outline" className="text-green-600 border-green-200">
-              <Sparkles className="h-3 w-3 mr-1" />
-              Plan Profesional
-            </Badge>
-          </div>
-        </div>
-      </header>
-
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <ProtectedLayout title={t("credits.title")} credits={currentCredits}>
+      <div className="p-6 max-w-7xl mx-auto">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Gestión de Créditos</h1>
           <p className="text-gray-600">Administra tus créditos y consulta tu historial de uso</p>
@@ -197,9 +194,9 @@ function CreditsPageContent() {
                   </div>
                 ))}
 
-                <Button className="w-full mt-4" disabled={!selectedPlan} size="lg">
+                <Button className="w-full mt-4" disabled={!selectedPlan} size="lg" onClick={handlePurchase}>
                   <CreditCard className="h-4 w-4 mr-2" />
-                  Comprar Créditos
+                  {t("credits.purchase")}
                 </Button>
               </CardContent>
             </Card>
@@ -237,14 +234,10 @@ function CreditsPageContent() {
           </div>
         </div>
       </div>
-    </div>
+    </ProtectedLayout>
   )
 }
 
 export default function CreditsPage() {
-  return (
-    <ProtectedRoute>
-      <CreditsPageContent />
-    </ProtectedRoute>
-  )
+  return <CreditsPageContent />
 }

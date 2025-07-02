@@ -6,6 +6,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth import login
 from django.utils.translation import gettext_lazy as _
 from drf_spectacular.utils import extend_schema, OpenApiResponse
+from apps.common.responses import APIResponse
 from .models import User
 from .serializers import (
     UserRegistrationSerializer,
@@ -45,16 +46,21 @@ class UserRegistrationView(generics.CreateAPIView):
             # Get user profile data
             profile_serializer = UserProfileSerializer(user)
 
-            return Response({
-                'message': _('User registered successfully.'),
-                'user': profile_serializer.data,
-                'tokens': {
-                    'refresh': str(refresh),
-                    'access': str(refresh.access_token),
-                }
-            }, status=status.HTTP_201_CREATED)
+            return APIResponse.created(
+                data={
+                    'user': profile_serializer.data,
+                    'tokens': {
+                        'refresh': str(refresh),
+                        'access': str(refresh.access_token),
+                    }
+                },
+                message='User registered successfully.'
+            )
 
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        return APIResponse.validation_error(
+            errors=serializer.errors,
+            message='Registration failed due to validation errors.'
+        )
 
 
 class UserLoginView(APIView):
@@ -92,16 +98,21 @@ class UserLoginView(APIView):
             # Get user profile data
             profile_serializer = UserProfileSerializer(user)
 
-            return Response({
-                'message': _('Login successful.'),
-                'user': profile_serializer.data,
-                'tokens': {
-                    'refresh': str(refresh),
-                    'access': str(refresh.access_token),
-                }
-            }, status=status.HTTP_200_OK)
+            return APIResponse.success(
+                data={
+                    'user': profile_serializer.data,
+                    'tokens': {
+                        'refresh': str(refresh),
+                        'access': str(refresh.access_token),
+                    }
+                },
+                message='Login successful.'
+            )
 
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        return APIResponse.validation_error(
+            errors=serializer.errors,
+            message='Login failed due to invalid credentials.'
+        )
 
 
 class UserProfileView(generics.RetrieveUpdateAPIView):

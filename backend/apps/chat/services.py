@@ -60,11 +60,11 @@ class ChatService:
             ]
             
             # Mock answer
-            answer = f"""Según la legislación española vigente, en respuesta a su pregunta: "{question}"
+            answer = f"""According to current Spanish legislation, in response to your question: "{question}"
 
-El tipo general del IVA en España es del 21%, según establece el artículo 21 de la Ley del IVA.
+The general VAT rate in Spain is 21%, as established by article 21 of the VAT Law.
 
-Esta información está actualizada según la normativa vigente. Si necesita más detalles específicos sobre su situación particular, le recomiendo consultar con un asesor fiscal profesional."""
+This information is updated according to current regulations. If you need more specific details about your particular situation, I recommend consulting with a professional tax advisor."""
             
             # Mock usage for cost calculation
             usage = {

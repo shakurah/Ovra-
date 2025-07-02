@@ -56,8 +56,8 @@ class User(AbstractUser):
     preferred_language = models.CharField(
         _('preferred language'),
         max_length=10,
-        choices=[('es', 'Español'), ('en', 'English')],
-        default='es'
+        choices=[('en', 'English'), ('es', 'Español')],
+        default='en'
     )
 
 

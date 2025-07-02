@@ -1,27 +1,22 @@
 "use client"
 
 import { useChat } from "ai/react"
-import { useState, useRef, useEffect } from "react"
+import { useRef, useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import { ThemeToggle } from "@/components/theme-toggle"
-import { LanguageToggle } from "@/components/language-toggle"
-import { ProtectedRoute } from "@/components/protected-route"
+import { ProtectedLayout } from "@/components/protected-layout"
 import { useLanguage } from "@/contexts/language-context"
-import { useAuth } from "@/contexts/auth-context"
-import { Scale, Send, User, Bot, Menu, CreditCard, LogOut, BookOpen, MessageSquare, Sparkles } from "lucide-react"
-import Link from "next/link"
+import { toastService } from "@/lib/services"
+import { Send, User, Bot, Sparkles, Scale } from "lucide-react"
 
 function ChatPageContent() {
   const { messages, input, handleInputChange, handleSubmit, isLoading } = useChat()
   const { t } = useLanguage()
-  const { logout } = useAuth()
-  const [sidebarOpen, setSidebarOpen] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
-  const [credits, setCredits] = useState(47) // Mock credits
+  const [credits] = useState(47) // Mock credits
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
@@ -44,87 +39,14 @@ function ChatPageContent() {
   }
 
   return (
-    <div className="flex h-screen bg-background">
-      {/* Sidebar */}
-      <div
-        className={`${sidebarOpen ? "translate-x-0" : "-translate-x-full"} fixed inset-y-0 left-0 z-50 w-64 bg-card shadow-lg transform transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0 border-r border-border`}
-      >
-        <div className="flex items-center justify-between p-4 border-b border-border">
-          <Link href="/" className="flex items-center space-x-2">
-            <Scale className="h-8 w-8 text-primary" />
-            <span className="text-xl font-bold text-foreground">Ovra AI</span>
-          </Link>
-          <Button variant="ghost" size="sm" className="lg:hidden" onClick={() => setSidebarOpen(false)}>
-            ×
-          </Button>
-        </div>
-
-        <div className="p-4">
-          <div className="mb-6">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-sm font-medium text-muted-foreground">{t("chat.credits.remaining")}</span>
-              <Badge variant="secondary" className="bg-primary/10 text-primary">
-                {credits}
-              </Badge>
-            </div>
-            <div className="w-full bg-muted rounded-full h-2">
-              <div
-                className="bg-primary h-2 rounded-full transition-all duration-300"
-                style={{ width: `${(credits / 50) * 100}%` }}
-              ></div>
-            </div>
-          </div>
-
-          <nav className="space-y-2">
-            <Link href="/chat" className="flex items-center space-x-3 px-3 py-2 rounded-lg bg-primary/10 text-primary">
-              <MessageSquare className="h-5 w-5" />
-              <span>{t("chat.sidebar.chat")}</span>
-            </Link>
-            <Link
-              href="/credits"
-              className="flex items-center space-x-3 px-3 py-2 rounded-lg text-muted-foreground hover:bg-muted"
-            >
-              <CreditCard className="h-5 w-5" />
-              <span>{t("chat.sidebar.credits")}</span>
-            </Link>
-            <Link
-              href="/history"
-              className="flex items-center space-x-3 px-3 py-2 rounded-lg text-muted-foreground hover:bg-muted"
-            >
-              <BookOpen className="h-5 w-5" />
-              <span>{t("chat.sidebar.docs")}</span>
-            </Link>
-          </nav>
-        </div>
-
-        <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-border">
-          <Button
-            variant="ghost"
-            className="w-full justify-start text-muted-foreground"
-            onClick={logout}
-          >
-            <LogOut className="h-5 w-5 mr-3" />
-            {t("chat.sidebar.logout")}
-          </Button>
-        </div>
-      </div>
-
-      {/* Main Content */}
-      <div className="flex-1 flex flex-col">
-        {/* Header */}
-        <header className="bg-card border-b border-border px-4 py-3 flex items-center justify-between">
-          <div className="flex items-center space-x-4">
-            <Button variant="ghost" size="sm" className="lg:hidden" onClick={() => setSidebarOpen(true)}>
-              <Menu className="h-5 w-5" />
-            </Button>
-            <div>
-              <h1 className="text-xl font-semibold text-foreground">{t("chat.title")}</h1>
-              <p className="text-sm text-muted-foreground">{t("chat.subtitle")}</p>
-            </div>
-          </div>
-          <div className="flex items-center space-x-2">
-            <LanguageToggle />
-            <ThemeToggle />
+    <ProtectedLayout
+      title={t("chat.title")}
+      credits={47}
+    >
+      <div className="flex flex-col h-full">
+        {/* GPT-4 Status Badge in Header Area */}
+        <div className="px-4 py-2 border-b border-border bg-card/50">
+          <div className="flex justify-end">
             <Badge
               variant="outline"
               className="text-green-600 border-green-200 dark:text-green-400 dark:border-green-800"
@@ -133,7 +55,7 @@ function ChatPageContent() {
               GPT-4 Activo
             </Badge>
           </div>
-        </header>
+        </div>
 
         {/* Chat Messages */}
         <div className="flex-1 overflow-y-auto p-4">
@@ -247,14 +169,10 @@ function ChatPageContent() {
           </div>
         </div>
       </div>
-    </div>
+    </ProtectedLayout>
   )
 }
 
 export default function ChatPage() {
-  return (
-    <ProtectedRoute>
-      <ChatPageContent />
-    </ProtectedRoute>
-  )
+  return <ChatPageContent />
 }

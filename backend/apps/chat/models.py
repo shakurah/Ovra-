@@ -48,7 +48,7 @@ class ChatLog(models.Model):
         blank=True
     )
     question = models.TextField(
-        help_text="User's question in Spanish"
+        help_text="User's question"
     )
     answer = models.TextField(
         help_text="AI-generated response with citations"

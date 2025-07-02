@@ -11,6 +11,8 @@ import { Scale, Eye, EyeOff, AlertCircle } from "lucide-react"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import Link from "next/link"
 import { useAuth } from "@/contexts/auth-context"
+import { useLanguage } from "@/contexts/language-context"
+import { toastService } from "@/lib/services"
 import { getValidationErrors } from "@/utils/api"
 
 export default function LoginPage() {
@@ -20,6 +22,7 @@ export default function LoginPage() {
   const [error, setError] = useState("")
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
   const { login, isLoading } = useAuth()
+  const { t } = useLanguage()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -28,12 +31,15 @@ export default function LoginPage() {
 
     try {
       await login({ email, password })
+      toastService.success(t("auth.login.success"))
     } catch (err) {
       const validationErrors = getValidationErrors(err)
       if (Object.keys(validationErrors).length > 0) {
         setFieldErrors(validationErrors)
       } else {
-        setError(err instanceof Error ? err.message : "Error al iniciar sesión")
+        const errorMessage = err instanceof Error ? err.message : t("auth.error.login.failed")
+        setError(errorMessage)
+        toastService.error(errorMessage)
       }
     }
   }
@@ -47,14 +53,14 @@ export default function LoginPage() {
             <Scale className="h-10 w-10 text-blue-600" />
             <span className="text-3xl font-bold text-gray-900">Ovra AI</span>
           </Link>
-          <p className="text-gray-600 mt-2">Asistente Legal Inteligente</p>
+          <p className="text-gray-600 mt-2">{t("auth.tagline")}</p>
         </div>
 
         <Card className="shadow-xl border-0">
           <CardHeader className="space-y-1">
-            <CardTitle className="text-2xl font-bold text-center">Iniciar Sesión</CardTitle>
+            <CardTitle className="text-2xl font-bold text-center">{t("auth.login.title")}</CardTitle>
             <CardDescription className="text-center">
-              Accede a tu cuenta para continuar con tus consultas legales
+              {t("auth.login.subtitle")}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -66,7 +72,7 @@ export default function LoginPage() {
             )}
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="email">Correo Electrónico</Label>
+                <Label htmlFor="email">{t("auth.login.email")}</Label>
                 <Input
                   id="email"
                   type="email"
@@ -82,7 +88,7 @@ export default function LoginPage() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="password">Contraseña</Label>
+                <Label htmlFor="password">{t("auth.login.password")}</Label>
                 <div className="relative">
                   <Input
                     id="password"
@@ -114,12 +120,12 @@ export default function LoginPage() {
 
               <div className="flex items-center justify-between">
                 <Link href="/forgot-password" className="text-sm text-blue-600 hover:underline">
-                  ¿Olvidaste tu contraseña?
+                  {t("auth.login.forgot.password")}
                 </Link>
               </div>
 
               <Button type="submit" className="w-full h-11" disabled={isLoading}>
-                {isLoading ? "Iniciando sesión..." : "Iniciar Sesión"}
+                {isLoading ? `${t("auth.login.submit")}...` : t("auth.login.submit")}
               </Button>
             </form>
 
@@ -169,9 +175,9 @@ export default function LoginPage() {
             </div>
 
             <p className="text-center text-sm text-gray-600 mt-6">
-              ¿No tienes una cuenta?{" "}
+              {t("auth.login.no.account")}{" "}
               <Link href="/signup" className="text-blue-600 hover:underline font-medium">
-                Regístrate aquí
+                {t("auth.login.signup.link")}
               </Link>
             </p>
           </CardContent>

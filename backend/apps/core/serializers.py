@@ -22,7 +22,7 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         model = User
         fields = (
             'email', 'full_name', 'password', 'confirm_password',
-            'phone_number', 'profession', 'company_name', 'preferred_language'
+            'preferred_language'
         )
         extra_kwargs = {
             'email': {'required': True},
@@ -99,34 +99,27 @@ class UserLoginSerializer(serializers.Serializer):
 
 class UserProfileSerializer(serializers.ModelSerializer):
     """Serializer for user profile information."""
-    
+
     display_name = serializers.ReadOnlyField()
-    trial_queries_remaining = serializers.ReadOnlyField()
-    has_trial_queries_remaining = serializers.ReadOnlyField()
-    
+
     class Meta:
         model = User
         fields = (
             'id', 'email', 'full_name', 'display_name', 'profile_picture',
-            'phone_number', 'profession', 'company_name', 'preferred_language',
-            'subscription_type', 'trial_queries_used', 'trial_queries_limit',
-            'trial_queries_remaining', 'has_trial_queries_remaining',
-            'is_verified', 'created_at', 'last_login'
+            'preferred_language', 'created_at', 'last_login'
         )
         read_only_fields = (
-            'id', 'email', 'subscription_type', 'trial_queries_used',
-            'trial_queries_limit', 'is_verified', 'created_at', 'last_login'
+            'id', 'email', 'created_at', 'last_login'
         )
 
 
 class UserProfileUpdateSerializer(serializers.ModelSerializer):
     """Serializer for updating user profile."""
-    
+
     class Meta:
         model = User
         fields = (
-            'full_name', 'profile_picture', 'phone_number', 
-            'profession', 'company_name', 'preferred_language'
+            'full_name', 'profile_picture', 'preferred_language'
         )
     
     def validate_profile_picture(self, value):

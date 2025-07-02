@@ -6,14 +6,11 @@ import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Switch } from "@/components/ui/switch"
-import { ThemeToggle } from "@/components/theme-toggle"
-import { LanguageToggle } from "@/components/language-toggle"
-import { ProtectedRoute } from "@/components/protected-route"
+import { ProtectedLayout } from "@/components/protected-layout"
 import { useLanguage } from "@/contexts/language-context"
 import { useTheme } from "next-themes"
+import { toastService } from "@/lib/services"
 import {
-  Scale,
-  ArrowLeft,
   SettingsIcon,
   Globe,
   Palette,
@@ -23,7 +20,6 @@ import {
   Trash2,
   AlertTriangle,
 } from "lucide-react"
-import Link from "next/link"
 
 function SettingsPageContent() {
   const { t, language, setLanguage } = useLanguage()
@@ -35,40 +31,48 @@ function SettingsPageContent() {
     marketingEmails: false,
   })
 
-  return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="bg-card border-b border-border">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <div className="flex items-center space-x-4">
-              <Link href="/chat">
-                <Button variant="ghost" size="sm">
-                  <ArrowLeft className="h-4 w-4 mr-2" />
-                  {t("nav.chat")}
-                </Button>
-              </Link>
-              <div className="flex items-center space-x-2">
-                <Scale className="h-8 w-8 text-primary" />
-                <span className="text-2xl font-bold text-foreground">Ovra AI</span>
-              </div>
-            </div>
-            <div className="flex items-center space-x-2">
-              <LanguageToggle />
-              <ThemeToggle />
-              <Badge
-                variant="outline"
-                className="text-gray-600 border-gray-200 dark:text-gray-400 dark:border-gray-800"
-              >
-                <SettingsIcon className="h-3 w-3 mr-1" />
-                {t("settings.title")}
-              </Badge>
-            </div>
-          </div>
-        </div>
-      </header>
+  const handleDataExport = async () => {
+    try {
+      // TODO: Replace with actual API call
+      // const data = await userService.exportData()
+      toastService.success(t("settings.data.export.success"))
+    } catch (error) {
+      toastService.handleApiError(error, t("settings.data.export.error"))
+    }
+  }
 
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+  const handleDataDelete = async () => {
+    if (!confirm(t("settings.data.delete.confirm"))) {
+      return
+    }
+
+    try {
+      // TODO: Replace with actual API call
+      // await userService.deleteAllData()
+      toastService.success(t("settings.data.delete.success"))
+    } catch (error) {
+      toastService.handleApiError(error, t("settings.data.delete.error"))
+    }
+  }
+
+  const handleAccountDelete = async () => {
+    if (!confirm(t("settings.account.delete.confirm"))) {
+      return
+    }
+
+    try {
+      // TODO: Replace with actual API call
+      // await userService.deleteAccount()
+      toastService.success(t("settings.account.delete.success"))
+      // Redirect to login or home page
+    } catch (error) {
+      toastService.handleApiError(error, t("settings.account.delete.error"))
+    }
+  }
+
+  return (
+    <ProtectedLayout title={t("settings.title")} credits={47}>
+      <div className="p-6 max-w-4xl mx-auto">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-foreground mb-2">{t("settings.title")}</h1>
           <p className="text-muted-foreground">Customize your OVRA AI experience</p>
@@ -216,7 +220,7 @@ function SettingsPageContent() {
                     <p className="text-sm text-muted-foreground">Download all your data in JSON format</p>
                   </div>
                 </div>
-                <Button variant="outline" size="sm">
+                <Button variant="outline" size="sm" onClick={handleDataExport}>
                   <Download className="h-4 w-4 mr-2" />
                   Export
                 </Button>
@@ -230,7 +234,7 @@ function SettingsPageContent() {
                     <p className="text-sm text-muted-foreground">Permanently delete all your data</p>
                   </div>
                 </div>
-                <Button variant="destructive" size="sm">
+                <Button variant="destructive" size="sm" onClick={handleDataDelete}>
                   <Trash2 className="h-4 w-4 mr-2" />
                   Delete
                 </Button>
@@ -256,7 +260,7 @@ function SettingsPageContent() {
                       Permanently delete your account and all associated data
                     </p>
                   </div>
-                  <Button variant="destructive">
+                  <Button variant="destructive" onClick={handleAccountDelete}>
                     <Trash2 className="h-4 w-4 mr-2" />
                     Delete Account
                   </Button>
@@ -266,14 +270,10 @@ function SettingsPageContent() {
           </Card>
         </div>
       </div>
-    </div>
+    </ProtectedLayout>
   )
 }
 
 export default function SettingsPage() {
-  return (
-    <ProtectedRoute>
-      <SettingsPageContent />
-    </ProtectedRoute>
-  )
+  return <SettingsPageContent />
 }
