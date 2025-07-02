@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { LanguageToggle } from "@/components/language-toggle"
+import { ProtectedRoute } from "@/components/protected-route"
 import { useLanguage } from "@/contexts/language-context"
 import {
   Scale,
@@ -23,7 +24,7 @@ import {
 import Link from "next/link"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 
-export default function HistoryPage() {
+function HistoryPageContent() {
   const { t } = useLanguage()
   const [searchQuery, setSearchQuery] = useState("")
   const [selectedFilter, setSelectedFilter] = useState("all")
@@ -271,5 +272,13 @@ export default function HistoryPage() {
         )}
       </div>
     </div>
+  )
+}
+
+export default function HistoryPage() {
+  return (
+    <ProtectedRoute>
+      <HistoryPageContent />
+    </ProtectedRoute>
   )
 }

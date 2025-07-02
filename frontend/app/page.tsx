@@ -76,10 +76,12 @@ export default function LandingPage() {
                 </div>
                 <LanguageToggle />
                 <ThemeToggle />
-                <Button variant="ghost" size="sm" className="text-muted-foreground">
-                  <User className="h-4 w-4 mr-1" />
-                  {t("nav.signin")}
-                </Button>
+                <Link href="/login">
+                  <Button variant="ghost" size="sm" className="text-muted-foreground">
+                    <User className="h-4 w-4 mr-1" />
+                    {t("nav.signin")}
+                  </Button>
+                </Link>
               </div>
               <Link href="/signup">
                 <Button size="sm" className="bg-primary hover:bg-primary/90">

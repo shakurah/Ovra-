@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge"
 import { Switch } from "@/components/ui/switch"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { LanguageToggle } from "@/components/language-toggle"
+import { ProtectedRoute } from "@/components/protected-route"
 import { useLanguage } from "@/contexts/language-context"
 import {
   Scale,
@@ -25,7 +26,7 @@ import {
 } from "lucide-react"
 import Link from "next/link"
 
-export default function AccountPage() {
+function AccountPageContent() {
   const { t } = useLanguage()
   const [activeTab, setActiveTab] = useState("profile")
   const [showCurrentPassword, setShowCurrentPassword] = useState(false)
@@ -456,5 +457,13 @@ export default function AccountPage() {
         </div>
       </div>
     </div>
+  )
+}
+
+export default function AccountPage() {
+  return (
+    <ProtectedRoute>
+      <AccountPageContent />
+    </ProtectedRoute>
   )
 }

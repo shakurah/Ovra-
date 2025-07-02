@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Switch } from "@/components/ui/switch"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { LanguageToggle } from "@/components/language-toggle"
+import { ProtectedRoute } from "@/components/protected-route"
 import { useLanguage } from "@/contexts/language-context"
 import { useTheme } from "next-themes"
 import {
@@ -24,7 +25,7 @@ import {
 } from "lucide-react"
 import Link from "next/link"
 
-export default function SettingsPage() {
+function SettingsPageContent() {
   const { t, language, setLanguage } = useLanguage()
   const { theme, setTheme } = useTheme()
   const [notifications, setNotifications] = useState({
@@ -266,5 +267,13 @@ export default function SettingsPage() {
         </div>
       </div>
     </div>
+  )
+}
+
+export default function SettingsPage() {
+  return (
+    <ProtectedRoute>
+      <SettingsPageContent />
+    </ProtectedRoute>
   )
 }

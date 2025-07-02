@@ -5,10 +5,11 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
+import { ProtectedRoute } from "@/components/protected-route"
 import { Scale, CreditCard, Zap, Clock, CheckCircle, ArrowLeft, Sparkles } from "lucide-react"
 import Link from "next/link"
 
-export default function CreditsPage() {
+function CreditsPageContent() {
   const [currentCredits] = useState(47)
   const [totalCredits] = useState(200)
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null)
@@ -237,5 +238,13 @@ export default function CreditsPage() {
         </div>
       </div>
     </div>
+  )
+}
+
+export default function CreditsPage() {
+  return (
+    <ProtectedRoute>
+      <CreditsPageContent />
+    </ProtectedRoute>
   )
 }

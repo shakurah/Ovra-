@@ -9,13 +9,16 @@ import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { LanguageToggle } from "@/components/language-toggle"
+import { ProtectedRoute } from "@/components/protected-route"
 import { useLanguage } from "@/contexts/language-context"
+import { useAuth } from "@/contexts/auth-context"
 import { Scale, Send, User, Bot, Menu, CreditCard, LogOut, BookOpen, MessageSquare, Sparkles } from "lucide-react"
 import Link from "next/link"
 
-export default function ChatPage() {
+function ChatPageContent() {
   const { messages, input, handleInputChange, handleSubmit, isLoading } = useChat()
   const { t } = useLanguage()
+  const { logout } = useAuth()
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const [credits, setCredits] = useState(47) // Mock credits
@@ -95,7 +98,11 @@ export default function ChatPage() {
         </div>
 
         <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-border">
-          <Button variant="ghost" className="w-full justify-start text-muted-foreground">
+          <Button
+            variant="ghost"
+            className="w-full justify-start text-muted-foreground"
+            onClick={logout}
+          >
             <LogOut className="h-5 w-5 mr-3" />
             {t("chat.sidebar.logout")}
           </Button>
@@ -241,5 +248,13 @@ export default function ChatPage() {
         </div>
       </div>
     </div>
+  )
+}
+
+export default function ChatPage() {
+  return (
+    <ProtectedRoute>
+      <ChatPageContent />
+    </ProtectedRoute>
   )
 }
