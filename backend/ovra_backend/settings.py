@@ -225,6 +225,7 @@ CORS_ALLOWED_ORIGINS = [
     'http://localhost:5173',
     'http://127.0.0.1:3000',
     'http://127.0.0.1:5173',
+    'http://139.59.137.134:3000',
 ]
 if not DEBUG:
     CORS_ALLOWED_ORIGINS.extend([

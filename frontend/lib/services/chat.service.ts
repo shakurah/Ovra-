@@ -4,6 +4,7 @@
  */
 
 import { BaseApiService } from './base.service'
+import { generateUUID } from '@/utils/uuid'
 
 export interface ChatMessage {
   id: string
@@ -81,7 +82,7 @@ export class ChatService extends BaseApiService {
 
       return {
         message: {
-          id: crypto.randomUUID(),
+          id: generateUUID(),
           role: 'assistant',
           content: response.data.answer,
           timestamp: new Date().toISOString(),
@@ -107,7 +108,7 @@ export class ChatService extends BaseApiService {
 
         return {
           message: {
-            id: crypto.randomUUID(),
+            id: generateUUID(),
             role: 'assistant',
             content: retryResponse.data.answer,
             timestamp: new Date().toISOString(),

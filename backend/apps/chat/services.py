@@ -52,7 +52,7 @@ class ChatService:
                                 - **Plan General Contable** (General Accounting Plan) - 5. Plan General Contable
 
                                 **CRITICAL INSTRUCTIONS:**
-                                1. Always respond in English
+                                1. Always respond in Spanish
                                 2. **MANDATORY**: Keep responses to maximum 200 words total but answer with detail facts and complete information
                                 3. **MANDATORY FORMAT**: Always use Markdown format
                                 4. **MANDATORY CITATIONS**: When referencing law sections, use this exact format:

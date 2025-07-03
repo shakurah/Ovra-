@@ -3,6 +3,7 @@
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
+import { Input } from "@/components/ui/input"
 import { SharedHeader } from "@/components/shared-header"
 import { SharedFooter } from "@/components/shared-footer"
 import { useLanguage } from "@/contexts/language-context"
@@ -14,6 +15,7 @@ import {
   Settings,
   BookOpen,
   ChevronRight,
+  Search,
 } from "lucide-react"
 import Link from "next/link"
 

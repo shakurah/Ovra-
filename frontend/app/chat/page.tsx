@@ -13,6 +13,7 @@ import { Send, User, Bot, Sparkles, Scale, Trash2 } from "lucide-react"
 import Link from "next/link"
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
+import { generateUUID } from "@/utils/uuid"
 
 interface Message {
   id: string
@@ -33,15 +34,6 @@ function ChatPageContent() {
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
-  }
-
-  // Generate UUID for chat session
-  const generateUUID = () => {
-    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-      const r = Math.random() * 16 | 0
-      const v = c == 'x' ? r : (r & 0x3 | 0x8)
-      return v.toString(16)
-    })
   }
 
   // Initialize chat session on component mount
@@ -139,14 +131,14 @@ function ChatPageContent() {
     }
 
     const userMessage: Message = {
-      id: crypto.randomUUID(),
+      id: generateUUID(),
       role: 'user',
       content: trimmedInput,
       timestamp: new Date().toISOString()
     }
 
     const assistantMessage: Message = {
-      id: crypto.randomUUID(),
+      id: generateUUID(),
       role: 'assistant',
       content: '',
       timestamp: new Date().toISOString()

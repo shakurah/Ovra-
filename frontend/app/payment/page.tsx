@@ -12,6 +12,7 @@ import { ProtectedLayout } from "@/components/protected-layout"
 import { useLanguage } from "@/contexts/language-context"
 import { CreditCard, Shield, Lock, CheckCircle } from "lucide-react"
 import { useRouter } from "next/navigation"
+import Link from "next/link"
 
 export default function PaymentPage() {
   const { t } = useLanguage()

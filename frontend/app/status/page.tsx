@@ -109,7 +109,7 @@ export default function StatusPage() {
 
   return (
     <ProtectedLayout title={t("status.title")} credits={47}>
-      <div className="p-6">
+      <section className="py-20 px-4 sm:px-6 lg:px-8">
         <div className="max-w-4xl mx-auto text-center">
           <div className="flex items-center justify-center space-x-3 mb-6">
             <Activity className="h-12 w-12 text-primary" />
