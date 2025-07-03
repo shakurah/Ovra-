@@ -56,9 +56,8 @@ INSTALLED_APPS = [
     # Custom domain apps
     'apps.common',
     'apps.core',
-    'apps.legal',
     'apps.chat',
-    'apps.embeddings',
+    'apps.rag_app',
 ]
 
 MIDDLEWARE = [
@@ -105,8 +104,12 @@ ASGI_APPLICATION = 'ovra_backend.asgi.application'
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'ovra_ai',
+        'USER': 'ovra_user',
+        'PASSWORD': 'ovra_password123',
+        'HOST': 'localhost',
+        'PORT': '5432',
     }
 }
 
@@ -228,6 +231,21 @@ if not DEBUG:
         'https://ovra.ai',
         'https://www.ovra.ai',
     ])
+
+# Additional CORS settings
+CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOW_ALL_ORIGINS = DEBUG  # Only in development
+CORS_ALLOWED_HEADERS = [
+    'accept',
+    'accept-encoding',
+    'authorization',
+    'content-type',
+    'dnt',
+    'origin',
+    'user-agent',
+    'x-csrftoken',
+    'x-requested-with',
+]
 
 # CSP (Content Security Policy) configuration
 CSP_DEFAULT_SRC = ("'self'",)

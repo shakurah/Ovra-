@@ -8,9 +8,9 @@ djangorestframework-simplejwt==5.5.0
 # Environment & Configuration
 django-environ==0.12.0
 
-# Database
-# psycopg[binary]==3.1.18
-# psycopg2-binary==2.9.10
+# Database (PostgreSQL with vector support)
+psycopg2-binary==2.9.10
+pgvector==0.3.6
 
 # Redis & Caching
 redis==5.1.1
@@ -39,10 +39,21 @@ django-prometheus==2.3.1
 django-structlog==8.1.0
 python-json-logger==2.0.7
 
-# OpenAI & Vector Store
-openai==1.35.3
-# chromadb==0.5.3  # Commented out due to C++ build requirements
-# tiktoken==0.7.0  # Commented out due to C++ build requirements
+# OpenAI & Embeddings (External Service)
+openai>=1.54.0
+tiktoken==0.7.0
+
+# LangChain Core (Lightweight)
+langchain==0.3.7
+langchain-openai==0.2.8
+langchain-text-splitters==0.3.2
+
+# PDF Processing (Lightweight)
+pypdf==5.1.0
+python-magic==0.4.27
+
+# Additional utilities for document processing
+pydantic==2.10.3
 
 # Rate Limiting
 django-ratelimit==4.1.0

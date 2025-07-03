@@ -3,9 +3,11 @@ Views for the chat application.
 """
 import time
 import logging
+import json
 from typing import Optional
 from django.db import transaction
 from django.utils import timezone
+from django.http import StreamingHttpResponse
 from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.generics import ListAPIView, RetrieveAPIView
@@ -30,7 +32,7 @@ class ChatAPIView(APIView):
     """
     Main chat endpoint for asking tax law questions.
     """
-    permission_classes = [AllowAny]  # Change to IsAuthenticated for production
+    permission_classes = [IsAuthenticated]
     
     def post(self, request):
         """
@@ -140,6 +142,101 @@ class ChatAPIView(APIView):
             logger.error(f"Unexpected error in chat: {str(e)}", exc_info=True)
             return APIResponse.server_error(
                 message="Unexpected error processing question"
+            )
+
+
+@method_decorator(ratelimit(key='ip', rate='60/m', method='POST'), name='dispatch')
+class ChatStreamAPIView(APIView):
+    """
+    Streaming chat endpoint for real-time AI responses.
+    """
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        """
+        Process a chat request and return streaming AI response.
+        """
+        serializer = ChatRequestSerializer(data=request.data)
+        if not serializer.is_valid():
+            return APIResponse.validation_error(
+                errors=serializer.errors,
+                message="Invalid request data"
+            )
+
+        validated_data = serializer.validated_data
+
+        try:
+            # Get or create session
+            session = None
+            if validated_data.get('session_id'):
+                try:
+                    session = ChatSession.objects.get(
+                        id=validated_data['session_id'],
+                        is_active=True
+                    )
+                except ChatSession.DoesNotExist:
+                    return APIResponse.not_found(
+                        message="Session not found or inactive"
+                    )
+            else:
+                # Create new session if not provided
+                session = ChatSession.objects.create(
+                    user=request.user if request.user.is_authenticated else None,
+                    title=validated_data['question'][:50] + "..."
+                )
+
+            # Process the streaming chat request
+            chat_service = ChatService()
+
+            def generate_stream():
+                try:
+                    # Send session info first
+                    yield f"data: {json.dumps({'type': 'session', 'session_id': str(session.id)})}\n\n"
+
+                    # Get streaming response
+                    stream_generator = chat_service.process_question(
+                        question=validated_data['question'],
+                        session=session,
+                        law_filter=validated_data.get('law_filter'),
+                        stream=True
+                    )
+
+                    full_response = ""
+                    for chunk in stream_generator:
+                        full_response += chunk
+                        yield f"data: {json.dumps({'type': 'content', 'content': chunk})}\n\n"
+
+                    # Save the complete response to database
+                    ChatLog.objects.create(
+                        session=session,
+                        question=validated_data['question'],
+                        answer=full_response,
+                        citations=[],  # Will be extracted from full response
+                        duration_ms=0,  # Not applicable for streaming
+                        model_used=chat_service.model,
+                        retrieved_articles=[]
+                    )
+
+                    # Send completion signal
+                    yield f"data: {json.dumps({'type': 'done'})}\n\n"
+
+                except Exception as e:
+                    logger.error(f"Streaming error: {str(e)}", exc_info=True)
+                    yield f"data: {json.dumps({'type': 'error', 'message': 'Error processing request'})}\n\n"
+
+            response = StreamingHttpResponse(
+                generate_stream(),
+                content_type='text/event-stream'
+            )
+            response['Cache-Control'] = 'no-cache'
+            response['X-Accel-Buffering'] = 'no'  # Disable nginx buffering
+
+            return response
+
+        except Exception as e:
+            logger.error(f"Unexpected error in streaming chat: {str(e)}", exc_info=True)
+            return APIResponse.server_error(
+                message="Unexpected error processing streaming request"
             )
 
 

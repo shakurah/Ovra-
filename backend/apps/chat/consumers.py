@@ -84,12 +84,12 @@ class ChatConsumer(AsyncWebsocketConsumer):
             
             # Mock streaming response
             response_parts = [
-                "Según la legislación española vigente, ",
-                "en respuesta a su pregunta: ",
+                "According to current Spanish legislation, ",
+                "in response to your question: ",
                 f'"{question}" ',
-                "\n\nEl tipo general del IVA en España es del 21%, ",
-                "según establece el artículo 21 de la Ley del IVA.",
-                "\n\nEsta información está actualizada según la normativa vigente."
+                "\n\nThe general VAT rate in Spain is 21%, ",
+                "as established by article 21 of the VAT Law.",
+                "\n\nThis information is updated according to current regulations."
             ]
             
             # Stream each part

@@ -36,6 +36,7 @@ export interface ChatRequest {
   context?: {
     user_profession?: string
     previous_context?: string
+    law_filter?: string
   }
 }
 
@@ -65,10 +66,170 @@ export interface ConversationListResponse {
 
 export class ChatService extends BaseApiService {
   /**
-   * Send a message to the AI assistant
+   * Send a message to the AI assistant (non-streaming)
    */
   async sendMessage(request: ChatRequest): Promise<ChatResponse> {
-    return this.post<ChatResponse>('/chat/message/', request, true)
+    const payload = {
+      question: request.message,
+      session_id: request.conversation_id,
+      law_filter: request.context?.law_filter,
+      stream: false
+    }
+
+    try {
+      const response = await this.post<any>('/chat/', payload, true)
+
+      return {
+        message: {
+          id: crypto.randomUUID(),
+          role: 'assistant',
+          content: response.data.answer,
+          timestamp: new Date().toISOString(),
+          metadata: {
+            legal_references: response.data.citations || [],
+            confidence_score: 0.9,
+            processing_time: response.data.duration_ms
+          }
+        },
+        conversation_id: response.data.session_id || request.conversation_id,
+        usage: response.data.usage
+      }
+    } catch (error: any) {
+      // Handle session not found - automatically create new session
+      if (error.status === 404 || (error.response && error.response.code === 404)) {
+        // Try again without session_id to create a new session
+        const newPayload = {
+          ...payload,
+          session_id: undefined
+        }
+
+        const retryResponse = await this.post<any>('/chat/', newPayload, true)
+
+        return {
+          message: {
+            id: crypto.randomUUID(),
+            role: 'assistant',
+            content: retryResponse.data.answer,
+            timestamp: new Date().toISOString(),
+            metadata: {
+              legal_references: retryResponse.data.citations || [],
+              confidence_score: 0.9,
+              processing_time: retryResponse.data.duration_ms
+            }
+          },
+          conversation_id: retryResponse.data.session_id,
+          usage: retryResponse.data.usage
+        }
+      }
+
+      // Re-throw other errors
+      throw error
+    }
+  }
+
+  /**
+   * Send a streaming message to the AI assistant
+   */
+  async sendStreamingMessage(
+    request: ChatRequest,
+    onChunk: (chunk: string) => void,
+    onComplete: (conversationId: string) => void,
+    onError: (error: string) => void
+  ): Promise<void> {
+    const payload = {
+      question: request.message,
+      session_id: request.conversation_id,
+      law_filter: request.context?.law_filter,
+      stream: true
+    }
+
+    try {
+      const response = await fetch(`${this.baseUrl}/chat/stream/`, {
+        method: 'POST',
+        headers: this.getAuthHeaders(),
+        body: JSON.stringify(payload)
+      })
+
+      // Handle session not found - automatically create new session
+      if (response.status === 404) {
+        // Try again without session_id to create a new session
+        const newPayload = {
+          ...payload,
+          session_id: undefined
+        }
+
+        const retryResponse = await fetch(`${this.baseUrl}/chat/stream/`, {
+          method: 'POST',
+          headers: this.getAuthHeaders(),
+          body: JSON.stringify(newPayload)
+        })
+
+        if (!retryResponse.ok) {
+          throw new Error(`HTTP error! status: ${retryResponse.status}`)
+        }
+
+        // Use the retry response for processing
+        return this.processStreamingResponse(retryResponse, onChunk, onComplete, onError, request.conversation_id)
+      }
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+
+      return this.processStreamingResponse(response, onChunk, onComplete, onError, request.conversation_id)
+    } catch (error) {
+      onError(error instanceof Error ? error.message : 'Unknown error')
+    }
+  }
+
+  /**
+   * Process streaming response (extracted for reuse)
+   */
+  private async processStreamingResponse(
+    response: Response,
+    onChunk: (chunk: string) => void,
+    onComplete: (conversationId: string) => void,
+    onError: (error: string) => void,
+    originalConversationId?: string
+  ): Promise<void> {
+
+    const reader = response.body?.getReader()
+    if (!reader) {
+      throw new Error('No response body')
+    }
+
+    const decoder = new TextDecoder()
+    let conversationId = originalConversationId
+
+    while (true) {
+      const { done, value } = await reader.read()
+      if (done) break
+
+      const chunk = decoder.decode(value)
+      const lines = chunk.split('\n')
+
+      for (const line of lines) {
+        if (line.startsWith('data: ')) {
+          try {
+            const data = JSON.parse(line.slice(6))
+
+            if (data.type === 'session') {
+              conversationId = data.session_id
+            } else if (data.type === 'content') {
+              onChunk(data.content)
+            } else if (data.type === 'done') {
+              onComplete(conversationId || '')
+              return
+            } else if (data.type === 'error') {
+              onError(data.message)
+              return
+            }
+          } catch (e) {
+            // Ignore malformed JSON
+          }
+        }
+      }
+    }
   }
 
   /**
@@ -82,12 +243,12 @@ export class ChatService extends BaseApiService {
    * Continue an existing conversation
    */
   async continueConversation(
-    conversationId: string, 
+    conversationId: string,
     message: string
   ): Promise<ChatResponse> {
-    return this.sendMessage({ 
-      message, 
-      conversation_id: conversationId 
+    return this.sendMessage({
+      message,
+      conversation_id: conversationId
     })
   }
 

@@ -38,7 +38,7 @@ class ChatRequestSerializer(serializers.Serializer):
         # Check if question is too short after cleanup
         if len(value) < 3:
             raise serializers.ValidationError(
-                "La pregunta es demasiado corta. Por favor, proporcione más detalles."
+                "Question is too short. Please provide more details."
             )
         
         return value
@@ -48,12 +48,11 @@ class CitationSerializer(serializers.Serializer):
     """
     Serializer for legal article citations.
     """
-    article_id = serializers.UUIDField()
-    law = serializers.CharField()
     article_num = serializers.CharField()
+    law = serializers.CharField()
     excerpt = serializers.CharField()
-    source_url = serializers.URLField()
     relevance_score = serializers.FloatField(required=False)
+    source = serializers.CharField(required=False)
 
 
 class ChatResponseSerializer(serializers.Serializer):

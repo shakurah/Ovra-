@@ -136,6 +136,8 @@ const translations = {
     "chat.examples.freelancer": "How should I invoice as a cultural freelancer?",
     "chat.examples.vat": "What VAT do I apply to my artistic services?",
     "chat.examples.deductions": "Can I deduct art material expenses in IRPF?",
+    "chat.error.failed": "Failed to send message. Please try again.",
+    "chat.error.question_too_short": "Question is too short. Please provide more details.",
     "chat.examples.copyright": "How are copyright royalties taxed?",
     "chat.examples.obligations": "What obligations do I have as a cultural freelancer?",
 
@@ -753,6 +755,8 @@ const translations = {
     "chat.examples.freelancer": "¿Cómo debo facturar como freelancer cultural?",
     "chat.examples.vat": "¿Qué IVA aplico a mis servicios artísticos?",
     "chat.examples.deductions": "¿Puedo deducir gastos de material artístico en IRPF?",
+    "chat.error.failed": "Error al enviar mensaje. Por favor intente nuevamente.",
+    "chat.error.question_too_short": "La pregunta es muy corta. Por favor proporcione más detalles.",
     "chat.examples.copyright": "¿Cómo tributan los derechos de autor?",
     "chat.examples.obligations": "¿Qué obligaciones tengo como autónomo cultural?",
 

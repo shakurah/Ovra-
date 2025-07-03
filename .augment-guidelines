@@ -154,3 +154,7 @@ follow mcp-feedback-enhanced instructions and call interactive_feedback after ev
 always restart services systemctl restart ovra-frontend and ovra-backend when you fix code
 
 default language is english but we have a toggle on frontend which changes the frontend langauge.
+
+we dont need schema generation in django or schema docs also the metrics we dont need it
+
+We are bot using chroma any more we are getting embeddings for our pdf documents from openai and storing in the vector db of the postgres

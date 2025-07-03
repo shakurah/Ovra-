@@ -11,6 +11,7 @@
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 84% 4.9%;
     --primary: 221.2 83.2% 53.3%;
+    --primary-rgb: 59, 130, 246;
     --primary-foreground: 210 40% 98%;
     --secondary: 210 40% 96%;
     --secondary-foreground: 222.2 84% 4.9%;
@@ -34,6 +35,7 @@
     --popover: 222.2 84% 4.9%;
     --popover-foreground: 210 40% 98%;
     --primary: 217.2 91.2% 59.8%;
+    --primary-rgb: 96, 165, 250;
     --primary-foreground: 222.2 84% 4.9%;
     --secondary: 217.2 32.6% 17.5%;
     --secondary-foreground: 210 40% 98%;
@@ -321,4 +323,41 @@ button:focus-visible {
 
 .dropdown-exit {
   animation: slideUp 0.15s ease-in;
+}
+
+/* Subtle streaming animation for chat */
+@keyframes subtleGlow {
+  0%, 100% {
+    opacity: 1;
+    box-shadow: 0 0 0 rgba(var(--primary-rgb), 0);
+  }
+  50% {
+    opacity: 0.95;
+    box-shadow: 0 0 20px rgba(var(--primary-rgb), 0.1);
+  }
+}
+
+.streaming-glow {
+  animation: subtleGlow 2s ease-in-out infinite;
+}
+
+/* Typing indicator for streaming text */
+@keyframes textShimmer {
+  0% {
+    background-position: -200px 0;
+  }
+  100% {
+    background-position: calc(200px + 100%) 0;
+  }
+}
+
+.text-streaming {
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(var(--primary-rgb), 0.1),
+    transparent
+  );
+  background-size: 200px 100%;
+  animation: textShimmer 2s infinite;
 }
