@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 
 # Import RAG services (will be available after installation)
 try:
-    from apps.rag_app.services import DocumentProcessingService, BOEAPIService
+    from apps.rag_app.services import VectorSearchService, EmbeddingService
     RAG_AVAILABLE = True
 except ImportError as e:
     RAG_AVAILABLE = False
@@ -33,45 +33,102 @@ class ChatService:
         self.max_tokens = 2000
         self.temperature = 0.7
 
-        # Initialize RAG service if available
+        # Initialize RAG services if available
         if RAG_AVAILABLE:
-            self.rag_service = DocumentProcessingService()
-            self.boe_service = BOEAPIService()
+            self.vector_search_service = VectorSearchService()
+            self.embedding_service = EmbeddingService()
         else:
-            self.rag_service = None
-            self.boe_service = None
+            self.vector_search_service = None
+            self.embedding_service = None
+
+        # Document to law name mapping with effective dates
+        self.law_mapping = {
+            'Ley del IVA': {
+                'name': 'Ley 37/1992, del Impuesto sobre el Valor Añadido',
+                'effective_date': '1 de enero de 1993',
+                'enacted_date': '28 de diciembre de 1992'
+            },
+            'Ley del Impuesto sobre Sociedades': {
+                'name': 'Ley 27/2014, del Impuesto sobre Sociedades',
+                'effective_date': '1 de enero de 2015',
+                'enacted_date': '27 de noviembre de 2014'
+            },
+            'Ley General Tributaria': {
+                'name': 'Ley 58/2003, General Tributaria',
+                'effective_date': '1 de julio de 2004',
+                'enacted_date': '17 de diciembre de 2003'
+            },
+            'Ley del Impuesto sobre la Renta de las Personas Físicas': {
+                'name': 'Ley 35/2006, del Impuesto sobre la Renta de las Personas Físicas',
+                'effective_date': '1 de enero de 2007',
+                'enacted_date': '28 de noviembre de 2006'
+            },
+            'Reglamento de Facturación': {
+                'name': 'Real Decreto 1619/2012, por el que se aprueba el Reglamento de Facturación',
+                'effective_date': '1 de enero de 2013',
+                'enacted_date': '30 de noviembre de 2012'
+            },
+            'Plan General Contable': {
+                'name': 'Real Decreto 1514/2007, por el que se aprueba el Plan General de Contabilidad',
+                'effective_date': '1 de enero de 2008',
+                'enacted_date': '16 de noviembre de 2007'
+            }
+        }
 
         self.system_prompt = """You are OVRA AI, a specialized legal assistant for Spanish tax legislation, focused on professionals in the cultural and artistic sectors.
 
-                                You have access to these official Spanish legal documents:
-                                - **Ley del IVA** (VAT Law) - 6. Ley Del Iva
-                                - **Ley del IRPF** (Personal Income Tax Law) - 2. Ley Del Impuesto Sobre La Renta De Las Personas Físicas
-                                - **Ley del Impuesto sobre Sociedades** (Corporate Income Tax Law) - 3. Ley Del Impuesto Sobre Sociedades
-                                - **Ley General Tributaria** (General Tax Law) - 1. Ley General Tributaria
-                                - **Reglamento de Facturación** (Invoicing Regulation) - 4. Reglamento De Facturación
-                                - **Plan General Contable** (General Accounting Plan) - 5. Plan General Contable
+                                **KNOWLEDGE BASE ACCESS:**
+                                You have access to a comprehensive, up-to-date knowledge bank containing:
+                                - **Complete Spanish Legal Framework**: All current tax laws, regulations, and official documents
+                                - **BOE Updates**: Real-time access to the latest official bulletins and legal changes
+                                - **Historical Legal Context**: Full legal evolution with dates and amendments
+                                - **Specialized Coverage**: Laws specifically relevant to cultural and artistic professionals
 
-                                **CRITICAL INSTRUCTIONS:**
+                                **CRITICAL LEGAL PRIORITY RULES:**
+                                1. **ALWAYS prioritize the MOST RECENT legal provisions** - If a law was modified in 2023, use the 2023 version, NOT the 2022 version
+                                2. **NEVER claim your knowledge is outdated** - You have access to current legal information through the knowledge bank
+                                3. **ALWAYS search the knowledge bank** for the most recent legal provisions before responding
+                                4. **EXPLICITLY state the publication/effective date** of any law you reference
+                                5. **If laws conflict by date, ALWAYS use the most recent one** and mention that it supersedes earlier versions
+
+                                **RESPONSE GUIDELINES:**
                                 1. Always respond in Spanish
                                 2. **MANDATORY**: Keep responses to maximum 200 words total but answer with detail facts and complete information
                                 3. **MANDATORY FORMAT**: Always use Markdown format
-                                4. **MANDATORY CITATIONS**: When referencing law sections, use this exact format:
-                                   - "According to **[Law Title] Article [Number]**..."
-                                   - Example: "According to **Ley del IVA Article 91**..."
-                                   - Always include the document title from the retrieved content
+                                4. **MANDATORY CITATIONS**: When referencing law sections, use the official law names and dates:
+                                   - Use format: "Según la **[Nombre Oficial de la Ley]** (vigente desde [fecha efectiva])..."
+                                   - Example: "Según la **Ley 37/1992, del Impuesto sobre el Valor Añadido** (vigente desde 1 de enero de 1993)..."
+                                   - **NEVER mention internal document names, filenames, or database titles**
                                 5. Use headers (###) to organize sections
                                 6. Use **bold** for important terms, percentages, and key concepts
                                 7. Use bulleted lists (-) or numbered lists (1.) to organize information
-                                8. **DOCUMENT IDENTIFICATION**: Always identify the specific law document when citing:
-                                   - Reference the exact document title as stored in the database
+                                8. **LAW IDENTIFICATION**: Always identify laws using their official legal names:
+                                   - Use the complete official law name (e.g., "Ley 37/1992, del Impuesto sobre el Valor Añadido")
                                    - Include article numbers, sections, or paragraph references when available
+                                   - **ALWAYS mention the effective date** to show currency of information
+                                   - **NEVER reveal internal document names or database structure**
                                 9. Provide practical examples for artists and cultural professionals
-                                10. If you don't have specific information, clearly indicate this
+                                10. If specific information is not in the knowledge bank, clearly indicate this
                                 11. Maintain a professional but accessible tone
-                                12. **CRITICAL**: Summarize answers concisely - maximum 100 words total
+                                12. **CRITICAL**: Summarize answers concisely - maximum 200 words total
 
-                                When relevant law sections are provided below, use them as your primary source and cite them explicitly with full document titles."""
-        
+                                **KNOWLEDGE BANK INTEGRATION:**
+                                When relevant law sections are provided below from the knowledge bank, use them as your PRIMARY and AUTHORITATIVE source. These represent the most current legal information available."""
+
+    def _get_official_law_name(self, document_title: str) -> dict:
+        """Convert internal document title to official law name and dates."""
+        # Extract the base law name from document title
+        for key, law_info in self.law_mapping.items():
+            if key in document_title:
+                return law_info
+
+        # Default fallback for unmapped documents
+        return {
+            'name': document_title,
+            'effective_date': 'fecha no especificada',
+            'enacted_date': 'fecha no especificada'
+        }
+
     def process_question(
         self,
         question: str,
@@ -94,27 +151,26 @@ class ChatService:
         start_time = time.time()
 
         try:
-            # Retrieve relevant law sections using RAG if available
+            # Retrieve relevant law sections using vector search if available
             retrieved_articles = []
-            if self.rag_service and RAG_AVAILABLE:
+            if self.vector_search_service and self.embedding_service and RAG_AVAILABLE:
                 try:
-                    retrieved_articles = self.rag_service.search_relevant_chunks(
-                        query=question,
+                    # Generate embedding for the question
+                    query_embedding = self.embedding_service.get_embedding(question)
+
+                    # Search for similar chunks using the embedding
+                    retrieved_articles = self.vector_search_service.search_similar_chunks(
+                        query_embedding=query_embedding,
                         law_filter=law_filter,
-                        max_results=3,
-                        similarity_threshold=0.4  # Lower threshold for better recall
+                        n_results=5,
+                        similarity_threshold=0.3  # Lower threshold for better recall
                     )
                 except Exception as e:
-                    logger.warning(f"RAG search failed: {str(e)}")
+                    logger.warning(f"Vector search failed: {str(e)}")
                     retrieved_articles = []
 
-            # Get recent BOE content if available
-            boe_content = []
-            if self.boe_service and RAG_AVAILABLE:
-                boe_content = self._get_boe_content(question, max_items=2)
-
             # Build conversation context
-            messages = [{"role": "system", "content": self._build_enhanced_prompt(retrieved_articles, boe_content)}]
+            messages = [{"role": "system", "content": self._build_enhanced_prompt(retrieved_articles)}]
 
             # Add session context if available
             if session:
@@ -126,9 +182,9 @@ class ChatService:
 
             # Call OpenAI API
             if stream:
-                return self._process_streaming_response(messages, start_time, retrieved_articles, boe_content)
+                return self._process_streaming_response(messages, start_time, retrieved_articles)
             else:
-                return self._process_regular_response(messages, start_time, retrieved_articles, boe_content)
+                return self._process_regular_response(messages, start_time, retrieved_articles)
 
         except Exception as e:
             logger.error(f"Error processing question: {str(e)}", exc_info=True)
@@ -137,58 +193,44 @@ class ChatService:
                 code="PROCESSING_ERROR"
             )
 
-    def _build_enhanced_prompt(self, retrieved_articles: List[Dict[str, Any]], boe_content: List[Dict[str, Any]] = None) -> str:
-        """Build enhanced system prompt with retrieved law sections and recent BOE updates."""
+    def _build_enhanced_prompt(self, retrieved_articles: List[Dict[str, Any]]) -> str:
+        """Build enhanced system prompt with retrieved law sections from the knowledge bank."""
         enhanced_prompt = self.system_prompt
 
         if retrieved_articles:
-            enhanced_prompt += "\n\n**RELEVANT LAW SECTIONS FROM OFFICIAL DOCUMENTS:**\n"
+            enhanced_prompt += "\n\n**RELEVANT LAW SECTIONS FROM KNOWLEDGE BANK:**\n"
             for i, article in enumerate(retrieved_articles, 1):
-                # Extract metadata from RAG results
+                # Extract metadata from vector search results
                 metadata = article.get('metadata', {})
                 document_title = metadata.get('document_title', 'Unknown Document')
-                document_type = metadata.get('document_type', '')
-                chunk_index = metadata.get('chunk_index', '')
                 content = article.get('content', '')
                 similarity = article.get('similarity', 0)
 
-                enhanced_prompt += f"\n{i}. **Document**: {document_title}\n"
-                enhanced_prompt += f"   **Relevance**: {similarity:.3f}\n"
-                if chunk_index:
-                    enhanced_prompt += f"   **Section**: Chunk {chunk_index}\n"
-                enhanced_prompt += f"   **Content**: {content}\n"
+                # Get official law name and dates
+                law_info = self._get_official_law_name(document_title)
 
-        # Add BOE content if available
-        if boe_content:
-            enhanced_prompt += "\n\n**RECENT OFFICIAL UPDATES FROM BOE (Spanish Official State Bulletin):**\n"
-            for i, item in enumerate(boe_content, 1):
-                title = item.get('title', 'Unknown Title')
-                department = item.get('department', 'Unknown Department')
-                date = item.get('date', 'Unknown Date')
-                content = item.get('content', '')
+                enhanced_prompt += f"\n{i}. **Ley**: {law_info['name']}\n"
+                enhanced_prompt += f"   **Vigente desde**: {law_info['effective_date']}\n"
+                enhanced_prompt += f"   **Promulgada**: {law_info['enacted_date']}\n"
+                enhanced_prompt += f"   **Relevancia**: {similarity:.3f}\n"
+                enhanced_prompt += f"   **Contenido**: {content}\n"
 
-                enhanced_prompt += f"\n{i}. **BOE Update**: {title}\n"
-                enhanced_prompt += f"   **Department**: {department}\n"
-                enhanced_prompt += f"   **Publication Date**: {date}\n"
-                enhanced_prompt += f"   **Content Summary**: {content[:500]}...\n"
-
-        if retrieved_articles or boe_content:
+        if retrieved_articles:
             enhanced_prompt += "\n**CITATION REQUIREMENTS:**"
-            enhanced_prompt += "\n- MUST cite the exact document title when referencing these sections"
-            enhanced_prompt += "\n- Use format: 'According to **[Document Title]**...' for PDF documents"
-            enhanced_prompt += "\n- Use format: 'According to recent BOE update **[BOE Title]**...' for BOE content"
+            enhanced_prompt += "\n- MUST cite using the official law names provided above"
+            enhanced_prompt += "\n- Use format: 'Según la **[Nombre Oficial de la Ley]** (vigente desde [fecha efectiva])...'"
+            enhanced_prompt += "\n- Example: 'Según la **Ley 37/1992, del Impuesto sobre el Valor Añadido** (vigente desde 1 de enero de 1993)...'"
             enhanced_prompt += "\n- Include specific article numbers or sections if mentioned in the content"
-            enhanced_prompt += "\n- These are your PRIMARY sources - cite them explicitly in your response"
-            enhanced_prompt += "\n- BOE updates represent the MOST RECENT legal changes and should be prioritized"
+            enhanced_prompt += "\n- These are your PRIMARY sources from the knowledge bank - cite them explicitly"
+            enhanced_prompt += "\n- **NEVER mention internal document names, filenames, or database structure**"
+            enhanced_prompt += "\n- ALWAYS use the official law names and effective dates provided above"
 
         return enhanced_prompt
 
-    def _process_regular_response(self, messages: List[Dict], start_time: float, retrieved_articles: List[Dict] = None, boe_content: List[Dict] = None) -> Dict[str, Any]:
+    def _process_regular_response(self, messages: List[Dict], start_time: float, retrieved_articles: List[Dict] = None) -> Dict[str, Any]:
         """Process a regular (non-streaming) response."""
         if retrieved_articles is None:
             retrieved_articles = []
-        if boe_content is None:
-            boe_content = []
 
         response = self.client.chat.completions.create(
             model=self.model,
@@ -200,8 +242,8 @@ class ChatService:
         duration_ms = int((time.time() - start_time) * 1000)
         answer = response.choices[0].message.content
 
-        # Extract citations from the response (enhanced with RAG data and BOE content)
-        citations = self._extract_citations(answer, retrieved_articles, boe_content)
+        # Extract citations from the response (enhanced with RAG data)
+        citations = self._extract_citations(answer, retrieved_articles)
 
         return {
             "answer": answer,
@@ -216,7 +258,7 @@ class ChatService:
             }
         }
 
-    def _process_streaming_response(self, messages: List[Dict], start_time: float, retrieved_articles: List[Dict] = None, boe_content: List[Dict] = None) -> Generator[str, None, None]:
+    def _process_streaming_response(self, messages: List[Dict], start_time: float, retrieved_articles: List[Dict] = None) -> Generator[str, None, None]:
         """Process a streaming response."""
         stream = self.client.chat.completions.create(
             model=self.model,
@@ -250,34 +292,30 @@ class ChatService:
         if buffer.strip():
             yield buffer
 
-    def _extract_citations(self, text: str, retrieved_articles: List[Dict] = None, boe_content: List[Dict] = None) -> List[Dict[str, Any]]:
-        """Extract legal citations from the response text, enhanced with RAG data and BOE content."""
+    def _extract_citations(self, text: str, retrieved_articles: List[Dict] = None) -> List[Dict[str, Any]]:
+        """Extract legal citations from the response text, enhanced with knowledge bank data."""
         citations = []
 
         if retrieved_articles is None:
             retrieved_articles = []
-        if boe_content is None:
-            boe_content = []
 
-        # Add citations from retrieved articles (high confidence)
+        # Add citations from retrieved articles from knowledge bank
         for article in retrieved_articles:
             metadata = article.get('metadata', {})
+            document_title = metadata.get('document_title', 'Unknown Document')
+
+            # Get official law name and dates
+            law_info = self._get_official_law_name(document_title)
+
             citations.append({
-                "article_num": f"Chunk {metadata.get('chunk_index', 'N/A')}",
-                "law": metadata.get('document_title', 'Unknown Document'),
+                "article_num": f"Sección {metadata.get('chunk_index', 'N/A')}",
+                "law": law_info['name'],
                 "excerpt": article.get('content', '')[:200] + "...",
                 "relevance_score": article.get('similarity', 0.9),
-                "source": "RAG_RETRIEVAL"
-            })
-
-        # Add citations from BOE content (recent updates)
-        for item in boe_content:
-            citations.append({
-                "article_num": item.get('document_id', 'N/A'),
-                "law": f"BOE: {item.get('title', 'Unknown BOE Update')}",
-                "excerpt": item.get('content', '')[:200] + "...",
-                "relevance_score": 0.95,  # High relevance for recent official updates
-                "source": "BOE_OFFICIAL"
+                "source": "KNOWLEDGE_BANK",
+                "effective_date": law_info['effective_date'],
+                "enacted_date": law_info['enacted_date'],
+                "document_type": metadata.get('document_type', '')
             })
 
         # Look for additional patterns in the response text
@@ -360,72 +398,3 @@ class ChatService:
         
         return context
 
-    def _get_boe_content(self, question: str, max_items: int = 2) -> List[Dict[str, Any]]:
-        """
-        Get relevant BOE content for the question.
-
-        Args:
-            question: User's question
-            max_items: Maximum number of BOE items to retrieve
-
-        Returns:
-            List of relevant BOE content items
-        """
-        if not self.boe_service:
-            return []
-
-        try:
-            # Get recent tax-related updates (last 7 days)
-            recent_items = self.boe_service.get_recent_tax_updates(days_back=7)
-
-            if not recent_items:
-                return []
-
-            # Filter items based on question keywords
-            question_lower = question.lower()
-            tax_keywords = [
-                'iva', 'irpf', 'impuesto', 'tributario', 'fiscal', 'hacienda',
-                'autónomo', 'facturación', 'sociedades', 'cultural', 'artístico',
-                'declaración', 'deducción', 'exención', 'tipo', 'base'
-            ]
-
-            # Score items based on relevance to question
-            scored_items = []
-            for item in recent_items[:10]:  # Limit to first 10 for performance
-                title = item.get('title', '').lower()
-                department = item.get('department', '').lower()
-
-                score = 0
-                # Check if question keywords appear in title or department
-                for keyword in tax_keywords:
-                    if keyword in question_lower:
-                        if keyword in title:
-                            score += 3
-                        if keyword in department:
-                            score += 1
-
-                # Boost score for recent items
-                if item.get('date') == datetime.now().strftime("%Y%m%d"):
-                    score += 2
-
-                if score > 0:
-                    scored_items.append((score, item))
-
-            # Sort by score and take top items
-            scored_items.sort(key=lambda x: x[0], reverse=True)
-            top_items = [item for _, item in scored_items[:max_items]]
-
-            # Format for RAG integration
-            if top_items:
-                formatted_items = self.boe_service.format_for_rag(
-                    top_items,
-                    include_content=True
-                )
-                logger.info(f"Retrieved {len(formatted_items)} relevant BOE items")
-                return formatted_items
-
-            return []
-
-        except Exception as e:
-            logger.warning(f"Failed to retrieve BOE content: {str(e)}")
-            return []

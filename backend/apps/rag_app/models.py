@@ -12,6 +12,23 @@ class LegalDocument(models.Model):
     filename = models.CharField(max_length=255)
     file_path = models.CharField(max_length=1000)
     document_type = models.CharField(max_length=100, help_text="Type of legal document (e.g., 'VAT Law', 'IRPF Law')")
+
+    # Enhanced metadata for BOE documents
+    document_name = models.CharField(max_length=500, null=True, blank=True, help_text="Official document name")
+    publication_date = models.DateField(null=True, blank=True, help_text="Official publication date")
+    boe_number = models.CharField(max_length=50, null=True, blank=True, help_text="BOE number (e.g., BOE-A-2023-12345)")
+    boe_section = models.CharField(max_length=100, null=True, blank=True, help_text="BOE section (e.g., 'I. Disposiciones generales')")
+    issuing_authority = models.CharField(max_length=300, null=True, blank=True, help_text="Authority that issued the document")
+    legal_status = models.CharField(max_length=50, default='active', choices=[
+        ('active', 'Active'),
+        ('modified', 'Modified'),
+        ('repealed', 'Repealed'),
+        ('superseded', 'Superseded'),
+        ('unknown', 'Unknown')
+    ], help_text="Current legal status of the document")
+    effective_date = models.DateField(null=True, blank=True, help_text="Date when the law/regulation became effective")
+
+    # Document processing metadata
     total_pages = models.IntegerField(null=True, blank=True)
     total_chunks = models.IntegerField(default=0)
     processed_at = models.DateTimeField(null=True, blank=True)
@@ -20,10 +37,36 @@ class LegalDocument(models.Model):
 
     class Meta:
         db_table = 'legal_documents'
-        ordering = ['title']
+        ordering = ['-publication_date', 'title']
+        indexes = [
+            models.Index(fields=['document_type', 'publication_date']),
+            models.Index(fields=['boe_number']),
+            models.Index(fields=['legal_status', 'publication_date']),
+            models.Index(fields=['publication_date']),
+        ]
 
     def __str__(self):
+        if self.publication_date:
+            return f"{self.title} ({self.publication_date})"
         return f"{self.title} ({self.filename})"
+
+    @property
+    def is_recent(self):
+        """Check if document is from the last 3 years"""
+        if not self.publication_date:
+            return False
+        from datetime import date, timedelta
+        three_years_ago = date.today() - timedelta(days=3*365)
+        return self.publication_date >= three_years_ago
+
+    @property
+    def formatted_reference(self):
+        """Get formatted legal reference for citations"""
+        if self.boe_number and self.publication_date:
+            return f"{self.boe_number} ({self.publication_date.strftime('%d/%m/%Y')})"
+        elif self.publication_date:
+            return f"BOE {self.publication_date.strftime('%d/%m/%Y')}"
+        return self.filename
 
 
 class DocumentChunk(models.Model):

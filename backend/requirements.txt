@@ -54,6 +54,8 @@ python-magic==0.4.27
 
 # Additional utilities for document processing
 pydantic==2.10.3
+requests==2.32.3
+tqdm==4.66.5
 
 # Rate Limiting
 django-ratelimit==4.1.0
