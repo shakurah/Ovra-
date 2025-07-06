@@ -42,7 +42,8 @@ class BOEEmbeddingService:
         if documents_dir is None:
             from django.conf import settings
             base_dir = getattr(settings, 'BASE_DIR', os.path.dirname(os.path.dirname(__file__)))
-            self.documents_dir = os.path.join(base_dir, '..', '..', 'documents')
+            # Go up from backend/ to root project directory, then to documents/
+            self.documents_dir = os.path.join(base_dir, '..', 'documents')
         else:
             self.documents_dir = documents_dir
 

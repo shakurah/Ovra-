@@ -38,9 +38,9 @@ class BOEDownloaderService:
             output_dir: Directory to save documents. Defaults to backend/documents/boe_summaries
         """
         if output_dir is None:
-            # Use the documents folder in the backend
+            # Use the documents folder in the project root
             base_dir = getattr(settings, 'BASE_DIR', os.path.dirname(os.path.dirname(__file__)))
-            self.output_dir = os.path.join(base_dir, '..', '..', 'documents', 'boe_summaries')
+            self.output_dir = os.path.join(base_dir, '..', 'documents', 'boe_summaries')
         else:
             self.output_dir = output_dir
             
