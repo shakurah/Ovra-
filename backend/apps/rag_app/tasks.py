@@ -11,37 +11,36 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-def daily_boe_capture_task():
+def daily_boe_automation_task():
     """
-    Daily task to capture BOE updates.
-    This function is called by Django Q scheduler.
+    Daily task for complete BOE automation.
+    Downloads documents, processes unprocessed files, generates embeddings.
     """
     try:
-        logger.info("Starting daily BOE capture task")
+        logger.info("Starting daily BOE automation task")
         
-        # Call the management command for daily capture
-        call_command('daily_boe_capture', '--days-back=1')
+        # Call the consolidated management command
+        call_command('daily_boe_capture')  # Default: yesterday's documents
         
-        logger.info("Daily BOE capture task completed successfully")
-        return {"status": "success", "message": "Daily BOE capture completed"}
+        logger.info("Daily BOE automation completed successfully")
+        return {"status": "success", "message": "Daily BOE automation completed"}
         
     except Exception as e:
-        logger.error(f"Daily BOE capture task failed: {e}")
+        logger.error(f"Daily BOE automation task failed: {e}")
         return {"status": "error", "message": str(e)}
 
 
 def setup_daily_boe_schedule():
     """
-    Set up the daily BOE capture schedule.
-    Call this function to initialize the scheduled task.
+    Set up the daily BOE automation schedule.
     """
     # Check if schedule already exists
     existing_schedule = ScheduleModel.objects.filter(
-        name='daily_boe_capture'
+        name='daily_boe_automation'
     ).first()
     
     if existing_schedule:
-        logger.info("Daily BOE capture schedule already exists")
+        logger.info("Daily BOE automation schedule already exists")
         return existing_schedule
     
     # Create new schedule for end of day (11:30 PM)
@@ -52,32 +51,39 @@ def setup_daily_boe_schedule():
         schedule_time += timedelta(days=1)
     
     scheduled_task = schedule(
-        'apps.rag_app.tasks.daily_boe_capture_task',
-        name='daily_boe_capture',
+        'apps.rag_app.tasks.daily_boe_automation_task',
+        name='daily_boe_automation',
         schedule_type=Schedule.DAILY,
         next_run=schedule_time,
         repeats=-1  # Repeat indefinitely
     )
     
-    logger.info(f"Daily BOE capture scheduled for {schedule_time}")
+    logger.info(f"Daily BOE automation scheduled for {schedule_time}")
     return scheduled_task
 
 
-def manual_boe_capture_task(days_back=1):
+def manual_boe_automation_task(days_back=1, skip_download=False, skip_embedding=False):
     """
-    Manual BOE capture task that can be triggered via API.
+    Manual BOE automation task that can be triggered via API.
     """
     try:
-        logger.info(f"Starting manual BOE capture for {days_back} days back")
+        logger.info(f"Starting manual BOE automation for {days_back} days back")
         
-        # Call the management command
-        call_command('daily_boe_capture', f'--days-back={days_back}')
+        # Build command arguments
+        args = [f'--days-back={days_back}']
+        if skip_download:
+            args.append('--skip-download')
+        if skip_embedding:
+            args.append('--skip-embedding')
         
-        logger.info("Manual BOE capture completed successfully")
-        return {"status": "success", "message": f"Manual BOE capture completed for {days_back} days"}
+        # Call the consolidated management command
+        call_command('daily_boe_capture', *args)
+        
+        logger.info("Manual BOE automation completed successfully")
+        return {"status": "success", "message": f"Manual BOE automation completed for {days_back} days"}
         
     except Exception as e:
-        logger.error(f"Manual BOE capture failed: {e}")
+        logger.error(f"Manual BOE automation failed: {e}")
         return {"status": "error", "message": str(e)}
 
 
@@ -87,13 +93,13 @@ def get_schedule_status():
     """
     try:
         schedule_obj = ScheduleModel.objects.filter(
-            name='daily_boe_capture'
+            name='daily_boe_automation'
         ).first()
         
         if not schedule_obj:
             return {
                 "status": "not_scheduled",
-                "message": "Daily BOE capture is not scheduled"
+                "message": "Daily BOE automation is not scheduled"
             }
         
         # Get the last run time safely
@@ -126,15 +132,15 @@ def get_schedule_status():
 
 def remove_daily_boe_schedule():
     """
-    Remove the daily BOE capture schedule.
+    Remove the daily BOE automation schedule.
     """
     try:
         deleted_count = ScheduleModel.objects.filter(
-            name='daily_boe_capture'
+            name='daily_boe_automation'
         ).delete()[0]
         
         if deleted_count > 0:
-            logger.info("Daily BOE capture schedule removed")
+            logger.info("Daily BOE automation schedule removed")
             return {"status": "success", "message": "Schedule removed"}
         else:
             return {"status": "not_found", "message": "No schedule found to remove"}
