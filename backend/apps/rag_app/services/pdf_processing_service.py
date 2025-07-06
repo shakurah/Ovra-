@@ -11,13 +11,13 @@ logger = logging.getLogger(__name__)
 
 # Import PDF processing libraries (lightweight version)
 try:
-    import PyPDF2
+    import pypdf as PyPDF2  # Use pypdf with PyPDF2 alias for compatibility
     from langchain.text_splitter import RecursiveCharacterTextSplitter
     from langchain_core.documents import Document
     PDF_PROCESSING_AVAILABLE = True
 except ImportError:
     PDF_PROCESSING_AVAILABLE = False
-    logger.warning("PDF processing libraries not available. Install langchain and PyPDF2.")
+    logger.warning("PDF processing libraries not available. Install langchain and pypdf.")
     # Define a minimal Document class for fallback
     class Document:
         def __init__(self, page_content: str, metadata: dict = None):
