@@ -5,18 +5,18 @@ Wants=network.target
 
 [Service]
 Type=simple
-User=ovra_ai
-Group=ovra_ai
-WorkingDirectory=/home/ovra_ai/backend
-Environment=PATH=/home/ovra_ai/backend/venv/bin:/usr/local/bin:/usr/bin:/bin
-Environment=PYTHONPATH=/home/ovra_ai/backend
+User=ali
+Group=ali
+WorkingDirectory=/home/ali/development/ovra_ai/backend
+Environment=PATH=/home/ali/development/ovra_ai/backend/venv/bin:/usr/local/bin:/usr/bin:/bin
+Environment=PYTHONPATH=/home/ali/development/ovra_ai/backend
 Environment=DJANGO_SETTINGS_MODULE=ovra_backend.settings
-ExecStartPre=/home/ovra_ai/backend/venv/bin/python manage.py migrate --check
-ExecStart=/home/ovra_ai/backend/venv/bin/daphne -b 0.0.0.0 -p 8000 ovra_backend.asgi:application
+ExecStartPre=/home/ali/development/ovra_ai/backend/venv/bin/python manage.py migrate --check
+ExecStart=/home/ali/development/ovra_ai/backend/venv/bin/daphne -b 0.0.0.0 -p 8000 ovra_backend.asgi:application
 Restart=always
 RestartSec=3
-StandardOutput=append:/home/ovra_ai/logs/backend.log
-StandardError=append:/home/ovra_ai/logs/backend.log
+StandardOutput=append:/home/ali/development/ovra_ai/logs/backend.log
+StandardError=append:/home/ali/development/ovra_ai/logs/backend.log
 
 [Install]
 WantedBy=multi-user.target
