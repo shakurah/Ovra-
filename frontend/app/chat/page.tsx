@@ -14,6 +14,7 @@ import Link from "next/link"
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { generateUUID } from "@/utils/uuid"
+import { useSearchParams, useRouter } from "next/navigation"
 
 interface Message {
   id: string
@@ -24,6 +25,8 @@ interface Message {
 
 function ChatPageContent() {
   const { t } = useLanguage()
+  const searchParams = useSearchParams()
+  const router = useRouter()
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const [credits] = useState(47) // Mock credits
   const [messages, setMessages] = useState<Message[]>([])
@@ -31,6 +34,7 @@ function ChatPageContent() {
   const [isLoading, setIsLoading] = useState(false)
   const [conversationId, setConversationId] = useState<string | undefined>()
   const [isInitialized, setIsInitialized] = useState(false)
+  const [sessionLoading, setSessionLoading] = useState(false)
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
@@ -38,28 +42,58 @@ function ChatPageContent() {
 
   // Initialize chat session on component mount
   useEffect(() => {
-    const initializeChat = () => {
+    const initializeChat = async () => {
       try {
-        // Get or create conversation ID
-        let storedConversationId = localStorage.getItem('ovra_chat_conversation_id')
-
-        if (!storedConversationId) {
-          storedConversationId = generateUUID()
-          localStorage.setItem('ovra_chat_conversation_id', storedConversationId)
-        }
-
-        setConversationId(storedConversationId)
-
-        // Load chat history if exists
-        const storedMessages = localStorage.getItem(`ovra_chat_messages_${storedConversationId}`)
-        if (storedMessages) {
+        setSessionLoading(true)
+        
+        // Check if session parameter is provided in URL
+        const sessionParam = searchParams.get('session')
+        
+        if (sessionParam) {
+          // Load existing session from backend
           try {
-            const parsedMessages = JSON.parse(storedMessages)
-            if (Array.isArray(parsedMessages)) {
-              setMessages(parsedMessages)
+            const sessionData = await chatService.getConversation(sessionParam)
+            
+            // Validate response structure
+            if (sessionData && sessionData.messages && Array.isArray(sessionData.messages)) {
+              setConversationId(sessionParam)
+              setMessages(sessionData.messages)
+              localStorage.setItem('ovra_chat_conversation_id', sessionParam)
+              localStorage.setItem(`ovra_chat_messages_${sessionParam}`, JSON.stringify(sessionData.messages))
+            } else {
+              console.warn('Invalid session data structure:', sessionData)
+              throw new Error('Invalid session data structure')
             }
           } catch (error) {
-            console.error('Error parsing stored messages:', error)
+            console.error('Error loading session:', error)
+            toastService.error('Failed to load chat session. Starting new conversation.')
+            // Fall back to creating new session
+            const newConversationId = generateUUID()
+            setConversationId(newConversationId)
+            localStorage.setItem('ovra_chat_conversation_id', newConversationId)
+          }
+        } else {
+          // Get or create conversation ID from localStorage
+          let storedConversationId = localStorage.getItem('ovra_chat_conversation_id')
+
+          if (!storedConversationId) {
+            storedConversationId = generateUUID()
+            localStorage.setItem('ovra_chat_conversation_id', storedConversationId)
+          }
+
+          setConversationId(storedConversationId)
+
+          // Load chat history if exists
+          const storedMessages = localStorage.getItem(`ovra_chat_messages_${storedConversationId}`)
+          if (storedMessages) {
+            try {
+              const parsedMessages = JSON.parse(storedMessages)
+              if (Array.isArray(parsedMessages)) {
+                setMessages(parsedMessages)
+              }
+            } catch (error) {
+              console.error('Error parsing stored messages:', error)
+            }
           }
         }
 
@@ -71,11 +105,13 @@ function ChatPageContent() {
         setConversationId(newConversationId)
         localStorage.setItem('ovra_chat_conversation_id', newConversationId)
         setIsInitialized(true)
+      } finally {
+        setSessionLoading(false)
       }
     }
 
     initializeChat()
-  }, [])
+  }, [searchParams])
 
   // Save messages to localStorage whenever messages change
   useEffect(() => {
@@ -105,18 +141,24 @@ function ChatPageContent() {
   }
 
   const clearChatHistory = () => {
+    // Clear messages from state
+    setMessages([])
+
+    // Remove session parameter from URL
+    router.replace('/chat')
+
+    // Remove from localStorage if conversationId exists
     if (conversationId) {
-      // Clear messages from state
-      setMessages([])
-
-      // Remove from localStorage
       localStorage.removeItem(`ovra_chat_messages_${conversationId}`)
-
-      // Generate new conversation ID
-      const newConversationId = generateUUID()
-      setConversationId(newConversationId)
-      localStorage.setItem('ovra_chat_conversation_id', newConversationId)
     }
+
+    // Generate new conversation ID
+    const newConversationId = generateUUID()
+    setConversationId(newConversationId)
+    localStorage.setItem('ovra_chat_conversation_id', newConversationId)
+    
+    // Clear any loaded session state
+    setIsInitialized(true)
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -186,6 +228,22 @@ function ChatPageContent() {
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setInput(e.target.value)
+  }
+
+  if (sessionLoading) {
+    return (
+      <ProtectedLayout
+        title={t("chat.title")}
+        credits={47}
+      >
+        <div className="flex items-center justify-center h-full">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+            <p className="text-muted-foreground">Loading chat session...</p>
+          </div>
+        </div>
+      </ProtectedLayout>
+    )
   }
 
   return (
@@ -264,7 +322,7 @@ function ChatPageContent() {
                       }`}
                     >
                       <CardContent className="p-4">
-                        <div className="prose prose-sm max-w-none dark:prose-invert">
+                        <div className={`prose prose-sm max-w-none ${message.role === 'user' ? 'user-message-text prose-invert' : 'dark:prose-invert'}`}>
                           {message.role === 'assistant' ? (
                             <ReactMarkdown
                               remarkPlugins={[remarkGfm]}

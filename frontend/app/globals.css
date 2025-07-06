@@ -361,3 +361,18 @@ button:focus-visible {
   background-size: 200px 100%;
   animation: textShimmer 2s infinite;
 }
+
+/* User chat bubble text styling */
+.user-message-text {
+  color: white !important;
+}
+
+.user-message-text * {
+  color: white !important;
+}
+
+.user-message-text p,
+.user-message-text span,
+.user-message-text div {
+  color: white !important;
+}

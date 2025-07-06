@@ -260,7 +260,108 @@ export class ChatService extends BaseApiService {
     conversation: Conversation
     messages: ChatMessage[]
   }> {
-    return this.get<any>(`/chat/conversations/${conversationId}/`, true)
+    if (!conversationId || conversationId === 'undefined') {
+      throw new Error('Invalid conversation ID')
+    }
+    
+    try {
+      const response = await this.get<any>(`/chat/sessions/${conversationId}/`, true)
+      
+      // Validate response structure
+      if (!response || !response.data) {
+        throw new Error('Invalid response structure')
+      }
+      
+      const { session, messages } = response.data
+      
+      // Validate messages array
+      if (!Array.isArray(messages)) {
+        console.warn('Messages is not an array:', messages)
+        return {
+          conversation: session || { id: conversationId, title: 'Chat Session', created_at: new Date().toISOString(), updated_at: new Date().toISOString(), message_count: 0 },
+          messages: []
+        }
+      }
+      
+      // Convert backend ChatLog format to frontend ChatMessage format
+      const convertedMessages: ChatMessage[] = messages.flatMap((log: any) => {
+        // Validate log structure
+        if (!log || !log.id || !log.question || !log.answer) {
+          console.warn('Invalid log structure:', log)
+          return []
+        }
+        
+        return [
+          // User message
+          {
+            id: `${log.id}-user`,
+            role: 'user' as const,
+            content: log.question,
+            timestamp: log.created_at || new Date().toISOString()
+          },
+          // Assistant message
+          {
+            id: log.id,
+            role: 'assistant' as const,
+            content: log.answer,
+            timestamp: log.created_at || new Date().toISOString(),
+            metadata: {
+              legal_references: Array.isArray(log.citations) ? log.citations : [],
+              processing_time: log.duration_ms || 0
+            }
+          }
+        ]
+      })
+      
+      return {
+        conversation: session || { id: conversationId, title: 'Chat Session', created_at: new Date().toISOString(), updated_at: new Date().toISOString(), message_count: convertedMessages.length },
+        messages: convertedMessages
+      }
+    } catch (error) {
+      console.error('Error in getConversation:', error)
+      throw new Error(`Failed to load conversation: ${error instanceof Error ? error.message : 'Unknown error'}`)
+    }
+  }
+
+  /**
+   * Get chat history (all messages for user)
+   */
+  async getChatHistory(page: number = 1, pageSize: number = 20): Promise<{
+    success: boolean
+    data: Array<{
+      id: string
+      question: string
+      answer: string
+      citations: string[]
+      created_at: string
+      duration_ms: number
+      model_used: string
+      user_rating?: number
+      session?: string // UUID string, not object
+    }>
+    total: number
+    page: number
+    page_size: number
+  }> {
+    try {
+      const response = await this.get<any>(`/chat/history/?page=${page}&page_size=${pageSize}`, true)
+      return {
+        success: true,
+        data: response.data || response.results || [],
+        total: response.total || response.count || 0,
+        page: response.page || page,
+        page_size: response.page_size || pageSize
+      }
+    } catch (error) {
+      console.error('Error fetching chat history:', error)
+      return {
+        success: false,
+        data: [],
+        total: 0,
+        page: 1,
+        page_size: pageSize
+      }
+    }
   }
 
   /**
@@ -271,7 +372,7 @@ export class ChatService extends BaseApiService {
     limit: number = 20
   ): Promise<ConversationListResponse> {
     return this.get<ConversationListResponse>(
-      `/chat/conversations/?page=${page}&limit=${limit}`, 
+      `/chat/sessions/?page=${page}&limit=${limit}`, 
       true
     )
   }
@@ -280,7 +381,7 @@ export class ChatService extends BaseApiService {
    * Delete a conversation
    */
   async deleteConversation(conversationId: string): Promise<{ message: string }> {
-    return this.delete<{ message: string }>(`/chat/conversations/${conversationId}/`, true)
+    return this.delete<{ message: string }>(`/chat/sessions/${conversationId}/`, true)
   }
 
   /**
@@ -291,7 +392,7 @@ export class ChatService extends BaseApiService {
     title: string
   ): Promise<Conversation> {
     return this.patch<Conversation>(
-      `/chat/conversations/${conversationId}/`, 
+      `/chat/sessions/${conversationId}/`, 
       { title }, 
       true
     )
@@ -411,7 +512,7 @@ export class ChatService extends BaseApiService {
     format: 'pdf' | 'txt' = 'pdf'
   ): Promise<{ download_url: string; expires_at: string }> {
     return this.post<{ download_url: string; expires_at: string }>(
-      `/chat/conversations/${conversationId}/export/`, 
+      `/chat/sessions/${conversationId}/export/`, 
       { format }, 
       true
     )

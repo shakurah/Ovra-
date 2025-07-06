@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { useLanguage } from "@/contexts/language-context"
 import { useAuth } from "@/contexts/auth-context"
-import { Scale, Menu, CreditCard, LogOut, MessageSquare, History, Settings, UserCircle, HelpCircle, BarChart3, Receipt, Activity } from "lucide-react"
+import { Scale, Menu, LogOut, MessageSquare, History } from "lucide-react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 
@@ -28,53 +28,13 @@ export function ProtectedSidebar({ sidebarOpen, setSidebarOpen, credits = 47 }: 
       key: "chat"
     },
     {
-      href: "/credits",
-      icon: CreditCard,
-      label: t("chat.sidebar.credits"),
-      key: "credits"
-    },
-    {
       href: "/history",
       icon: History,
       label: t("chat.sidebar.history"),
       key: "history"
-    },
-    {
-      href: "/account",
-      icon: UserCircle,
-      label: t("chat.sidebar.account"),
-      key: "account"
-    },
-    {
-      href: "/settings",
-      icon: Settings,
-      label: t("chat.sidebar.settings"),
-      key: "settings"
-    },
-    {
-      href: "/help",
-      icon: HelpCircle,
-      label: t("chat.sidebar.help"),
-      key: "help"
-    },
-    {
-      href: "/analytics",
-      icon: BarChart3,
-      label: t("chat.sidebar.analytics"),
-      key: "analytics"
-    },
-    {
-      href: "/payment",
-      icon: Receipt,
-      label: t("chat.sidebar.payment"),
-      key: "payment"
-    },
-    {
-      href: "/status",
-      icon: Activity,
-      label: t("chat.sidebar.status"),
-      key: "status"
     }
+    // Temporarily hidden: credits, account, settings, help, analytics, payment, status
+    // Will be added back later
   ]
 
   const isActive = (href: string) => pathname === href

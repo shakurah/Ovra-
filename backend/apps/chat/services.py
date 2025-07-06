@@ -77,6 +77,9 @@ class ChatService:
 
         self.system_prompt = """You are OVRA AI, a specialized legal assistant for Spanish tax legislation, focused on professionals in the cultural and artistic sectors.
 
+                                **CONVERSATION CONTINUITY:**
+                                You have access to the full conversation history with this user. When the user asks about previous questions, topics discussed, or refers to earlier parts of the conversation, you should reference and build upon that context. Always maintain conversation continuity and remember what has been discussed.
+
                                 **KNOWLEDGE BASE ACCESS:**
                                 You have access to a comprehensive, up-to-date knowledge bank containing:
                                 - **Complete Spanish Legal Framework**: All current tax laws, regulations, and official documents
@@ -175,10 +178,17 @@ class ChatService:
             # Add session context if available
             if session:
                 context_messages = self.get_session_context(session, limit=5)
+                logger.info(f"Session {session.id}: Adding {len(context_messages)} context messages")
+                for i, msg in enumerate(context_messages):
+                    logger.info(f"Context {i+1}: {msg['role']}: {msg['content'][:100]}...")
                 messages.extend(context_messages)
 
             # Add current question
             messages.append({"role": "user", "content": question})
+            
+            # Log final message count
+            logger.info(f"Total messages being sent to OpenAI: {len(messages)}")
+            logger.info(f"Final message types: {[msg['role'] for msg in messages]}")
 
             # Call OpenAI API
             if stream:
