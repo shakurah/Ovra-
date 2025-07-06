@@ -61,6 +61,8 @@ urlpatterns = [
     # App URLs
     path('api/v1/', include('apps.core.urls')),
     path('api/v1/chat/', include('apps.chat.urls')),
+    path('api/v1/widget/', include('apps.widget.urls')),
+    path('api/v1/rag/', include('apps.rag_app.urls')),
     
     # Prometheus metrics
     path('', include('django_prometheus.urls')),

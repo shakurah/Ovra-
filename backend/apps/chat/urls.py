@@ -1,7 +1,7 @@
 """
 URL configuration for the chat app.
 """
-from django.urls import path
+from django.urls import path, include
 from apps.chat.views import (
     ChatAPIView, ChatStreamAPIView, ChatSessionListView, ChatSessionDetailView,
     ChatHistoryView, UpdateChatRatingView

@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge"
 import { SharedHeader } from "@/components/shared-header"
 import { SharedFooter } from "@/components/shared-footer"
 import { useLanguage } from "@/contexts/language-context"
+import { ChatWidget } from "@/components/chat-widget"
 import {
   CheckCircle,
   MessageSquare,
@@ -350,6 +351,9 @@ export default function LandingPage() {
       </section>
 
       <SharedFooter />
+      
+      {/* Chat Widget */}
+      <ChatWidget />
     </div>
   )
 }
