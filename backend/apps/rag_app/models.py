@@ -1,6 +1,7 @@
 from django.db import models
 from pgvector.django import VectorField
 import uuid
+from django.utils import timezone
 
 
 class LegalDocument(models.Model):
@@ -17,8 +18,12 @@ class LegalDocument(models.Model):
     document_name = models.CharField(max_length=500, null=True, blank=True, help_text="Official document name")
     publication_date = models.DateField(null=True, blank=True, help_text="Official publication date")
     boe_number = models.CharField(max_length=50, null=True, blank=True, help_text="BOE number (e.g., BOE-A-2023-12345)")
+    boe_id = models.CharField(max_length=100, null=True, blank=True, unique=True, help_text="BOE document ID for API items")
     boe_section = models.CharField(max_length=100, null=True, blank=True, help_text="BOE section (e.g., 'I. Disposiciones generales')")
+    department = models.CharField(max_length=200, null=True, blank=True, help_text="Department that issued the document")
+    section = models.CharField(max_length=200, null=True, blank=True, help_text="BOE section name")
     issuing_authority = models.CharField(max_length=300, null=True, blank=True, help_text="Authority that issued the document")
+    metadata = models.JSONField(null=True, blank=True, help_text="Additional metadata for API items")
     legal_status = models.CharField(max_length=50, default='active', choices=[
         ('active', 'Active'),
         ('modified', 'Modified'),
@@ -123,3 +128,58 @@ class EmbeddingSearchLog(models.Model):
 
     def __str__(self):
         return f"Search: {self.query[:50]}... ({self.results_count} results)"
+
+
+class CaptureLog(models.Model):
+    """
+    Model to log daily BOE capture processes for monitoring and debugging.
+    """
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    capture_date = models.DateField(help_text="Date of the BOE capture")
+    status = models.CharField(max_length=20, choices=[
+        ('running', 'Running'),
+        ('completed', 'Completed'),
+        ('failed', 'Failed'),
+        ('cancelled', 'Cancelled')
+    ], default='running')
+    
+    # Capture statistics
+    documents_found = models.IntegerField(default=0, help_text="Number of documents found from API")
+    documents_downloaded = models.IntegerField(default=0, help_text="Number of documents downloaded")
+    documents_processed = models.IntegerField(default=0, help_text="Number of documents processed")
+    embeddings_created = models.IntegerField(default=0, help_text="Number of embeddings created")
+    
+    # Timing information
+    started_at = models.DateTimeField(default=timezone.now)
+    completed_at = models.DateTimeField(null=True, blank=True)
+    
+    # Error handling
+    error_message = models.TextField(null=True, blank=True)
+    retry_count = models.IntegerField(default=0)
+    
+    # Processing metadata
+    api_items_processed = models.IntegerField(default=0, help_text="Number of API items processed")
+    pdf_files_processed = models.IntegerField(default=0, help_text="Number of PDF files processed")
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        db_table = 'capture_logs'
+        ordering = ['-capture_date', '-started_at']
+        indexes = [
+            models.Index(fields=['capture_date']),
+            models.Index(fields=['status', 'capture_date']),
+            models.Index(fields=['started_at']),
+        ]
+        unique_together = ['capture_date', 'started_at']
+    
+    def __str__(self):
+        return f"Capture {self.capture_date} - {self.status}"
+    
+    @property
+    def duration(self):
+        """Calculate the duration of the capture process."""
+        if self.completed_at:
+            return self.completed_at - self.started_at
+        return None

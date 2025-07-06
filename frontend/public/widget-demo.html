@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Demo del Widget de Chat OVRA</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .content {
+            line-height: 1.6;
+            color: #666;
+            margin-bottom: 40px;
+        }
+        
+        .demo-section {
+            background: #f8f9fa;
+            padding: 30px;
+            border-radius: 8px;
+            border-left: 4px solid #007bff;
+        }
+        
+        .demo-section h2 {
+            color: #007bff;
+            margin-top: 0;
+        }
+        
+        .code-block {
+            background: #2d3748;
+            color: #e2e8f0;
+            padding: 20px;
+            border-radius: 6px;
+            font-family: 'Courier New', monospace;
+            margin: 20px 0;
+            overflow-x: auto;
+        }
+        
+        .widget-placeholder {
+            text-align: center;
+            padding: 60px 20px;
+            border: 2px dashed #ddd;
+            border-radius: 8px;
+            color: #999;
+            margin: 30px 0;
+        }
+        
+        .note {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 4px;
+            padding: 15px;
+            margin: 20px 0;
+            color: #856404;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🤖 OVRA AI - Demo del Widget de Chat</h1>
+        
+        <div class="content">
+            <p>
+                Este es un ejemplo de cómo el widget de chat de OVRA AI se integra en cualquier sitio web.
+                El widget permite a los usuarios hacer preguntas sobre impuestos y contabilidad después de 
+                proporcionar su email.
+            </p>
+            
+            <p>
+                <strong>Características del widget:</strong>
+            </p>
+            <ul>
+                <li>✅ Registro simple con email</li>
+                <li>✅ Aceptación de política de privacidad y términos</li>
+                <li>✅ Chat en tiempo real con IA especializada en fiscalidad española</li>
+                <li>✅ Referencias legales en las respuestas</li>
+                <li>✅ Sistema de feedback para mejorar las respuestas</li>
+                <li>✅ Diseño responsive y moderno</li>
+                <li>✅ Fácil integración en cualquier sitio web</li>
+            </ul>
+        </div>
+
+        <div class="demo-section">
+            <h2>🚀 Integración del Widget</h2>
+            <p>Para integrar el widget en tu sitio web WordPress, simplemente añade este código:</p>
+            
+            <div class="code-block">
+&lt;!-- Cargar React y el widget --&gt;
+&lt;script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"&gt;&lt;/script&gt;
+&lt;script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"&gt;&lt;/script&gt;
+
+&lt;!-- Div donde se montará el widget --&gt;
+&lt;div id="ovra-chat-widget"&gt;&lt;/div&gt;
+
+&lt;!-- Script del widget --&gt;
+&lt;script&gt;
+// Aquí iría el código compilado del widget
+// El widget se auto-inicializa al cargar
+&lt;/script&gt;
+            </div>
+            
+            <div class="note">
+                <strong>Nota:</strong> El widget se mostrará como un botón flotante en la esquina inferior derecha. 
+                Los usuarios pueden hacer clic para abrir el chat.
+            </div>
+        </div>
+
+        <div class="widget-placeholder">
+            <h3>Widget de Chat OVRA AI</h3>
+            <p>El widget aparecerá aquí como un botón flotante</p>
+            <p style="font-size: 14px; color: #999;">
+                (En producción, verías un botón azul con un icono de chat en la esquina inferior derecha)
+            </p>
+        </div>
+
+        <div class="demo-section">
+            <h2>📋 Flujo de Usuario</h2>
+            <ol>
+                <li><strong>Click en el widget:</strong> El usuario hace clic en el botón flotante</li>
+                <li><strong>Registro:</strong> Se solicita email y aceptación de términos</li>
+                <li><strong>Bienvenida:</strong> Se muestra un mensaje de bienvenida</li>
+                <li><strong>Chat:</strong> El usuario puede hacer preguntas sobre impuestos</li>
+                <li><strong>Respuestas:</strong> La IA responde con información especializada y referencias legales</li>
+                <li><strong>Feedback:</strong> El usuario puede valorar las respuestas</li>
+            </ol>
+        </div>
+
+        <div class="demo-section">
+            <h2>🔒 Privacidad y Datos</h2>
+            <p>
+                El widget cumple con las normativas de protección de datos:
+            </p>
+            <ul>
+                <li>Solo se requiere email para el registro</li>
+                <li>Aceptación explícita de políticas de privacidad</li>
+                <li>Todas las conversaciones se almacenan de forma segura</li>
+                <li>Los datos se utilizan para mejorar el servicio</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Aquí iría el widget real -->
+    <script>
+        // Simulación del widget para demo
+        function createDemoWidget() {
+            const widget = document.createElement('div');
+            widget.style.cssText = `
+                position: fixed;
+                bottom: 20px;
+                right: 20px;
+                width: 60px;
+                height: 60px;
+                background: #007bff;
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                color: white;
+                font-size: 24px;
+                cursor: pointer;
+                box-shadow: 0 4px 12px rgba(0,123,255,0.3);
+                z-index: 1000;
+                transition: all 0.3s ease;
+            `;
+            widget.innerHTML = '💬';
+            widget.title = 'Chat con OVRA AI';
+            
+            widget.addEventListener('click', function() {
+                alert('¡Aquí se abriría el widget de chat real!\\n\\nEl usuario vería:\\n1. Formulario de email\\n2. Términos y privacidad\\n3. Chat interface');
+            });
+            
+            widget.addEventListener('mouseenter', function() {
+                this.style.transform = 'scale(1.1)';
+            });
+            
+            widget.addEventListener('mouseleave', function() {
+                this.style.transform = 'scale(1)';
+            });
+            
+            document.body.appendChild(widget);
+        }
+        
+        // Crear el widget demo al cargar la página
+        document.addEventListener('DOMContentLoaded', createDemoWidget);
+    </script>
+</body>
+</html>
