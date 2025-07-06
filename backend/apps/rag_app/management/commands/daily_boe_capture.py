@@ -171,7 +171,7 @@ class Command(BaseCommand):
         self.stdout.write(f'   📁 Output directory: {self.downloader.output_dir}')
 
     def _process_single_date(self, date: str, options: Dict[str, Any]) -> Dict[str, int]:
-        """Process BOE updates for a single date."""
+        """Process BOE updates for a single date - complete workflow."""
         stats = {
             'documents_found': 0,
             'documents_downloaded': 0,
@@ -180,40 +180,56 @@ class Command(BaseCommand):
             'errors': 0
         }
         
-        # Step 1: Fetch BOE data from API
-        tax_items = self.boe_api.search_tax_related_content(date)
-        stats['documents_found'] = len(tax_items)
-        
-        if not tax_items:
-            self.stdout.write(f'   ℹ️  No tax-related BOE items found for {date}')
-            return stats
-        
-        # Step 2: Download PDFs (if not skipped)
+        # Step 1: Download BOE daily summaries (PDFs)
         if not options['skip_download']:
             try:
-                # Use existing downloader for PDF summaries
                 date_obj = datetime.strptime(date, '%Y%m%d')
+                self.stdout.write(f'   📥 Downloading BOE summaries for {date}...')
+                
+                # Download daily summaries using the BOE downloader
                 download_stats = self.downloader.download_date_range(date_obj, date_obj)
                 stats['documents_downloaded'] = download_stats.get('downloaded', 0)
+                
+                self.stdout.write(f'   📥 Downloaded {stats["documents_downloaded"]} documents')
+                
             except Exception as e:
                 logger.error(f'Error downloading PDFs for {date}: {e}')
                 stats['errors'] += 1
         
-        # Step 3: Store metadata for API items
-        for item in tax_items:
-            try:
-                self._store_boe_item_metadata(item, date)
-            except Exception as e:
-                logger.error(f'Error storing metadata for {item.get("id", "unknown")}: {e}')
-                stats['errors'] += 1
+        # Step 2: Fetch BOE API data for metadata
+        try:
+            tax_items = self.boe_api.search_tax_related_content(date)
+            stats['documents_found'] = len(tax_items)
+            
+            if tax_items:
+                self.stdout.write(f'   📊 Found {len(tax_items)} tax-related BOE items')
+                
+                # Store metadata for API items
+                for item in tax_items:
+                    try:
+                        self._store_boe_item_metadata(item, date)
+                    except Exception as e:
+                        logger.error(f'Error storing metadata for {item.get("id", "unknown")}: {e}')
+                        stats['errors'] += 1
+            else:
+                self.stdout.write(f'   ℹ️  No tax-related BOE items found for {date}')
+                
+        except Exception as e:
+            logger.error(f'Error fetching BOE API data for {date}: {e}')
+            stats['errors'] += 1
         
-        # Step 4: Process embeddings (if not skipped)
+        # Step 3: Process downloaded PDFs and generate embeddings
         if not options['skip_embedding']:
             try:
+                self.stdout.write(f'   🧠 Processing embeddings for downloaded documents...')
+                
                 # Process any new unprocessed documents
                 embedding_stats = self.embedding_service.process_all_unprocessed_documents()
                 stats['documents_processed'] = embedding_stats.get('processed', 0)
                 stats['embeddings_created'] = embedding_stats.get('total_chunks', 0)
+                
+                self.stdout.write(f'   🧠 Processed {stats["documents_processed"]} documents, created {stats["embeddings_created"]} embeddings')
+                
             except Exception as e:
                 logger.error(f'Error processing embeddings for {date}: {e}')
                 stats['errors'] += 1

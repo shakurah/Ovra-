@@ -56,6 +56,8 @@ python-magic==0.4.27
 pydantic==2.10.3
 requests==2.32.3
 tqdm==4.66.5
+beautifulsoup4==4.12.3
+lxml==5.1.0
 
 # Rate Limiting
 django-ratelimit==4.1.0
