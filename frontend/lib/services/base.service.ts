@@ -22,6 +22,7 @@ export class BaseApiService {
   protected baseUrl: string
 
   constructor(baseUrl: string = API_BASE_URL) {
+    console.log('baseUrl: ', baseUrl);
     this.baseUrl = baseUrl
   }
 

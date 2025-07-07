@@ -23,9 +23,9 @@ interface ChatWidgetProps {
   sourceWebsite?: string
 }
 
-export function ChatWidget({ 
-  apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000', 
-  sourceWebsite = typeof window !== 'undefined' ? window.location.origin : '' 
+export function ChatWidget({
+  apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000',
+  sourceWebsite = typeof window !== 'undefined' ? window.location.origin : ''
 }: ChatWidgetProps) {
   const [isOpen, setIsOpen] = useState(false)
   const [messages, setMessages] = useState<Message[]>([])
@@ -46,7 +46,7 @@ export function ChatWidget({
       setEmail(savedEmail)
       setIsRegistered(true)
     }
-    
+
     // Load session if exists
     const savedSession = localStorage.getItem('ovra_widget_session')
     if (savedSession) {
@@ -55,11 +55,42 @@ export function ChatWidget({
   }, [])
 
   // Auto-scroll to bottom when new messages arrive
-  useEffect(() => {
+ useEffect(() => {
+  const smoothScrollToBottom = () => {
     if (scrollAreaRef.current) {
-      scrollAreaRef.current.scrollTop = scrollAreaRef.current.scrollHeight
+      const viewport = scrollAreaRef.current.querySelector('[data-radix-scroll-area-viewport]');
+      if (viewport) {
+        const startY = viewport.scrollTop;
+        const targetY = viewport.scrollHeight - viewport.clientHeight;
+        const distance = targetY - startY;
+        const duration = 300; // milliseconds
+        
+        if (distance === 0) return;
+        
+        const startTime = performance.now();
+        
+        const easeOutCubic = (t: number) => 1 - Math.pow(1 - t, 3);
+        
+        const animateScroll = (currentTime: number) => {
+          const elapsed = currentTime - startTime;
+          const progress = Math.min(elapsed / duration, 1);
+          const easedProgress = easeOutCubic(progress);
+          
+          viewport.scrollTop = startY + distance * easedProgress;
+          
+          if (progress < 1) {
+            requestAnimationFrame(animateScroll);
+          }
+        };
+        
+        requestAnimationFrame(animateScroll);
+      }
     }
-  }, [messages])
+  };
+  
+  setTimeout(smoothScrollToBottom, 0);
+}, [messages])
+
 
   const handleRegister = async () => {
     if (!email || !privacyAccepted || !termsAccepted) {
@@ -68,7 +99,7 @@ export function ChatWidget({
 
     setIsLoading(true)
     try {
-      const response = await fetch(`${apiUrl}/api/v1/widget/register/`, {
+      const response = await fetch(`${apiUrl}/widget/register/`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -87,7 +118,7 @@ export function ChatWidget({
         setIsRegistered(true)
         setShowEmailForm(false)
         localStorage.setItem('ovra_widget_email', email)
-        
+
         // Add welcome message
         setMessages([{
           id: uuidv4(),
@@ -120,7 +151,7 @@ export function ChatWidget({
     setIsLoading(true)
 
     try {
-      const response = await fetch(`${apiUrl}/api/v1/widget/chat/`, {
+      const response = await fetch(`${apiUrl}/widget/chat/`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -145,7 +176,7 @@ export function ChatWidget({
         }
 
         setMessages(prev => [...prev, assistantMessage])
-        
+
         // Save session ID
         if (data.data.session_id && !sessionId) {
           setSessionId(data.data.session_id)
@@ -194,10 +225,10 @@ export function ChatWidget({
       {!isOpen && (
         <Button
           onClick={() => setIsOpen(true)}
-          className="fixed bottom-4 right-4 rounded-full w-14 h-14 shadow-lg hover:shadow-xl transition-shadow"
+          className="fixed bottom-4 right-4 rounded-full w-14 h-14 shadow-lg bg-black dark:bg-white hover:bg-black hover:dark:bg-white hover:shadow-xl transition-shadow"
           size="icon"
         >
-          <MessageCircle className="h-6 w-6" />
+          <MessageCircle className="!h-6 !w-6 text-white dark:text-black" />
         </Button>
       )}
 
@@ -297,21 +328,19 @@ export function ChatWidget({
           ) : (
             <>
               {/* Messages */}
-              <ScrollArea className="flex-1 p-4" ref={scrollAreaRef}>
+              <ScrollArea className="flex-1 p-4 " ref={scrollAreaRef}>
                 <div className="space-y-4">
                   {messages.map((message) => (
                     <div
                       key={message.id}
-                      className={`flex ${
-                        message.role === 'user' ? 'justify-end' : 'justify-start'
-                      }`}
+                      className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'
+                        }`}
                     >
                       <div
-                        className={`max-w-[80%] rounded-lg p-3 ${
-                          message.role === 'user'
+                        className={`max-w-[80%] rounded-lg p-3 ${message.role === 'user'
                             ? 'bg-primary text-primary-foreground'
                             : 'bg-muted'
-                        }`}
+                          }`}
                       >
                         {message.role === 'assistant' ? (
                           <div className="prose prose-sm dark:prose-invert">
@@ -322,7 +351,7 @@ export function ChatWidget({
                         ) : (
                           <p className="text-sm">{message.content}</p>
                         )}
-                        
+
                         {message.citations && message.citations.length > 0 && (
                           <div className="mt-2 pt-2 border-t">
                             <p className="text-xs font-semibold mb-1">Referencias:</p>
@@ -336,7 +365,7 @@ export function ChatWidget({
                       </div>
                     </div>
                   ))}
-                  
+
                   {isLoading && (
                     <div className="flex justify-start">
                       <div className="bg-muted rounded-lg p-3">

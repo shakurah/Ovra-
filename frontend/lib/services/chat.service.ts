@@ -66,6 +66,9 @@ export interface ConversationListResponse {
 }
 
 export class ChatService extends BaseApiService {
+  constructor() {
+    super(process.env.NEXT_PUBLIC_API_URL || 'https://0b44-182-180-150-188.ngrok-free.app/api/v1')
+  }
   /**
    * Send a message to the AI assistant (non-streaming)
    */
@@ -134,7 +137,7 @@ export class ChatService extends BaseApiService {
   async sendStreamingMessage(
     request: ChatRequest,
     onChunk: (chunk: string) => void,
-    onComplete: (conversationId: string, citations?: any[]) => void,
+    onComplete: (conversationId: string) => void,
     onError: (error: string) => void
   ): Promise<void> {
     const payload = {
@@ -189,7 +192,7 @@ export class ChatService extends BaseApiService {
   private async processStreamingResponse(
     response: Response,
     onChunk: (chunk: string) => void,
-    onComplete: (conversationId: string, citations?: any[]) => void,
+    onComplete: (conversationId: string) => void,
     onError: (error: string) => void,
     originalConversationId?: string
   ): Promise<void> {
@@ -219,7 +222,7 @@ export class ChatService extends BaseApiService {
             } else if (data.type === 'content') {
               onChunk(data.content)
             } else if (data.type === 'done') {
-              onComplete(conversationId || '', data.citations)
+              onComplete(conversationId || '')
               return
             } else if (data.type === 'error') {
               onError(data.message)

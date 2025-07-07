@@ -5,7 +5,7 @@
 
 // Base service and types
 export { BaseApiService, API_BASE_URL } from './base.service'
-export type { ApiError, ApiResponse } from './base.service'
+export type { ApiError } from './base.service'
 
 // Authentication service
 export { authService, AuthService } from './auth.service'
@@ -19,6 +19,7 @@ export type {
 
 // User service
 export { userService, UserService } from './user.service'
+import { userService } from './user.service'
 export type { 
   UserProfileUpdateRequest, 
   UserProfileResponse, 

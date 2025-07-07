@@ -15,8 +15,11 @@ import { useAuth } from "@/contexts/auth-context"
 import { useLanguage } from "@/contexts/language-context"
 import { toastService } from "@/lib/services"
 import { getValidationErrors } from "@/utils/api"
+import { useRouter } from "next/navigation"
+
 
 export default function SignupPage() {
+  const router = useRouter()
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
@@ -62,6 +65,7 @@ export default function SignupPage() {
         preferred_language: 'en'
       })
       toastService.success(t("auth.signup.success"))
+      router.push('/login')
     } catch (err) {
       const validationErrors = getValidationErrors(err)
       if (Object.keys(validationErrors).length > 0) {
@@ -75,15 +79,15 @@ export default function SignupPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 dark:from-slate-900 to-blue-50 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         {/* Logo */}
         <div className="text-center mb-8">
           <Link href="/" className="inline-flex items-center space-x-2">
             <Scale className="h-10 w-10 text-blue-600" />
-            <span className="text-3xl font-bold text-gray-900">Ovra AI</span>
+            <span className="text-3xl font-bold text-gray-900 dark:text-white">Ovra AI</span>
           </Link>
-          <p className="text-gray-600 mt-2">{t("auth.signup.subtitle")}</p>
+          <p className="text-gray-600 dark:text-white mt-2">{t("auth.signup.subtitle")}</p>
         </div>
 
         <Card className="shadow-xl border-0">
