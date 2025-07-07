@@ -215,13 +215,26 @@ class ChatService:
                 document_title = metadata.get('document_title', 'Unknown Document')
                 content = article.get('content', '')
                 similarity = article.get('similarity', 0)
+                publication_date = metadata.get('publication_date')
+                boe_number = metadata.get('boe_number')
+                formatted_reference = metadata.get('formatted_reference')
 
-                # Get official law name and dates
-                law_info = self._get_official_law_name(document_title)
+                # Use the formatted reference from database or fallback to law mapping
+                if formatted_reference:
+                    law_reference = formatted_reference
+                    if publication_date:
+                        effective_date = publication_date
+                    else:
+                        effective_date = "fecha no especificada"
+                else:
+                    law_info = self._get_official_law_name(document_title)
+                    law_reference = law_info['name']
+                    effective_date = law_info['effective_date']
 
-                enhanced_prompt += f"\n{i}. **Ley**: {law_info['name']}\n"
-                enhanced_prompt += f"   **Vigente desde**: {law_info['effective_date']}\n"
-                enhanced_prompt += f"   **Promulgada**: {law_info['enacted_date']}\n"
+                enhanced_prompt += f"\n{i}. **Ley**: {law_reference}\n"
+                enhanced_prompt += f"   **Vigente desde**: {effective_date}\n"
+                if boe_number:
+                    enhanced_prompt += f"   **BOE**: {boe_number}\n"
                 enhanced_prompt += f"   **Relevancia**: {similarity:.3f}\n"
                 enhanced_prompt += f"   **Contenido**: {content}\n"
 
@@ -268,8 +281,11 @@ class ChatService:
             }
         }
 
-    def _process_streaming_response(self, messages: List[Dict], start_time: float, retrieved_articles: List[Dict] = None) -> Generator[str, None, None]:
+    def _process_streaming_response(self, messages: List[Dict], start_time: float, retrieved_articles: List[Dict] = None) -> Dict[str, Any]:
         """Process a streaming response."""
+        if retrieved_articles is None:
+            retrieved_articles = []
+            
         stream = self.client.chat.completions.create(
             model=self.model,
             messages=messages,
@@ -278,29 +294,42 @@ class ChatService:
             stream=True
         )
 
-        buffer = ""
-        min_words = 8
+        def stream_generator():
+            buffer = ""
+            min_words = 8
+            full_response = ""
 
-        for chunk in stream:
-            if chunk.choices[0].delta.content is not None:
-                content = chunk.choices[0].delta.content
-                buffer += content
+            for chunk in stream:
+                if chunk.choices[0].delta.content is not None:
+                    content = chunk.choices[0].delta.content
+                    buffer += content
+                    full_response += content
 
-                # Count words in buffer
-                word_count = len(buffer.split())
+                    # Count words in buffer
+                    word_count = len(buffer.split())
 
-                # Yield when we have enough words or hit natural breaks
-                if (word_count >= min_words or
-                    any(buffer.endswith(punct) for punct in ['. ', '! ', '? ', '\n\n', '.\n', '!\n', '?\n']) or
-                    buffer.endswith('**') or  # End of bold text
-                    buffer.endswith('###') or  # End of header
-                    len(buffer) > 100):  # Prevent very long buffers
-                    yield buffer
-                    buffer = ""
+                    # Yield when we have enough words or hit natural breaks
+                    if (word_count >= min_words or
+                        any(buffer.endswith(punct) for punct in ['. ', '! ', '? ', '\n\n', '.\n', '!\n', '?\n']) or
+                        buffer.endswith('**') or  # End of bold text
+                        buffer.endswith('###') or  # End of header
+                        len(buffer) > 100):  # Prevent very long buffers
+                        yield buffer
+                        buffer = ""
 
-        # Yield any remaining content
-        if buffer.strip():
-            yield buffer
+            # Yield any remaining content
+            if buffer.strip():
+                yield buffer
+
+            # Return the full response for logging
+            return full_response
+
+        return {
+            "stream": stream_generator(),
+            "retrieved_articles": retrieved_articles,
+            "model": self.model,
+            "duration_ms": int((time.time() - start_time) * 1000)
+        }
 
     def _extract_citations(self, text: str, retrieved_articles: List[Dict] = None) -> List[Dict[str, Any]]:
         """Extract legal citations from the response text, enhanced with knowledge bank data."""
@@ -313,18 +342,28 @@ class ChatService:
         for article in retrieved_articles:
             metadata = article.get('metadata', {})
             document_title = metadata.get('document_title', 'Unknown Document')
+            publication_date = metadata.get('publication_date')
+            boe_number = metadata.get('boe_number')
+            formatted_reference = metadata.get('formatted_reference')
 
-            # Get official law name and dates
-            law_info = self._get_official_law_name(document_title)
+            # Use the formatted reference from database or fallback to law mapping
+            if formatted_reference:
+                law_reference = formatted_reference
+                effective_date = publication_date if publication_date else "fecha no especificada"
+            else:
+                law_info = self._get_official_law_name(document_title)
+                law_reference = law_info['name']
+                effective_date = law_info['effective_date']
 
             citations.append({
                 "article_num": f"Sección {metadata.get('chunk_index', 'N/A')}",
-                "law": law_info['name'],
+                "law": law_reference,
                 "excerpt": article.get('content', '')[:200] + "...",
                 "relevance_score": article.get('similarity', 0.9),
                 "source": "KNOWLEDGE_BANK",
-                "effective_date": law_info['effective_date'],
-                "enacted_date": law_info['enacted_date'],
+                "effective_date": effective_date,
+                "boe_number": boe_number,
+                "publication_date": publication_date,
                 "document_type": metadata.get('document_type', '')
             })
 

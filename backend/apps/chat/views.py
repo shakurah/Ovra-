@@ -194,7 +194,7 @@ class ChatStreamAPIView(APIView):
                     yield f"data: {json.dumps({'type': 'session', 'session_id': str(session.id)})}\n\n"
 
                     # Get streaming response
-                    stream_generator = chat_service.process_question(
+                    stream_result = chat_service.process_question(
                         question=validated_data['question'],
                         session=session,
                         law_filter=validated_data.get('law_filter'),
@@ -202,23 +202,42 @@ class ChatStreamAPIView(APIView):
                     )
 
                     full_response = ""
-                    for chunk in stream_generator:
+                    for chunk in stream_result['stream']:
                         full_response += chunk
                         yield f"data: {json.dumps({'type': 'content', 'content': chunk})}\n\n"
 
-                    # Save the complete response to database
-                    ChatLog.objects.create(
-                        session=session,
-                        question=validated_data['question'],
-                        answer=full_response,
-                        citations=[],  # Will be extracted from full response
-                        duration_ms=0,  # Not applicable for streaming
-                        model_used=chat_service.model,
-                        retrieved_articles=[]
-                    )
+                    # Extract citations from the full response
+                    citations = chat_service._extract_citations(full_response, stream_result['retrieved_articles'])
 
-                    # Send completion signal
-                    yield f"data: {json.dumps({'type': 'done'})}\n\n"
+                    # Save the complete response to database
+                    with transaction.atomic():
+                        chat_log = ChatLog.objects.create(
+                            session=session,
+                            question=validated_data['question'],
+                            answer=full_response,
+                            citations=citations,
+                            duration_ms=stream_result['duration_ms'],
+                            model_used=stream_result['model'],
+                            retrieved_articles=stream_result['retrieved_articles']
+                        )
+
+                        # Create cost metrics if usage info is available
+                        if 'usage' in stream_result:
+                            usage = stream_result['usage']
+                            cost_eur = chat_service.calculate_cost(usage)
+                            CostMetric.objects.create(
+                                chat_log=chat_log,
+                                prompt_tokens=usage.get('prompt_tokens', 0),
+                                completion_tokens=usage.get('completion_tokens', 0),
+                                embedding_tokens=usage.get('embedding_tokens', 0),
+                                cost_eur=cost_eur['total'],
+                                prompt_cost_eur=cost_eur['prompt'],
+                                completion_cost_eur=cost_eur['completion'],
+                                embedding_cost_eur=cost_eur['embedding']
+                            )
+
+                    # Send completion signal with citations
+                    yield f"data: {json.dumps({'type': 'done', 'citations': citations})}\n\n"
 
                 except Exception as e:
                     logger.error(f"Streaming error: {str(e)}", exc_info=True)

@@ -88,7 +88,7 @@ class VectorSearchService:
                 distance=CosineDistance('embedding_vector', query_embedding)
             ).filter(
                 distance__lte=distance_threshold
-            ).order_by('distance')[:n_results]
+            ).order_by('distance', '-document__publication_date')[:n_results]
 
             similar_chunks = []
             for chunk in chunks_with_distance:
@@ -104,12 +104,18 @@ class VectorSearchService:
                             "document_title": chunk.document.title,
                             "document_type": chunk.document.document_type,
                             "chunk_index": chunk.chunk_index,
-                            "filename": chunk.document.filename
+                            "filename": chunk.document.filename,
+                            "publication_date": chunk.document.publication_date.isoformat() if chunk.document.publication_date else None,
+                            "boe_number": chunk.document.boe_number,
+                            "formatted_reference": chunk.document.formatted_reference
                         }
                     })
 
-            # Sort by similarity (highest first) and limit results
-            similar_chunks.sort(key=lambda x: x["similarity"], reverse=True)
+            # Sort by similarity (highest first) and then by publication date (latest first)
+            similar_chunks.sort(key=lambda x: (
+                x["similarity"], 
+                x["metadata"]["publication_date"] or "1900-01-01"
+            ), reverse=True)
             similar_chunks = similar_chunks[:n_results]
 
             # Add rank information

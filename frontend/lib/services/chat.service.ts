@@ -134,7 +134,7 @@ export class ChatService extends BaseApiService {
   async sendStreamingMessage(
     request: ChatRequest,
     onChunk: (chunk: string) => void,
-    onComplete: (conversationId: string) => void,
+    onComplete: (conversationId: string, citations?: any[]) => void,
     onError: (error: string) => void
   ): Promise<void> {
     const payload = {
@@ -189,7 +189,7 @@ export class ChatService extends BaseApiService {
   private async processStreamingResponse(
     response: Response,
     onChunk: (chunk: string) => void,
-    onComplete: (conversationId: string) => void,
+    onComplete: (conversationId: string, citations?: any[]) => void,
     onError: (error: string) => void,
     originalConversationId?: string
   ): Promise<void> {
@@ -219,7 +219,7 @@ export class ChatService extends BaseApiService {
             } else if (data.type === 'content') {
               onChunk(data.content)
             } else if (data.type === 'done') {
-              onComplete(conversationId || '')
+              onComplete(conversationId || '', data.citations)
               return
             } else if (data.type === 'error') {
               onError(data.message)
