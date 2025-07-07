@@ -59,10 +59,11 @@ export default function SignupPage() {
     try {
       await register({
         email: formData.email,
+        username: formData.email, // Use email as username for simplicity
         full_name: `${formData.firstName} ${formData.lastName}`.trim(),
         password: formData.password,
         confirm_password: formData.confirmPassword,
-        preferred_language: 'en'
+        agree_to_terms: acceptTerms
       })
       toastService.success(t("auth.signup.success"))
       router.push('/login')

@@ -1,12 +1,14 @@
 from typing import Optional
+from datetime import datetime
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+from sqlalchemy import select, update
 from sqlalchemy.exc import IntegrityError
 from fastapi import HTTPException, status
 
 from app.models.user import User
 from app.schemas.user import UserCreate, UserUpdate
 from app.core.security import get_password_hash, verify_password
+from app.core.logging_config import log_database_operation, log_error, get_logger
 
 
 class UserService:
@@ -135,3 +137,30 @@ class UserService:
     async def is_superuser(user: User) -> bool:
         """Check if user is superuser"""
         return user.is_superuser
+
+    @staticmethod
+    async def update_last_login(db: AsyncSession, user_id: int) -> bool:
+        """Update user's last login timestamp"""
+        logger = get_logger("database")
+        
+        try:
+            # Update last login timestamp
+            await db.execute(
+                update(User)
+                .where(User.id == user_id)
+                .values(last_login=datetime.utcnow())
+            )
+            await db.commit()
+            
+            log_database_operation("UPDATE", "users", 
+                                 user_id=user_id, 
+                                 operation="update_last_login")
+            
+            logger.info(f"Updated last login for user {user_id}")
+            return True
+            
+        except Exception as e:
+            await db.rollback()
+            log_error(e, "Update last login", user_id=user_id)
+            logger.error(f"Failed to update last login for user {user_id}: {e}")
+            return False

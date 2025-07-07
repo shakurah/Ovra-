@@ -141,10 +141,11 @@ export class ChatService extends BaseApiService {
     onError: (error: string) => void
   ): Promise<void> {
     const payload = {
-      question: request.message,
-      session_id: request.conversation_id,
-      law_filter: request.context?.law_filter,
-      stream: true
+      message: request.message,
+      conversation_id: request.conversation_id,
+      context: request.context ? [
+        { role: 'system', content: `User profession: ${request.context.user_profession || 'General'}` }
+      ] : []
     }
 
     try {
@@ -154,33 +155,30 @@ export class ChatService extends BaseApiService {
         body: JSON.stringify(payload)
       })
 
-      // Handle session not found - automatically create new session
-      if (response.status === 404) {
-        // Try again without session_id to create a new session
-        const newPayload = {
-          ...payload,
-          session_id: undefined
-        }
-
-        const retryResponse = await fetch(`${this.baseUrl}/chat/stream/`, {
-          method: 'POST',
-          headers: this.getAuthHeaders(),
-          body: JSON.stringify(newPayload)
-        })
-
-        if (!retryResponse.ok) {
-          throw new Error(`HTTP error! status: ${retryResponse.status}`)
-        }
-
-        // Use the retry response for processing
-        return this.processStreamingResponse(retryResponse, onChunk, onComplete, onError, request.conversation_id)
-      }
-
       if (!response.ok) {
+        if (response.status === 404) {
+          // Try again without conversation_id to create a new session
+          const newPayload = {
+            ...payload,
+            conversation_id: undefined
+          }
+
+          const retryResponse = await fetch(`${this.baseUrl}/chat/stream/`, {
+            method: 'POST',
+            headers: this.getAuthHeaders(),
+            body: JSON.stringify(newPayload)
+          })
+
+          if (!retryResponse.ok) {
+            throw new Error(`HTTP error! status: ${retryResponse.status}`)
+          }
+
+          return this.processStreamingResponse(retryResponse, onChunk, onComplete, onError)
+        }
         throw new Error(`HTTP error! status: ${response.status}`)
       }
 
-      return this.processStreamingResponse(response, onChunk, onComplete, onError, request.conversation_id)
+      return this.processStreamingResponse(response, onChunk, onComplete, onError)
     } catch (error) {
       onError(error instanceof Error ? error.message : 'Unknown error')
     }
@@ -192,47 +190,63 @@ export class ChatService extends BaseApiService {
   private async processStreamingResponse(
     response: Response,
     onChunk: (chunk: string) => void,
-    onComplete: (conversationId: string) => void,
-    onError: (error: string) => void,
-    originalConversationId?: string
+    onComplete: (conversationId: string, citations?: any[]) => void,
+    onError: (error: string) => void
   ): Promise<void> {
-
     const reader = response.body?.getReader()
     if (!reader) {
       throw new Error('No response body')
     }
 
     const decoder = new TextDecoder()
-    let conversationId = originalConversationId
+    let conversationId = ''
+    let buffer = ''
 
-    while (true) {
-      const { done, value } = await reader.read()
-      if (done) break
+    try {
+      while (true) {
+        const { done, value } = await reader.read()
+        if (done) break
 
-      const chunk = decoder.decode(value)
-      const lines = chunk.split('\n')
+        buffer += decoder.decode(value, { stream: true })
+        const lines = buffer.split('\n')
+        
+        // Keep the last incomplete line in the buffer
+        buffer = lines.pop() || ''
 
-      for (const line of lines) {
-        if (line.startsWith('data: ')) {
-          try {
-            const data = JSON.parse(line.slice(6))
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            try {
+              const jsonData = line.slice(6).trim()
+              if (jsonData === '[DONE]') {
+                onComplete(conversationId, [])
+                return
+              }
 
-            if (data.type === 'session') {
-              conversationId = data.session_id
-            } else if (data.type === 'content') {
-              onChunk(data.content)
-            } else if (data.type === 'done') {
-              onComplete(conversationId || '')
-              return
-            } else if (data.type === 'error') {
-              onError(data.message)
-              return
+              const data = JSON.parse(jsonData)
+
+              if (data.content) {
+                onChunk(data.content)
+              }
+              
+              if (data.conversation_id) {
+                conversationId = data.conversation_id
+              }
+
+              if (data.is_complete) {
+                onComplete(conversationId, [])
+                return
+              }
+            } catch (e) {
+              // Ignore malformed JSON chunks
+              console.warn('Failed to parse SSE data:', e)
             }
-          } catch (e) {
-            // Ignore malformed JSON
           }
         }
       }
+    } catch (error) {
+      onError(error instanceof Error ? error.message : 'Streaming error')
+    } finally {
+      reader.releaseLock()
     }
   }
 
@@ -281,43 +295,40 @@ export class ChatService extends BaseApiService {
       if (!Array.isArray(messages)) {
         console.warn('Messages is not an array:', messages)
         return {
-          conversation: session || { id: conversationId, title: 'Chat Session', created_at: new Date().toISOString(), updated_at: new Date().toISOString(), message_count: 0 },
+          conversation: session || { 
+            id: conversationId, 
+            title: 'Chat Session', 
+            created_at: new Date().toISOString(), 
+            updated_at: new Date().toISOString(), 
+            message_count: 0 
+          },
           messages: []
         }
       }
       
-      // Convert backend ChatLog format to frontend ChatMessage format
-      const convertedMessages: ChatMessage[] = messages.flatMap((log: any) => {
-        // Validate log structure
-        if (!log || !log.id || !log.question || !log.answer) {
-          console.warn('Invalid log structure:', log)
-          return []
-        }
-        
-        return [
-          // User message
-          {
-            id: `${log.id}-user`,
-            role: 'user' as const,
-            content: log.question,
-            timestamp: log.created_at || new Date().toISOString()
-          },
-          // Assistant message
-          {
-            id: log.id,
-            role: 'assistant' as const,
-            content: log.answer,
-            timestamp: log.created_at || new Date().toISOString(),
-            metadata: {
-              legal_references: Array.isArray(log.citations) ? log.citations : [],
-              processing_time: log.duration_ms || 0
-            }
-          }
-        ]
-      })
+      // Convert backend ChatMessage format to frontend format
+      const convertedMessages: ChatMessage[] = messages.map((msg: any) => ({
+        id: msg.id,
+        role: msg.role as 'user' | 'assistant',
+        content: msg.content,
+        timestamp: msg.created_at || new Date().toISOString(),
+        metadata: msg.role === 'assistant' ? {
+          legal_references: msg.legal_references || [],
+          processing_time: msg.response_time_ms || 0
+        } : undefined
+      }))
       
       return {
-        conversation: session || { id: conversationId, title: 'Chat Session', created_at: new Date().toISOString(), updated_at: new Date().toISOString(), message_count: convertedMessages.length },
+        conversation: {
+          id: session.id,
+          title: session.title || 'Chat Session',
+          created_at: session.created_at,
+          updated_at: session.updated_at,
+          message_count: session.message_count || convertedMessages.length,
+          last_message_preview: convertedMessages.length > 0 ? 
+            convertedMessages[convertedMessages.length - 1].content.substring(0, 100) + '...' : 
+            undefined
+        },
         messages: convertedMessages
       }
     } catch (error) {
@@ -374,10 +385,35 @@ export class ChatService extends BaseApiService {
     page: number = 1, 
     limit: number = 20
   ): Promise<ConversationListResponse> {
-    return this.get<ConversationListResponse>(
-      `/chat/sessions/?page=${page}&limit=${limit}`, 
-      true
-    )
+    try {
+      const response = await this.get<any>(`/chat/sessions/?page=${page}&limit=${limit}`, true)
+      
+      const sessions = response.data || response.results || []
+      
+      const conversations: Conversation[] = sessions.map((session: any) => ({
+        id: session.id,
+        title: session.title || 'Chat Session',
+        created_at: session.created_at,
+        updated_at: session.updated_at,
+        message_count: session.message_count || 0,
+        last_message_preview: session.last_message_preview
+      }))
+
+      return {
+        results: conversations,
+        count: response.total || response.count || conversations.length,
+        next: response.next || null,
+        previous: response.previous || null
+      }
+    } catch (error) {
+      console.error('Error fetching conversations:', error)
+      return {
+        results: [],
+        count: 0,
+        next: null,
+        previous: null
+      }
+    }
   }
 
   /**

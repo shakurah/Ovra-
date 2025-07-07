@@ -12,10 +12,13 @@ export interface LoginRequest {
 
 export interface RegisterRequest {
   email: string
+  username: string
   full_name: string
   password: string
   confirm_password: string
-  preferred_language?: string
+  company?: string
+  phone?: string
+  agree_to_terms: boolean
 }
 
 export interface User {
@@ -30,12 +33,10 @@ export interface User {
 }
 
 export interface AuthResponse {
-  message: string
+  access_token: string
+  refresh_token: string
+  token_type: string
   user: User
-  tokens: {
-    access: string
-    refresh: string
-  }
 }
 
 export interface TokenRefreshResponse {
@@ -47,11 +48,10 @@ export class AuthService extends BaseApiService {
    * Login user with email and password
    */
   async login(credentials: LoginRequest): Promise<AuthResponse> {
-    const apiResponse = await this.post<ApiResponse<AuthResponse>>('/auth/login/', credentials)
-    const response = apiResponse.data!
+    const response = await this.post<AuthResponse>('/auth/login/', credentials)
 
     // Store tokens and user data
-    this.setTokens(response.tokens.access, response.tokens.refresh)
+    this.setTokens(response.access_token, response.refresh_token)
     this.setUser(response.user)
 
     return response
@@ -61,14 +61,16 @@ export class AuthService extends BaseApiService {
    * Register new user
    */
   async register(userData: RegisterRequest): Promise<AuthResponse> {
-    const apiResponse = await this.post<ApiResponse<AuthResponse>>('/auth/register/', userData)
-    const response = apiResponse.data!
+    // Register endpoint only returns user, not tokens
+    const user = await this.post<User>('/auth/register/', userData)
+    
+    // After registration, automatically login
+    const loginResponse = await this.login({ 
+      email: userData.email, 
+      password: userData.password 
+    })
 
-    // Store tokens and user data
-    this.setTokens(response.tokens.access, response.tokens.refresh)
-    this.setUser(response.user)
-
-    return response
+    return loginResponse
   }
 
   /**

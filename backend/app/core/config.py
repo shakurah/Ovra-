@@ -20,8 +20,8 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7
     
-    # CORS
-    BACKEND_CORS_ORIGINS: List[AnyHttpUrl] = []
+    # CORS - Allow all origins in development mode
+    BACKEND_CORS_ORIGINS: List[str] = ["*"]
     
     @field_validator("BACKEND_CORS_ORIGINS", mode="before")
     def assemble_cors_origins(cls, v: Union[str, List[str]]) -> Union[List[str], str]:
@@ -65,12 +65,4 @@ class Settings(BaseSettings):
 
 
 # Create settings instance
-settings = Settings(
-    BACKEND_CORS_ORIGINS=[
-        "http://localhost:3000",
-        "http://localhost:3001", 
-        "http://localhost:5173",
-        "http://localhost:5174",
-        "https://ovra-ai.com"
-    ]
-)
+settings = Settings()

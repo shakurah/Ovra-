@@ -16,10 +16,14 @@ mkdir -p "$LOGS_DIR"
 
 # Stop any existing manual processes
 echo "🛑 Stopping any existing manual processes..."
+sudo systemctl stop ovra-backend.service 2>/dev/null || true
+sudo systemctl stop ovra-frontend.service 2>/dev/null || true
 pkill -f "manage.py runserver" 2>/dev/null || true
+pkill -f "daphne" 2>/dev/null || true
+pkill -f "uvicorn" 2>/dev/null || true
 pkill -f "next dev" 2>/dev/null || true
 pkill -f "npm run dev" 2>/dev/null || true
-sleep 2
+sleep 3
 
 # Copy service files to systemd directory
 echo "📋 Installing service files..."
@@ -57,9 +61,10 @@ echo "Frontend:"
 sudo systemctl status ovra-frontend.service --no-pager -l
 
 echo ""
-echo "🎉 Ovra AI Services Installed Successfully!"
-echo "📡 Backend:  http://localhost:8000"
-echo "🎨 Frontend: http://localhost:3000"
+echo "🎉 Ovra AI FastAPI Services Installed Successfully!"
+echo "📡 Backend API:  http://localhost:8000"
+echo "📚 API Docs:     http://localhost:8000/docs"
+echo "🎨 Frontend:     http://localhost:3000"
 echo ""
 echo "🔧 Service Management Commands:"
 echo "   Start:   sudo systemctl start ovra-backend ovra-frontend"

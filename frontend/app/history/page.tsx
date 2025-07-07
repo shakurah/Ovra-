@@ -23,16 +23,13 @@ import {
 } from "lucide-react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 
-interface ChatMessage {
+interface ChatSession {
   id: string
-  question: string
-  answer: string
-  citations: string[]
+  title: string
   created_at: string
-  duration_ms: number
-  model_used: string
-  user_rating?: number
-  session?: string // This is a UUID string, not an object
+  updated_at: string
+  message_count: number
+  last_message_preview?: string
 }
 
 function HistoryPageContent() {
@@ -42,7 +39,7 @@ function HistoryPageContent() {
   const [searchQuery, setSearchQuery] = useState("")
   const [selectedFilter, setSelectedFilter] = useState("all")
   const [sortBy, setSortBy] = useState("newest")
-  const [consultations, setConsultations] = useState<ChatMessage[]>([])
+  const [sessions, setSessions] = useState<ChatSession[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -53,15 +50,11 @@ function HistoryPageContent() {
   const fetchChatHistory = async () => {
     try {
       setLoading(true)
-      const response = await chatService.getChatHistory()
-      if (response.success) {
-        setConsultations(response.data)
-      } else {
-        setError("Failed to load chat history")
-      }
+      const response = await chatService.getConversations()
+      setSessions(response.results || [])
     } catch (error) {
-      console.error("Error fetching chat history:", error)
-      setError("Failed to load chat history")
+      console.error("Error fetching chat sessions:", error)
+      setError("Failed to load chat sessions")
     } finally {
       setLoading(false)
     }
@@ -72,15 +65,15 @@ function HistoryPageContent() {
     router.push(`/chat?session=${sessionId}`)
   }
 
-  const getTopicFromQuestion = (question: string): string => {
-    // Simple topic extraction based on keywords
-    const lowercaseQuestion = question.toLowerCase()
-    if (lowercaseQuestion.includes("iva") || lowercaseQuestion.includes("vat")) return "IVA"
-    if (lowercaseQuestion.includes("irpf") || lowercaseQuestion.includes("income")) return "IRPF"
-    if (lowercaseQuestion.includes("autónomo") || lowercaseQuestion.includes("freelancer")) return "Autónomos"
-    if (lowercaseQuestion.includes("factura") || lowercaseQuestion.includes("billing")) return "Facturación"
-    if (lowercaseQuestion.includes("deducción") || lowercaseQuestion.includes("deduction")) return "Deducciones"
-    if (lowercaseQuestion.includes("derecho") || lowercaseQuestion.includes("copyright")) return "Derechos de Autor"
+  const getTopicFromTitle = (title: string): string => {
+    // Simple topic extraction based on keywords in title
+    const lowercaseTitle = title.toLowerCase()
+    if (lowercaseTitle.includes("iva") || lowercaseTitle.includes("vat")) return "IVA"
+    if (lowercaseTitle.includes("irpf") || lowercaseTitle.includes("income")) return "IRPF"
+    if (lowercaseTitle.includes("autónomo") || lowercaseTitle.includes("freelancer")) return "Autónomos"
+    if (lowercaseTitle.includes("factura") || lowercaseTitle.includes("billing")) return "Facturación"
+    if (lowercaseTitle.includes("deducción") || lowercaseTitle.includes("deduction")) return "Deducciones"
+    if (lowercaseTitle.includes("derecho") || lowercaseTitle.includes("copyright")) return "Derechos de Autor"
     return "General"
   }
 
@@ -92,21 +85,21 @@ function HistoryPageContent() {
     }
   }
 
-  const filteredConsultations = consultations.filter((consultation) => {
-    const topic = getTopicFromQuestion(consultation.question)
+  const filteredSessions = sessions.filter((session) => {
+    const topic = getTopicFromTitle(session.title)
     const matchesSearch =
-      consultation.question.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      consultation.answer.toLowerCase().includes(searchQuery.toLowerCase())
+      session.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (session.last_message_preview && session.last_message_preview.toLowerCase().includes(searchQuery.toLowerCase()))
     const matchesFilter =
       selectedFilter === "all" || topic.toLowerCase().includes(selectedFilter.toLowerCase())
     return matchesSearch && matchesFilter
   })
 
-  const sortedConsultations = [...filteredConsultations].sort((a, b) => {
+  const sortedSessions = [...filteredSessions].sort((a, b) => {
     if (sortBy === "newest") {
-      return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      return new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
     } else if (sortBy === "oldest") {
-      return new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+      return new Date(a.updated_at).getTime() - new Date(b.updated_at).getTime()
     }
     return 0
   })
@@ -205,9 +198,9 @@ function HistoryPageContent() {
           </div>
         </div>
 
-        {/* Consultations List */}
+        {/* Chat Sessions List */}
         <div className="space-y-6">
-          {sortedConsultations.length === 0 ? (
+          {sortedSessions.length === 0 ? (
             <Card className="border-border bg-card">
               <CardContent className="p-12 text-center">
                 <MessageSquare className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
@@ -216,12 +209,12 @@ function HistoryPageContent() {
               </CardContent>
             </Card>
           ) : (
-            sortedConsultations.map((consultation) => {
-              const topic = getTopicFromQuestion(consultation.question)
-              const { date, time } = formatDate(consultation.created_at)
+            sortedSessions.map((session) => {
+              const topic = getTopicFromTitle(session.title)
+              const { date, time } = formatDate(session.updated_at)
               
               return (
-                <Card key={consultation.id} className="border-border bg-card hover:shadow-md transition-shadow">
+                <Card key={session.id} className="border-border bg-card hover:shadow-md transition-shadow">
                   <CardContent className="p-6">
                     <div className="flex items-start justify-between mb-4">
                       <div className="flex items-center space-x-3">
@@ -240,63 +233,35 @@ function HistoryPageContent() {
                         </div>
                       </div>
                       <div className="flex items-center space-x-2">
-                        {consultation.user_rating && (
-                          <div className="flex items-center space-x-1">
-                            {[...Array(5)].map((_, i) => (
-                              <Star
-                                key={i}
-                                className={`h-4 w-4 ${
-                                  i < consultation.user_rating! ? "text-yellow-400 fill-current" : "text-muted-foreground"
-                                }`}
-                              />
-                            ))}
-                          </div>
-                        )}
                         <Badge variant="outline" className="text-xs">
-                          {consultation.duration_ms}ms
+                          {session.message_count} messages
                         </Badge>
                       </div>
                     </div>
 
                     <div className="space-y-4">
                       <div>
-                        <h3 className="font-semibold text-foreground mb-2">Pregunta:</h3>
-                        <p className="text-muted-foreground">{consultation.question}</p>
+                        <h3 className="font-semibold text-foreground mb-2">{session.title || 'Chat Session'}</h3>
+                        {session.last_message_preview && (
+                          <p className="text-muted-foreground leading-relaxed">
+                            {session.last_message_preview.length > 200 
+                              ? `${session.last_message_preview.substring(0, 200)}...` 
+                              : session.last_message_preview
+                            }
+                          </p>
+                        )}
                       </div>
-                      <div>
-                        <h3 className="font-semibold text-foreground mb-2">Respuesta:</h3>
-                        <p className="text-muted-foreground leading-relaxed">
-                          {consultation.answer.length > 300 
-                            ? `${consultation.answer.substring(0, 300)}...` 
-                            : consultation.answer
-                          }
-                        </p>
+                      <div className="flex justify-end pt-4 border-t border-border">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleContinueChat(session.id)}
+                          className="flex items-center gap-2"
+                        >
+                          Continue Chat
+                          <ArrowRight className="h-4 w-4" />
+                        </Button>
                       </div>
-                      {consultation.citations && consultation.citations.length > 0 && (
-                        <div>
-                          <h3 className="font-semibold text-foreground mb-2">Citas legales:</h3>
-                          <div className="flex flex-wrap gap-2">
-                            {consultation.citations.map((citation, index) => (
-                              <Badge key={index} variant="outline" className="text-xs">
-                                {citation}
-                              </Badge>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                      {consultation.session && (
-                        <div className="flex justify-end pt-4 border-t border-border">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleContinueChat(consultation.session!)}
-                            className="flex items-center gap-2"
-                          >
-                            Continue Chat
-                            <ArrowRight className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      )}
                     </div>
                   </CardContent>
                 </Card>
@@ -306,7 +271,7 @@ function HistoryPageContent() {
         </div>
 
         {/* Load More Button */}
-        {sortedConsultations.length > 0 && (
+        {sortedSessions.length > 0 && (
           <div className="text-center mt-8">
             <Button variant="outline">{t("history.load.more")}</Button>
           </div>

@@ -78,38 +78,40 @@ Always cite relevant BOE (Boletín Oficial del Estado) references when applicabl
                 temperature=0.7
             )
             
-            word_buffer = ""
-            word_count = 0
+            content_buffer = ""
+            chunk_size = 50  # Characters per chunk instead of words
             
             async for chunk in stream:
                 if chunk.choices[0].delta.content is not None:
                     content = chunk.choices[0].delta.content
-                    word_buffer += content
+                    content_buffer += content
                     
-                    # Split by spaces to count words
-                    words = word_buffer.split()
-                    
-                    # If we have 10 or more words, yield them
-                    if len(words) >= 10:
-                        # Take first 10 words and rejoin
-                        chunk_words = words[:10]
-                        chunk_content = " ".join(chunk_words)
+                    # Send chunks when buffer reaches target size
+                    while len(content_buffer) >= chunk_size:
+                        # Find a good breaking point (space, newline, or punctuation)
+                        break_pos = chunk_size
                         
-                        # Keep remaining words in buffer
-                        word_buffer = " ".join(words[10:])
+                        # Look for natural break points within reasonable distance
+                        for i in range(min(chunk_size, len(content_buffer) - 1), max(0, chunk_size - 20), -1):
+                            if content_buffer[i] in [' ', '\n', '\t', '.', ',', ';', '!', '?']:
+                                break_pos = i + 1
+                                break
                         
-                        yield StreamChunk(
-                            content=chunk_content + " ",
-                            conversation_id=conversation_id,
-                            is_complete=False
-                        )
+                        # Extract chunk and update buffer
+                        chunk_content = content_buffer[:break_pos]
+                        content_buffer = content_buffer[break_pos:]
                         
-                        word_count += 10
+                        if chunk_content.strip():  # Only send non-empty chunks
+                            yield StreamChunk(
+                                content=chunk_content,
+                                conversation_id=conversation_id,
+                                is_complete=False
+                            )
             
             # Send any remaining content
-            if word_buffer.strip():
+            if content_buffer.strip():
                 yield StreamChunk(
-                    content=word_buffer,
+                    content=content_buffer,
                     conversation_id=conversation_id,
                     is_complete=True
                 )

@@ -1,55 +1,119 @@
-start responses with smileys 
-any code you do do adjust the backend and frontend as well
+make small files max 300 lines a fileor split large files into function or class base.
+always use pre built libraries no raw coding please
 
-make sure you use prebuilt libraries no use of raw code find npm libs for doing things and pypi packages best suited for jobs
+# OVRA AI Project Structure & Progress
 
-There a common app that has a response view always use that response to return responses like other apis are returning
+## Project Overview
+OVRA AI is a legal assistant application specialized in Spanish tax legislation for cultural professionals. It consists of a FastAPI backend and Next.js frontend with AI-powered chat capabilities.
 
-we are using pnpm. shadcn and radix ui for frontend
+## Project Structure
 
-# Project Structure & Goals
-
-## 🎯 OVRA AI - Spanish Tax Law Consultation System
-
-### What We're Building
-OVRA AI is a sophisticated AI-powered legal chatbot that provides real-time Spanish tax law consultation, specifically designed for freelancers and professionals in arts/cultural sectors. It democratizes access to Spanish tax law through AI-powered RAG (Retrieval-Augmented Generation) using official BOE documents.
-
-### Core Purpose
-- **Democratize Spanish tax law access** for freelancers and cultural professionals
-- **Provide instant, accurate tax consultation** using AI-powered RAG
-- **Stay current with tax legislation** through automated BOE document processing
-- **Offer both authenticated chat and anonymous widget access**
-
-### Tech Stack
-**Backend (Django REST API)**
-- Django 5.0 + Django REST Framework
-- PostgreSQL with pgvector for embeddings
-- OpenAI GPT-4 with LangChain
-- WebSockets via Django Channels
-- Django Q2 for background tasks
-
-**Frontend (Next.js)**
-- Next.js 15.2.4 with TypeScript
-- Shadcn/UI + Radix UI components
-- Tailwind CSS
-- PNPM package manager
-
-### Key Features
-1. **RAG-Powered Legal Consultation** - Vector search through Spanish tax laws
-2. **Real-time BOE Integration** - Daily capture of official Spanish legal documents
-3. **Dual Access Models** - Authenticated users + anonymous widget access
-4. **Embeddable Widget** - For external websites and lead generation
-5. **Multi-language Support** - English/Spanish interface
-6. **Cost Tracking** - OpenAI usage monitoring
-
-### Architecture Overview
+### Backend (FastAPI)
 ```
-BOE API → PDF Processing → Vector Embeddings → RAG Search → AI Consultation
-User Query → Context Retrieval → OpenAI GPT-4 → Cited Legal Response
+backend/
+├── app/
+│   ├── api/v1/              # API routes
+│   │   ├── auth/            # Authentication endpoints
+│   │   └── endpoints/       # Other API endpoints
+│   ├── core/                # Core configuration
+│   │   ├── config.py        # Settings and CORS
+│   │   ├── database.py      # Database connection
+│   │   └── security.py      # Security utilities
+│   ├── models/              # SQLAlchemy models
+│   │   └── user.py          # User model
+│   ├── schemas/             # Pydantic schemas
+│   │   └── user.py          # User schemas
+│   └── services/            # Business logic
+│       └── user_service.py  # User operations
+├── alembic/                 # Database migrations
+├── main.py                  # FastAPI app entry point
+├── requirements.txt         # Python dependencies
+└── .env                     # Environment variables
 ```
 
-### Target Audience
-- Spanish freelancers needing tax guidance
-- Arts & cultural professionals with complex tax situations
-- Legal/accounting firms wanting AI consultation tools
-- Spanish SMEs requiring accessible tax law interpretation
+### Frontend (Next.js 15)
+```
+frontend/
+├── app/                     # Next.js app directory
+│   ├── login/page.tsx       # Login page
+│   ├── signup/page.tsx      # Registration page
+│   ├── chat/page.tsx        # Chat interface
+│   └── layout.tsx           # Root layout
+├── components/              # Reusable components
+│   ├── ui/                  # UI components (shadcn/ui)
+│   ├── chat-widget.tsx      # Chat component
+│   └── shared-header.tsx    # Header component
+├── contexts/                # React contexts
+│   ├── auth-context.tsx     # Authentication state
+│   └── language-context.tsx # Multi-language support
+├── lib/services/            # API services
+│   ├── auth.service.ts      # Authentication API
+│   ├── base.service.ts      # Base API service
+│   ├── chat.service.ts      # Chat API
+│   └── config.ts            # API configuration
+├── package.json             # Dependencies
+└── tailwind.config.ts       # Styling configuration
+```
+
+## Task Progress
+
+### ✅ Completed Tasks
+1. **Project Structure Setup**
+   - FastAPI backend with proper architecture
+   - Next.js frontend with TypeScript
+   - Database models and migrations setup
+   - Authentication system architecture
+
+2. **Authentication System**
+   - User registration endpoint (`POST /api/v1/auth/register/`)
+   - User login endpoint (`POST /api/v1/auth/login/`)
+   - JWT token management
+   - Frontend auth context and forms
+   - CORS configuration resolved
+
+3. **Frontend Development**
+   - Registration page with validation
+   - Login page with validation
+   - Protected routes setup
+   - Multi-language support (ES/EN)
+   - Responsive design with Tailwind CSS
+
+4. **Testing & Integration**
+   - Frontend-backend connectivity verified
+   - Authentication flow tested with Playwright
+   - CORS issues resolved
+   - Form validation working
+
+### 🔄 In Progress
+1. **Streaming Chat API Implementation**
+   - OpenAI integration for chat responses
+   - Streaming API endpoints
+   - Markdown response formatting
+
+### 📋 Pending Tasks
+1. **Chat System Development**
+   - Streaming chat API with OpenAI (`POST /api/v1/chat/stream/`)
+   - Frontend streaming chat interface
+   - Message history management
+   - Real-time response streaming (10 words at a time)
+
+2. **Advanced Features**
+   - Legal document RAG integration
+   - User conversation history
+   - Chat context management
+   - Error handling improvements
+
+3. **Deployment & Production**
+   - Production environment setup
+   - Database optimization
+   - Performance monitoring
+   - Security hardening
+
+## System Status
+- **Backend**: Running via systemctl on port 8000
+- **Frontend**: Running via systemctl on port 3000
+- **Database**: PostgreSQL configured and connected
+- **Authentication**: Fully functional
+- **CORS**: Configured and working
+
+we have both the servers running through systemctl
