@@ -1,81 +1,37 @@
-# Django core
-Django==5.0.14
-djangorestframework==3.16.0
+# FastAPI and core dependencies
+fastapi==0.109.0
+uvicorn[standard]==0.27.0
+python-multipart==0.0.6
 
-# Authentication
-djangorestframework-simplejwt==5.5.0
+# Database
+sqlalchemy==2.0.25
+alembic==1.13.1
+asyncpg==0.29.0
+psycopg2-binary==2.9.9
 
-# Environment & Configuration
-django-environ==0.12.0
+# Authentication and Security
+python-jose[cryptography]==3.3.0
+passlib[argon2]==1.7.4
+argon2-cffi==23.1.0
 
-# Database (PostgreSQL with vector support)
-psycopg2-binary==2.9.10
-pgvector==0.3.6
+# Environment and Configuration
+python-dotenv==1.0.0
+pydantic==2.5.3
+pydantic-settings==2.1.0
 
-# Redis & Caching
-redis==5.1.1
-django-redis==5.4.0
+# Email (for verification)
+aiosmtplib==3.0.1
 
-# Django Q (Task Queue)
-django-q2==1.6.2
+# CORS (FastAPI has built-in CORS support)
 
-# Channels & WebSockets
-channels==4.2.2
-channels-redis==4.2.1
-daphne==4.2.0
+# Development tools
+pytest==7.4.4
+pytest-asyncio==0.23.3
+httpx==0.26.0
 
-# CORS
-django-cors-headers==4.7.0
+# Additional utilities
+python-dateutil==2.8.2
+pytz==2023.3
 
-# Security
-django-csp==4.0
-argon2-cffi==25.1.0
-
-# API Documentation
-drf-spectacular==0.28.0
-
-# Monitoring & Logging
-django-prometheus==2.3.1
-django-structlog==8.1.0
-python-json-logger==2.0.7
-
-# OpenAI & Embeddings (External Service)
-openai>=1.54.0
-tiktoken==0.7.0
-
-# LangChain Core (Lightweight)
-langchain==0.3.7
-langchain-openai==0.2.8
-langchain-text-splitters==0.3.2
-
-# PDF Processing (Lightweight)
-pypdf==5.1.0
-python-magic==0.4.27
-
-# Additional utilities for document processing
-pydantic==2.10.3
-requests==2.32.3
-tqdm==4.66.5
-beautifulsoup4==4.12.3
-lxml==5.1.0
-
-# Rate Limiting
-django-ratelimit==4.1.0
-django-ipware==7.0.1
-
-# Development & Testing
-pytest-django==4.8.0
-pytest-asyncio==0.23.0
-httpx==0.27.0
-
-# Code Quality
-ruff==0.1.0
-black==23.1.0
-mypy==1.7.0
-django-stubs==4.2.0
-
-# Production Server
-gunicorn==23.0.0
-
-# Task Runner
-taskipy==1.13.0
+# AI/LLM
+openai==1.58.1
