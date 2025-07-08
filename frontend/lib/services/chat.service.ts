@@ -67,9 +67,6 @@ export interface ConversationListResponse {
 }
 
 export class ChatService extends BaseApiService {
-  constructor() {
-    super(process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1')
-  }
   /**
    * Send a message to the AI assistant (non-streaming)
    */
@@ -380,13 +377,14 @@ export class ChatService extends BaseApiService {
     try {
       const response = await this.get<any>(`/chat/sessions/?page=${page}&limit=${limit}`, true)
       
-      const sessions = response.results || []
+      // Backend returns { sessions } array, not { results }
+      const sessions = response.sessions || []
       
       const conversations: Conversation[] = sessions.map((session: any) => ({
         id: session.id,
         title: session.title || 'Chat Session',
-        created_at: session.created_at,
-        updated_at: session.updated_at,
+        created_at: session.createdAt || session.created_at,
+        updated_at: session.updatedAt || session.updated_at,
         message_count: session.message_count || 0,
         last_message_preview: session.last_message_preview
       }))

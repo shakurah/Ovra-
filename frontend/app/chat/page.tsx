@@ -32,9 +32,47 @@ function ChatPageContent() {
   const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState('')
   const [isLoading, setIsLoading] = useState(false)
+  const [loadingMessage, setLoadingMessage] = useState('')
   const [conversationId, setConversationId] = useState<string | undefined>()
   const [isInitialized, setIsInitialized] = useState(false)
   const [sessionLoading, setSessionLoading] = useState(false)
+
+  // BOE-related loading messages
+  const loadingMessages = [
+    'Consultando Boletín Oficial del Estado...',
+    'Analizando normativa fiscal vigente...',
+    'Revisando últimas actualizaciones del BOE...',
+    'Procesando legislación tributaria...',
+    'Verificando disposiciones administrativas...',
+    'Accediendo a jurisprudencia fiscal...',
+    'Consultando reglamentos específicos...',
+    'Analizando circular normativa...',
+    'Revisando ordenanzas municipales...',
+    'Procesando Real Decreto vigente...',
+    'Verificando Ley General Tributaria...',
+    'Consultando instrucciones AEAT...',
+    'Analizando resoluciones DGT...',
+    'Revisando normativa autonómica...',
+    'Procesando documentación oficial...'
+  ]
+
+  // Loading message rotation effect
+  useEffect(() => {
+    if (!isLoading) {
+      setLoadingMessage('')
+      return
+    }
+
+    let messageIndex = 0
+    setLoadingMessage(loadingMessages[0])
+
+    const interval = setInterval(() => {
+      messageIndex = (messageIndex + 1) % loadingMessages.length
+      setLoadingMessage(loadingMessages[messageIndex])
+    }, 1500) // Change every 1.5 seconds
+
+    return () => clearInterval(interval)
+  }, [isLoading])
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
@@ -49,7 +87,7 @@ function ChatPageContent() {
         // Check if session parameter is provided in URL
         const sessionParam = searchParams.get('session')
         
-        if (sessionParam) {
+        if (sessionParam && sessionParam !== 'undefined') {
           // Load existing session from backend
           try {
             const sessionData = await chatService.getConversation(sessionParam)
@@ -58,8 +96,6 @@ function ChatPageContent() {
             if (sessionData && sessionData.messages && Array.isArray(sessionData.messages)) {
               setConversationId(sessionParam)
               setMessages(sessionData.messages)
-              localStorage.setItem('ovra_chat_conversation_id', sessionParam)
-              localStorage.setItem(`ovra_chat_messages_${sessionParam}`, JSON.stringify(sessionData.messages))
             } else {
               console.warn('Invalid session data structure:', sessionData)
               throw new Error('Invalid session data structure')
@@ -67,43 +103,19 @@ function ChatPageContent() {
           } catch (error) {
             console.error('Error loading session:', error)
             toastService.error('Failed to load chat session. Starting new conversation.')
-            // Fall back to creating new session
-            const newConversationId = generateUUID()
-            setConversationId(newConversationId)
-            localStorage.setItem('ovra_chat_conversation_id', newConversationId)
+            // Fall back to creating new session - let it be created when first message is sent
+            setConversationId(undefined)
           }
         } else {
-          // Get or create conversation ID from localStorage
-          let storedConversationId = localStorage.getItem('ovra_chat_conversation_id')
-
-          if (!storedConversationId) {
-            storedConversationId = generateUUID()
-            localStorage.setItem('ovra_chat_conversation_id', storedConversationId)
-          }
-
-          setConversationId(storedConversationId)
-
-          // Load chat history if exists
-          const storedMessages = localStorage.getItem(`ovra_chat_messages_${storedConversationId}`)
-          if (storedMessages) {
-            try {
-              const parsedMessages = JSON.parse(storedMessages)
-              if (Array.isArray(parsedMessages)) {
-                setMessages(parsedMessages)
-              }
-            } catch (error) {
-              console.error('Error parsing stored messages:', error)
-            }
-          }
+          // Start with no conversation - it will be created when first message is sent
+          setConversationId(undefined)
         }
 
         setIsInitialized(true)
       } catch (error) {
         console.error('Error initializing chat:', error)
-        // Fallback: create new session
-        const newConversationId = generateUUID()
-        setConversationId(newConversationId)
-        localStorage.setItem('ovra_chat_conversation_id', newConversationId)
+        // Start with no conversation - it will be created when first message is sent
+        setConversationId(undefined)
         setIsInitialized(true)
       } finally {
         setSessionLoading(false)
@@ -113,16 +125,7 @@ function ChatPageContent() {
     initializeChat()
   }, [searchParams])
 
-  // Save messages to localStorage whenever messages change
-  useEffect(() => {
-    if (isInitialized && conversationId && messages.length > 0) {
-      try {
-        localStorage.setItem(`ovra_chat_messages_${conversationId}`, JSON.stringify(messages))
-      } catch (error) {
-        console.error('Error saving messages to localStorage:', error)
-      }
-    }
-  }, [messages, conversationId, isInitialized])
+  // Messages are now stored in the backend, no need for localStorage persistence
 
   useEffect(() => {
     scrollToBottom()
@@ -147,15 +150,8 @@ function ChatPageContent() {
     // Remove session parameter from URL
     router.replace('/chat')
 
-    // Remove from localStorage if conversationId exists
-    if (conversationId) {
-      localStorage.removeItem(`ovra_chat_messages_${conversationId}`)
-    }
-
-    // Generate new conversation ID
-    const newConversationId = generateUUID()
-    setConversationId(newConversationId)
-    localStorage.setItem('ovra_chat_conversation_id', newConversationId)
+    // Clear conversation ID - new one will be created on next message
+    setConversationId(undefined)
     
     // Clear any loaded session state
     setIsInitialized(true)
@@ -384,7 +380,9 @@ function ChatPageContent() {
                               style={{ animationDelay: "0.2s" }}
                             ></div>
                           </div>
-                          <span className="text-sm text-muted-foreground">{t("chat.input.analyzing")}</span>
+                          <span className="text-sm text-muted-foreground italic">
+                            {loadingMessage || t("chat.input.analyzing")}
+                          </span>
                         </div>
                       </CardContent>
                     </Card>

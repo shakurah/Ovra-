@@ -33,11 +33,49 @@ export function ChatWidget({
   const [email, setEmail] = useState('')
   const [isRegistered, setIsRegistered] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
+  const [loadingMessage, setLoadingMessage] = useState('')
   const [sessionId, setSessionId] = useState<string | null>(null)
   const [privacyAccepted, setPrivacyAccepted] = useState(false)
   const [termsAccepted, setTermsAccepted] = useState(false)
-  const [showEmailForm, setShowEmailForm] = useState(false)
+  const [showEmailForm, setShowEmailForm] = useState(true)
   const scrollAreaRef = useRef<HTMLDivElement>(null)
+
+  // BOE-related loading messages
+  const loadingMessages = [
+    'Consultando Boletín Oficial del Estado...',
+    'Analizando normativa fiscal vigente...',
+    'Revisando últimas actualizaciones del BOE...',
+    'Procesando legislación tributaria...',
+    'Verificando disposiciones administrativas...',
+    'Accediendo a jurisprudencia fiscal...',
+    'Consultando reglamentos específicos...',
+    'Analizando circular normativa...',
+    'Revisando ordenanzas municipales...',
+    'Procesando Real Decreto vigente...',
+    'Verificando Ley General Tributaria...',
+    'Consultando instrucciones AEAT...',
+    'Analizando resoluciones DGT...',
+    'Revisando normativa autonómica...',
+    'Procesando documentación oficial...'
+  ]
+
+  // Loading message rotation effect
+  useEffect(() => {
+    if (!isLoading) {
+      setLoadingMessage('')
+      return
+    }
+
+    let messageIndex = 0
+    setLoadingMessage(loadingMessages[0])
+
+    const interval = setInterval(() => {
+      messageIndex = (messageIndex + 1) % loadingMessages.length
+      setLoadingMessage(loadingMessages[messageIndex])
+    }, 1500) // Change every 1.5 seconds
+
+    return () => clearInterval(interval)
+  }, [isLoading])
 
   // Load email from localStorage on mount
   useEffect(() => {
@@ -45,6 +83,12 @@ export function ChatWidget({
     if (savedEmail) {
       setEmail(savedEmail)
       setIsRegistered(true)
+      setShowEmailForm(false)
+      setPrivacyAccepted(true)
+      setTermsAccepted(true)
+    } else {
+      setIsRegistered(false)
+      setShowEmailForm(true)
     }
 
     // Load session if exists
@@ -128,6 +172,13 @@ export function ChatWidget({
         }])
       } else {
         console.error('Registration failed:', data.message)
+        // Show error message
+        setMessages([{
+          id: uuidv4(),
+          role: 'assistant',
+          content: 'Error al registrar el email. Por favor, verifica tu email e inténtalo de nuevo.',
+          timestamp: new Date(),
+        }])
       }
     } catch (error) {
       console.error('Registration error:', error)
@@ -151,49 +202,71 @@ export function ChatWidget({
     setIsLoading(true)
 
     try {
-      const response = await fetch(`${apiUrl}/widget/chat/`, {
+      // Check if user is registered, if not, show email form
+      if (!isRegistered || !email) {
+        setMessages(prev => [...prev, {
+          id: uuidv4(),
+          role: 'assistant',
+          content: 'Por favor, registra tu email primero para poder ayudarte.',
+          timestamp: new Date(),
+        }])
+        setShowEmailForm(true)
+        setIsLoading(false)
+        return
+      }
+
+      // Use the same endpoint as the login area
+      const response = await fetch(`${apiUrl}/chat/message/`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          email,
-          question: userMessage.content,
-          session_id: sessionId,
+          message: userMessage.content,
+          conversation_id: sessionId,
+          email: email, // Include email for widget context
           source_website: sourceWebsite,
         }),
       })
 
       const data = await response.json()
 
-      if (data.is_success) {
+      if (data.message) {
         const assistantMessage: Message = {
-          id: data.data.chat_id,
+          id: data.message.id || uuidv4(),
           role: 'assistant',
-          content: data.data.answer,
-          citations: data.data.citations,
+          content: data.message.content,
+          citations: data.message.metadata?.legal_references || [],
           timestamp: new Date(),
         }
 
         setMessages(prev => [...prev, assistantMessage])
 
         // Save session ID
-        if (data.data.session_id && !sessionId) {
-          setSessionId(data.data.session_id)
-          localStorage.setItem('ovra_widget_session', data.data.session_id)
+        if (data.conversation_id && !sessionId) {
+          setSessionId(data.conversation_id)
+          localStorage.setItem('ovra_widget_session', data.conversation_id)
         }
-      } else if (data.error_code === 'USER_NOT_REGISTERED') {
-        // User not registered
-        setIsRegistered(false)
-        setShowEmailForm(true)
       } else {
-        // Show error message
-        setMessages(prev => [...prev, {
-          id: uuidv4(),
-          role: 'assistant',
-          content: data.message || 'Lo siento, ha ocurrido un error. Por favor, inténtalo de nuevo.',
-          timestamp: new Date(),
-        }])
+        // Check if it's an email registration error
+        if (data.error === 'Email not registered') {
+          setMessages(prev => [...prev, {
+            id: uuidv4(),
+            role: 'assistant',
+            content: 'Tu email no está registrado. Por favor, regístrate primero.',
+            timestamp: new Date(),
+          }])
+          setIsRegistered(false)
+          setShowEmailForm(true)
+        } else {
+          // Show generic error message
+          setMessages(prev => [...prev, {
+            id: uuidv4(),
+            role: 'assistant',
+            content: data.message || 'Lo siento, ha ocurrido un error. Por favor, inténtalo de nuevo.',
+            timestamp: new Date(),
+          }])
+        }
       }
     } catch (error) {
       console.error('Chat error:', error)
@@ -369,10 +442,15 @@ export function ChatWidget({
                   {isLoading && (
                     <div className="flex justify-start">
                       <div className="bg-muted rounded-lg p-3">
-                        <div className="flex space-x-2">
-                          <div className="w-2 h-2 bg-gray-500 rounded-full animate-bounce" />
-                          <div className="w-2 h-2 bg-gray-500 rounded-full animate-bounce delay-100" />
-                          <div className="w-2 h-2 bg-gray-500 rounded-full animate-bounce delay-200" />
+                        <div className="flex items-center space-x-3">
+                          <div className="flex space-x-1">
+                            <div className="w-2 h-2 bg-gray-500 rounded-full animate-bounce" />
+                            <div className="w-2 h-2 bg-gray-500 rounded-full animate-bounce delay-100" />
+                            <div className="w-2 h-2 bg-gray-500 rounded-full animate-bounce delay-200" />
+                          </div>
+                          <span className="text-sm text-muted-foreground italic">
+                            {loadingMessage}
+                          </span>
                         </div>
                       </div>
                     </div>

@@ -1,0 +1,92 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String @id @default(uuid())
+  email        String @unique
+  passwordHash String @map("password_hash")
+  firstName    String? @map("first_name")
+  lastName     String? @map("last_name")
+  isActive     Boolean @default(true) @map("is_active")
+  isSuperuser  Boolean @default(false) @map("is_superuser")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+  
+  sessions ChatSession[]
+  
+  @@map("users")
+}
+
+model ChatSession {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  title     String   @default("New Chat")
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  
+  user     User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  messages ChatMessage[]
+  
+  @@map("chat_sessions")
+}
+
+model ChatMessage {
+  id        String   @id @default(uuid())
+  sessionId String   @map("session_id")
+  role      String   // 'user' or 'assistant'
+  content   String
+  createdAt DateTime @default(now()) @map("created_at")
+  
+  session ChatSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  
+  @@map("chat_messages")
+}
+
+model MarketingEmail {
+  id             String   @id @default(uuid())
+  email          String   @unique
+  sourceWebsite  String?  @map("source_website")
+  privacyAccepted Boolean @default(false) @map("privacy_accepted")
+  termsAccepted  Boolean @default(false) @map("terms_accepted")
+  isActive       Boolean @default(true) @map("is_active")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+  
+  sessions WidgetSession[]
+  
+  @@map("marketing_emails")
+}
+
+model WidgetSession {
+  id              String   @id @default(uuid())
+  marketingEmailId String   @map("marketing_email_id")
+  sessionData     String?  @map("session_data") // JSON string for storing session context
+  isActive        Boolean  @default(true) @map("is_active")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+  
+  marketingEmail MarketingEmail @relation(fields: [marketingEmailId], references: [id], onDelete: Cascade)
+  messages       WidgetMessage[]
+  
+  @@map("widget_sessions")
+}
+
+model WidgetMessage {
+  id        String   @id @default(uuid())
+  sessionId String   @map("session_id")
+  role      String   // 'user' or 'assistant'
+  content   String
+  metadata  String?  // JSON string for storing additional metadata like citations
+  createdAt DateTime @default(now()) @map("created_at")
+  
+  session WidgetSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  
+  @@map("widget_messages")
+}

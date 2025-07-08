@@ -3,7 +3,7 @@
  * Provides common functionality for all API services
  */
 
-export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1'
+export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api'
 
 export interface ApiError {
   message: string
@@ -153,7 +153,9 @@ export class BaseApiService {
   protected setTokens(accessToken: string, refreshToken: string): void {
     if (typeof window === 'undefined') return
     localStorage.setItem('access_token', accessToken)
-    localStorage.setItem('refresh_token', refreshToken)
+    if (refreshToken) {
+      localStorage.setItem('refresh_token', refreshToken)
+    }
   }
 
   protected clearTokens(): void {

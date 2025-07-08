@@ -45,37 +45,57 @@ export function AuthProvider({ children }: AuthProviderProps) {
       try {
         const storedUser = authService.getCurrentUser()
         const accessToken = authService.getStoredToken()
+        const refreshToken = authService.getStoredRefreshToken()
 
-        console.log('AuthContext: Stored user:', !!storedUser, 'Access token:', !!accessToken)
+        console.log('AuthContext: Stored user:', !!storedUser, 'Access token:', !!accessToken, 'Refresh token:', !!refreshToken)
 
         if (storedUser && accessToken) {
           console.log('AuthContext: Setting user from localStorage')
           setUser(storedUser)
 
-          // Try to get fresh user data to verify token is still valid
+          // Only try auto-refresh if we have a refresh token
+          if (refreshToken) {
+            try {
+              await authService.autoRefreshToken()
+            } catch (error) {
+              console.log('AuthContext: Auto-refresh failed:', error)
+            }
+          }
+
+          // Verify token is still valid by fetching user profile
           try {
-            console.log('AuthContext: Fetching fresh user data...')
+            console.log('AuthContext: Verifying token validity...')
             const freshUserData = await userService.getProfile()
             console.log('AuthContext: Token valid, updated user data')
             setUser(freshUserData)
           } catch (error) {
-            console.log('AuthContext: Failed to fetch user data, trying token refresh:', error)
-            // If getting user data fails, try to refresh token
-            try {
-              console.log('AuthContext: Attempting token refresh...')
-              await authService.refreshToken()
-              const freshUserData = await userService.getProfile()
-              console.log('AuthContext: Token refreshed successfully')
-              setUser(freshUserData)
-            } catch (refreshError) {
-              console.log('AuthContext: Token refresh failed, clearing auth state')
-              // If refresh fails, clear auth state
+            console.log('AuthContext: Token validation failed:', error)
+            // If we have a refresh token, try to use it
+            if (refreshToken) {
+              try {
+                console.log('AuthContext: Attempting token refresh...')
+                await authService.refreshToken()
+                const freshUserData = await userService.getProfile()
+                console.log('AuthContext: Token refreshed successfully')
+                setUser(freshUserData)
+              } catch (refreshError) {
+                console.log('AuthContext: Token refresh failed, clearing auth state')
+                // If refresh fails, clear auth state
+                await authService.logout()
+                setUser(null)
+              }
+            } else {
+              console.log('AuthContext: No refresh token available, clearing auth state')
+              // If no refresh token and validation failed, clear auth state
               await authService.logout()
               setUser(null)
             }
           }
         } else {
-          console.log('AuthContext: No stored user or token found')
+          console.log('AuthContext: Missing stored credentials, clearing auth state')
+          // Clear any partial auth state
+          await authService.logout()
+          setUser(null)
         }
       } catch (error) {
         console.error('AuthContext: Error initializing auth:', error)

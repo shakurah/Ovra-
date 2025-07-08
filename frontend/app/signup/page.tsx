@@ -59,8 +59,8 @@ export default function SignupPage() {
     try {
       await register({
         email: formData.email,
-        username: formData.email, // Use email as username for simplicity
-        full_name: `${formData.firstName} ${formData.lastName}`.trim(),
+        firstName: formData.firstName,
+        lastName: formData.lastName,
         password: formData.password,
         confirm_password: formData.confirmPassword,
         agree_to_terms: acceptTerms

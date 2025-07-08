@@ -28,7 +28,8 @@ export class UserService extends BaseApiService {
    * Get current user profile
    */
   async getProfile(): Promise<UserProfileResponse> {
-    return this.get<UserProfileResponse>('/user/profile/', true)
+    const response = await this.get<any>('/auth/me', true)
+    return response.user || response
   }
 
   /**

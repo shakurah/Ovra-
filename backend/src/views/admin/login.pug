@@ -1,0 +1,55 @@
+doctype html
+html(lang='en')
+  head
+    meta(charset='utf-8')
+    meta(name='viewport', content='width=device-width, initial-scale=1')
+    title #{title} - OVRA AI Admin
+    link(rel='stylesheet', href='/admin/assets/bower_components/bootstrap/dist/css/bootstrap.min.css')
+    link(rel='stylesheet', href='/admin/assets/bower_components/font-awesome/css/font-awesome.min.css')
+    link(rel='stylesheet', href='/admin/assets/bower_components/Ionicons/css/ionicons.min.css')
+    link(rel='stylesheet', href='/admin/assets/dist/css/AdminLTE.min.css')
+    link(rel='stylesheet', href='/admin/assets/plugins/iCheck/square/blue.css')
+    link(rel='stylesheet', href='https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,600,700,300italic,400italic,600italic')
+    
+  body.hold-transition.login-page
+    .login-box
+      .login-logo
+        a(href='/admin')
+          b OVRA
+          |  AI Admin
+      
+      .login-box-body
+        p.login-box-msg Sign in to start your session
+        
+        if error
+          .alert.alert-danger
+            i.fa.fa-exclamation-triangle
+            |  #{error}
+        
+        form(action='/admin/login', method='post')
+          .form-group.has-feedback
+            input.form-control(type='email', name='email', placeholder='Email', required)
+            span.glyphicon.glyphicon-envelope.form-control-feedback
+          .form-group.has-feedback
+            input.form-control(type='password', name='password', placeholder='Password', required)
+            span.glyphicon.glyphicon-lock.form-control-feedback
+          .row
+            .col-xs-8
+              .checkbox.icheck
+                label
+                  input(type='checkbox')
+                  |  Remember Me
+            .col-xs-4
+              button.btn.btn-primary.btn-block.btn-flat(type='submit') Sign In
+    
+    script(src='/admin/assets/bower_components/jquery/dist/jquery.min.js')
+    script(src='/admin/assets/bower_components/bootstrap/dist/js/bootstrap.min.js')
+    script(src='/admin/assets/plugins/iCheck/icheck.min.js')
+    script.
+      $(function () {
+        $('input').iCheck({
+          checkboxClass: 'icheckbox_square-blue',
+          radioClass: 'iradio_square-blue',
+          increaseArea: '20%' /* optional */
+        });
+      });

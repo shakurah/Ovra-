@@ -12,9 +12,9 @@ show_usage() {
     echo "Usage: $0 [COMMAND]"
     echo ""
     echo "Commands:"
-    echo "  start     - Start both services"
-    echo "  stop      - Stop both services"
-    echo "  restart   - Restart both services"
+    echo "  start     - Start all services"
+    echo "  stop      - Stop all services"
+    echo "  restart   - Restart all services"
     echo "  status    - Show service status"
     echo "  logs      - Show recent logs"
     echo "  follow    - Follow logs in real-time"
@@ -39,21 +39,21 @@ case "${1:-}" in
     "start")
         echo "🚀 Starting Ovra AI Services..."
         check_services_installed
-        sudo systemctl start ovra-backend ovra-frontend
+        sudo systemctl start ovra-backend ovra-frontend ovra-mcp-boe
         echo "✅ Services started"
         ;;
     
     "stop")
         echo "🛑 Stopping Ovra AI Services..."
         check_services_installed
-        sudo systemctl stop ovra-backend ovra-frontend
+        sudo systemctl stop ovra-backend ovra-frontend ovra-mcp-boe
         echo "✅ Services stopped"
         ;;
     
     "restart")
         echo "🔄 Restarting Ovra AI Services..."
         check_services_installed
-        sudo systemctl restart ovra-backend ovra-frontend
+        sudo systemctl restart ovra-backend ovra-frontend ovra-mcp-boe
         echo "✅ Services restarted"
         ;;
     
@@ -65,6 +65,9 @@ case "${1:-}" in
         echo ""
         echo "Frontend:"
         sudo systemctl status ovra-frontend --no-pager -l
+        echo ""
+        echo "MCP BOE:"
+        sudo systemctl status ovra-mcp-boe --no-pager -l
         ;;
     
     "logs")
@@ -75,12 +78,15 @@ case "${1:-}" in
         echo ""
         echo "=== Frontend Logs ==="
         sudo journalctl -u ovra-frontend --no-pager -n 20
+        echo ""
+        echo "=== MCP BOE Logs ==="
+        sudo journalctl -u ovra-mcp-boe --no-pager -n 20
         ;;
     
     "follow")
         echo "📝 Following Service Logs (Ctrl+C to exit)..."
-        echo "Backend: ovra-backend | Frontend: ovra-frontend"
-        sudo journalctl -u ovra-backend -u ovra-frontend -f
+        echo "Backend: ovra-backend | Frontend: ovra-frontend | MCP BOE: ovra-mcp-boe"
+        sudo journalctl -u ovra-backend -u ovra-frontend -u ovra-mcp-boe -f
         ;;
     
     "install")
@@ -90,10 +96,11 @@ case "${1:-}" in
     
     "uninstall")
         echo "🗑️  Uninstalling Ovra AI Services..."
-        sudo systemctl stop ovra-backend ovra-frontend 2>/dev/null || true
-        sudo systemctl disable ovra-backend ovra-frontend 2>/dev/null || true
+        sudo systemctl stop ovra-backend ovra-frontend ovra-mcp-boe 2>/dev/null || true
+        sudo systemctl disable ovra-backend ovra-frontend ovra-mcp-boe 2>/dev/null || true
         sudo rm -f /etc/systemd/system/ovra-backend.service
         sudo rm -f /etc/systemd/system/ovra-frontend.service
+        sudo rm -f /etc/systemd/system/ovra-mcp-boe.service
         sudo systemctl daemon-reload
         echo "✅ Services uninstalled"
         ;;

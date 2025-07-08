@@ -12,8 +12,8 @@ export interface LoginRequest {
 
 export interface RegisterRequest {
   email: string
-  username: string
-  full_name: string
+  firstName: string
+  lastName: string
   password: string
   confirm_password: string
   company?: string
@@ -22,25 +22,22 @@ export interface RegisterRequest {
 }
 
 export interface User {
-  id: number
+  id: string
   email: string
-  full_name: string
-  display_name: string
-  profile_picture: string | null
-  preferred_language: string
-  created_at: string
-  last_login: string | null
+  firstName: string
+  lastName: string
 }
 
 export interface AuthResponse {
-  access_token: string
-  refresh_token: string
-  token_type: string
+  token: string
   user: User
 }
 
 export interface TokenRefreshResponse {
-  access: string
+  access_token: string
+  refresh_token: string
+  token_type: string
+  user: User
 }
 
 export class AuthService extends BaseApiService {
@@ -48,10 +45,10 @@ export class AuthService extends BaseApiService {
    * Login user with email and password
    */
   async login(credentials: LoginRequest): Promise<AuthResponse> {
-    const response = await this.post<AuthResponse>('/auth/login/', credentials)
+    const response = await this.post<AuthResponse>('/auth/login', credentials)
 
-    // Store tokens and user data
-    this.setTokens(response.access_token, response.refresh_token)
+    // Store token and user data
+    this.setTokens(response.token, '')
     this.setUser(response.user)
 
     return response
@@ -61,16 +58,14 @@ export class AuthService extends BaseApiService {
    * Register new user
    */
   async register(userData: RegisterRequest): Promise<AuthResponse> {
-    // Register endpoint only returns user, not tokens
-    const user = await this.post<User>('/auth/register/', userData)
+    // Register endpoint returns user and token
+    const response = await this.post<AuthResponse>('/auth/register', userData)
     
-    // After registration, automatically login
-    const loginResponse = await this.login({ 
-      email: userData.email, 
-      password: userData.password 
-    })
+    // Store token and user data
+    this.setTokens(response.token, '')
+    this.setUser(response.user)
 
-    return loginResponse
+    return response
   }
 
   /**
@@ -102,12 +97,13 @@ export class AuthService extends BaseApiService {
 
     const response = await this.post<TokenRefreshResponse>(
       '/auth/token/refresh/', 
-      { refresh: refreshToken }
+      { refresh_token: refreshToken }
     )
     
-    // Update access token
+    // Update both tokens in localStorage
     if (typeof window !== 'undefined') {
-      localStorage.setItem('access_token', response.access)
+      localStorage.setItem('access_token', response.access_token)
+      localStorage.setItem('refresh_token', response.refresh_token)
     }
     
     return response
@@ -147,6 +143,13 @@ export class AuthService extends BaseApiService {
    */
   getStoredToken(): string | null {
     return this.getAccessToken()
+  }
+
+  /**
+   * Get stored refresh token
+   */
+  getStoredRefreshToken(): string | null {
+    return this.getRefreshToken()
   }
 
   /**
