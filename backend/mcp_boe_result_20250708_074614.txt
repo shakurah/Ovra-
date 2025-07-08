@@ -1,0 +1,61 @@
+User Query: ¿Qué leyes regulan los impuestos para artistas en España?
+BOE Query: 
+        Busca información legal actualizada sobre: ¿Qué leyes regulan los impuestos para artistas en España?
+        
+        Prioriza:
+        1. Legislación específica para profesionales culturales
+        2. Normativa fiscal y tributaria relevante
+        3. Referencias BOE recientes
+        4. Disposiciones sobre derechos de autor si aplica
+        
+        Proporciona las referencias BOE completas y fechas de publicación.
+        
+Result Length: 3141
+
+--- BOE RESULT ---
+Aquí tienes la información legal actualizada sobre las leyes que regulan los impuestos para artistas en España, priorizando la legislación específica para profesionales culturales, normativa fiscal y tributaria relevante, referencias BOE recientes y disposiciones sobre derechos de autor.
+
+### Legislación específica para profesionales culturales
+
+1. **Real Decreto-ley 1/2023**
+   - **Título:** Real Decreto-ley 1/2023, de 10 de enero, de medidas urgentes en materia de incentivos a la contratación laboral y mejora de la protección social de las personas artistas.
+   - **Fecha de publicación:** 11 de enero de 2023
+   - **Referencia BOE:** [BOE-A-2023-625](https://www.boe.es/eli/es/rdl/2023/01/10/1)
+   - **Diario:** Boletín Oficial del Estado, Número 9
+
+2. **Real Decreto 1435/1985**
+   - **Título:** Real Decreto 1435/1985, de 1 de agosto, por el que se regula la relación laboral especial de los artistas en espectáculos públicos.
+   - **Fecha de publicación:** 14 de agosto de 1985
+   - **Referencia BOE:** [BOE-A-1985-17303](https://www.boe.es/eli/es/rd/1985/08/01/1435)
+   - **Diario:** Boletín Oficial del Estado, Número 194
+
+3. **Orden de 30 de noviembre de 1987**
+   - **Título:** Orden de 30 de noviembre de 1987 para la aplicación y desarrollo, en materia de acción protectora, del Real Decreto 2621/1986.
+   - **Fecha de publicación:** 11 de diciembre de 1987
+   - **Referencia BOE:** [BOE-A-1987-27400](https://www.boe.es/eli/es/o/1987/11/30/(2))
+   - **Diario:** Boletín Oficial del Estado, Número 296
+
+### Normativa fiscal y tributaria relevante
+
+1. **Convenio entre España y Vietnam**
+   - **Título:** Convenio entre el Reino de España y la República Socialista de Vietnam para evitar la doble imposición y prevenir la evasión fiscal en materia de impuestos sobre la renta.
+   - **Fecha de publicación:** 10 de enero de 2006
+   - **Referencia BOE:** [BOE-A-2006-278](https://www.boe.es/eli/es/ai/2005/03/07/(1))
+   - **Diario:** Boletín Oficial del Estado, Número 8
+
+2. **Convenio entre España y Uruguay**
+   - **Título:** Convenio entre el Reino de España y la República Oriental del Uruguay para evitar la doble imposición y prevenir la evasión fiscal en materia de impuestos sobre la renta y sobre el patrimonio.
+   - **Fecha de publicación:** 12 de abril de 2011
+   - **Referencia BOE:** [BOE-A-2011-6551](https://www.boe.es/eli/es/ai/2009/10/09/(1))
+   - **Diario:** Boletín Oficial del Estado, Número 87
+
+### Disposiciones sobre derechos de autor
+
+1. **Real Decreto-ley 24/2021**
+   - **Título:** Real Decreto-ley 24/2021, de 2 de noviembre, de transposición de directivas de la Unión Europea en materias de derechos de autor y derechos afines aplicables a determinadas transmisiones en línea.
+   - **Fecha de publicación:** 3 de noviembre de 2021
+   - **Referencia BOE:** [BOE-A-2021-17910](https://www.boe.es/eli/es/rdl/2021/11/02/24)
+   - **Diario:** Boletín Oficial del Estado, Número 263
+
+### Resumen
+Estas leyes y disposiciones son fundamentales para entender el marco legal que regula los impuestos y derechos de los artistas en España. Para más detalles, puedes consultar las referencias BOE proporcionadas.

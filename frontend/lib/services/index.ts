@@ -9,6 +9,7 @@ export type { ApiError } from './base.service'
 
 // Authentication service
 export { authService, AuthService } from './auth.service'
+import { authService } from './auth.service'
 export type { 
   LoginRequest, 
   RegisterRequest, 
@@ -28,6 +29,7 @@ export type {
 
 // Chat service
 export { chatService, ChatService } from './chat.service'
+import { chatService } from './chat.service'
 export type { 
   ChatMessage, 
   Conversation, 

@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "boe_mcp": {
+      "command": "/home/ali/development/ovra_ai/backend/venv/bin/python",
+      "args": [
+        "/home/ali/development/ovra_ai/backend/boe_mcp_server_fixed.py"
+      ]
+    }
+  }
+}

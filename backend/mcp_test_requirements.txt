@@ -1,0 +1,27 @@
+# MCP Testing Dependencies
+# Install with: pip install -r mcp_test_requirements.txt
+
+# Core MCP integration
+mcp-use>=0.1.0
+
+# LangChain providers
+langchain-openai>=0.1.0
+langchain-core>=0.2.0
+langchain>=0.2.0
+
+# Environment and utilities
+python-dotenv>=1.0.0
+aiofiles>=23.0.0
+requests>=2.31.0
+
+# JSON handling and data processing
+orjson>=3.9.0
+pydantic>=2.0.0
+
+# Async support
+aiohttp>=3.8.0
+aiofiles>=23.0.0
+
+# Development and testing
+pytest>=7.0.0
+pytest-asyncio>=0.21.0

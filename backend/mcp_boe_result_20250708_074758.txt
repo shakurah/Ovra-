@@ -1,0 +1,16 @@
+User Query: 2025 vat rates for artists
+BOE Query: 
+        Busca información legal actualizada sobre: 2025 vat rates for artists
+        
+        Prioriza:
+        1. Legislación específica para profesionales culturales
+        2. Normativa fiscal y tributaria relevante
+        3. Referencias BOE recientes
+        4. Disposiciones sobre derechos de autor si aplica
+        
+        Proporciona las referencias BOE completas y fechas de publicación.
+        
+Result Length: 61
+
+--- BOE RESULT ---
+Agent stopped after reaching the maximum number of steps (8).

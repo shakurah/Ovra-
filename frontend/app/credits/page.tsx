@@ -28,7 +28,7 @@ function CreditsPageContent() {
     try {
       // TODO: Replace with actual payment API call
       // await paymentService.purchaseCredits(selectedPlan)
-      toastService.success(t("credits.purchase.success", { credits: selectedPackage.credits }))
+      toastService.success(t("credits.purchase.success"))
       setSelectedPlan(null)
     } catch (error) {
       toastService.handleApiError(error, t("credits.purchase.error"))

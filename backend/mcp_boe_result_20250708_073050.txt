@@ -1,0 +1,35 @@
+User Query: ¿Qué leyes regulan los impuestos para artistas en España?
+BOE Query: 
+        Busca información legal actualizada sobre: ¿Qué leyes regulan los impuestos para artistas en España?
+        
+        Prioriza:
+        1. Legislación específica para profesionales culturales
+        2. Normativa fiscal y tributaria relevante
+        3. Referencias BOE recientes
+        4. Disposiciones sobre derechos de autor si aplica
+        
+        Proporciona las referencias BOE completas y fechas de publicación.
+        
+Result Length: 1381
+
+--- BOE RESULT ---
+He encontrado información relevante sobre la legislación que regula los impuestos para artistas en España, así como normativa fiscal y disposiciones sobre derechos de autor. Aquí están los detalles:
+
+### 1. Legislación específica para profesionales culturales
+No se encontraron leyes específicas bajo el término "profesionales culturales" en la búsqueda realizada.
+
+### 2. Normativa fiscal y tributaria relevante
+No se encontraron leyes específicas bajo el término "normativa fiscal" en la búsqueda realizada.
+
+### 3. Referencias BOE recientes
+- **Real Decreto-ley 24/2021, de 2 de noviembre**
+  - **Descripción**: Transposición de directivas de la Unión Europea en materias de derechos de autor y derechos afines aplicables a determinadas transmisiones en línea y a las retransmisiones de programas de radio y televisión, entre otros.
+  - **Publicación**: Boletín Oficial del Estado, 3 de noviembre de 2021.
+  - **Número de Diario**: 263
+  - **Vigencia**: Desde el 4 de noviembre de 2021.
+  - **URL**: [BOE-A-2021-17910](https://www.boe.es/eli/es/rdl/2021/11/02/24)
+
+### 4. Disposiciones sobre derechos de autor
+La normativa mencionada anteriormente incluye disposiciones sobre derechos de autor, especialmente en el contexto de transmisiones en línea y retransmisiones de programas.
+
+Si necesitas más detalles o información adicional sobre otro aspecto específico, házmelo saber.

@@ -57,6 +57,10 @@ class Settings(BaseSettings):
     FIRST_SUPERUSER: str = os.getenv("FIRST_SUPERUSER", "admin@ovra-ai.com")
     FIRST_SUPERUSER_PASSWORD: str = os.getenv("FIRST_SUPERUSER_PASSWORD", "changeme")
     
+    # OpenAI settings
+    OPENAI_API_KEY: str = os.getenv("OPENAI_API_KEY", "")
+    OPENAI_MODEL: str = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
+    
     model_config = {
         "case_sensitive": True,
         "env_file": ".env",

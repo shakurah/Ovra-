@@ -35,10 +35,10 @@ export function ProtectedRoute({ children, redirectTo = '/login' }: ProtectedRou
               <Scale className="h-6 w-6 text-primary animate-pulse" />
             </div>
             <h2 className="text-lg font-semibold text-foreground mb-2">
-              {t('auth.verifying_access', 'Verifying access...')}
+              {t('auth.verifying_access')}
             </h2>
             <p className="text-sm text-muted-foreground text-center">
-              {t('auth.please_wait_session', 'Please wait while we verify your session')}
+              {t('auth.please_wait_session')}
             </p>
           </CardContent>
         </Card>

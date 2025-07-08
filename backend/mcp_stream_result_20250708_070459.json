@@ -1,0 +1,335 @@
+{
+  "request": {
+    "message": "¿Cuáles son las deducciones fiscales específicas para artistas según el BOE?",
+    "conversation_id": "test_flow_123"
+  },
+  "chunks": [
+    {
+      "content": "# Deducciones Fiscales para Artistas en España\n\n",
+      "length": 48,
+      "is_complete": false,
+      "conversation_id": "test_flow_123"
+    },
+    {
+      "content": "Según la información recopilada del BOE, las ",
+      "length": 45,
+      "is_complete": false,
+      "conversation_id": "test_flow_123"
+    },
+    {
+      "content": "deducciones fiscales específicas para artistas no ",
+      "length": 50,
+      "is_complete": false,
+      "conversation_id": "test_flow_123"
+    },
+    {
+      "content": "están claramente definidas en la normativa actual.",
+      "length": 50,
+      "is_complete": false,
+      "conversation_id": "test_flow_123"
+    },
+    {
+      "content": " Sin embargo, se pueden considerar algunas ",
+      "length": 43,
+      "is_complete": false,
+      "conversation_id": "test_flow_123"
+    },
+    {
+      "content": "referencias relevantes que pueden influir en su ",
+      "length": 48,
+      "is_complete": false,
+      "conversation_id": "test_flow_123"
+    },
+    {
+      "content": "situación fiscal:\n\n## 1. Legislación Específica\n\n",
+      "length": 49,
+      "is_complete": false,
+      "conversation_id": "test_flow_123"
+    },
+    {
+      "content": "### Real Decreto-ley 1/2023, de 10 de enero\n- ",
+      "length": 46,
+      "is_complete": false,
+      "conversation_id": "test_flow_123"
+    },
+    {
+      "content": "**Descripción:** Este decreto establece medidas ",
+      "length": 48,
+      "is_complete": false,
+      "conversation_id": "test_flow_123"
+    },
+    {
+      "content": "urgentes en materia de incentivos a la ",
+      "length": 39,
+      "is_complete": false,
+      "conversation_id": "test_flow_123"
+    },
+    {
+      "content": "contratación laboral y mejora de la protección ",
+      "length": 47,
+      "is_complete": false,
+      "conversation_id": "test_flow_123"
+    },
+    {
+      "content": "social de las personas artistas.\n- ",
+      "length": 35,
+      "is_complete": false,
+      "conversation_id": "test_flow_123"
+    },
+    {
+      "content": "**Publicación:** BOE núm. 9, 11 de enero de 2023.\n",
+      "length": 50,
+      "is_complete": false,
+      "conversation_id": "test_flow_123"
+    },
+    {
+      "content": "- **URL:** [BOE-A-2023-625](https://www.boe.",
+      "length": 44,
+      "is_complete": false,
+      "conversation_id": "test_flow_123"
+    },
+    {
+      "content": "es/eli/es/rdl/2023/01/10/1)\n\n### Orden de 30 de ",
+      "length": 48,
+      "is_complete": false,
+      "conversation_id": "test_flow_123"
+    },
+    {
+      "content": "noviembre de 1987\n- **Descripción:** Desarrolla ",
+      "length": 48,
+      "is_complete": false,
+      "conversation_id": "test_flow_123"
+    },
+    {
+      "content": "la acción protectora para artistas integrados en ",
+      "length": 49,
+      "is_complete": false,
+      "conversation_id": "test_flow_123"
+    },
+    {
+      "content": "el Régimen General de la Seguridad Social.\n- ",
+      "length": 45,
+      "is_complete": false,
+      "conversation_id": "test_flow_123"
+    },
+    {
+      "content": "**Publicación:** BOE núm. 296, 11 de diciembre de ",
+      "length": 50,
+      "is_complete": false,
+      "conversation_id": "test_flow_123"
+    },
+    {
+      "content": "1987.\n- **URL:** [BOE-A-1987-27400](https://www.",
+      "length": 48,
+      "is_complete": false,
+      "conversation_id": "test_flow_123"
+    },
+    {
+      "content": "boe.es/eli/es/o/1987/11/30/(2))\n\n### Real Decreto ",
+      "length": 50,
+      "is_complete": false,
+      "conversation_id": "test_flow_123"
+    },
+    {
+      "content": "2621/1986, de 24 de diciembre\n- **Descripción:** ",
+      "length": 49,
+      "is_complete": false,
+      "conversation_id": "test_flow_123"
+    },
+    {
+      "content": "Integra a los artistas en el Régimen General de ",
+      "length": 48,
+      "is_complete": false,
+      "conversation_id": "test_flow_123"
+    },
+    {
+      "content": "la Seguridad Social, lo que puede afectar su ",
+      "length": 45,
+      "is_complete": false,
+      "conversation_id": "test_flow_123"
+    },
+    {
+      "content": "situación fiscal.\n- **Publicación:** BOE núm. 312,",
+      "length": 50,
+      "is_complete": false,
+      "conversation_id": "test_flow_123"
+    },
+    {
+      "content": " 30 de diciembre de 1986.\n- **URL:** ",
+      "length": 37,
+      "is_complete": false,
+      "conversation_id": "test_flow_123"
+    },
+    {
+      "content": "[BOE-A-1986-33763](https://www.boe.",
+      "length": 35,
+      "is_complete": false,
+      "conversation_id": "test_flow_123"
+    },
+    {
+      "content": "es/eli/es/rd/1986/12/24/2621)\n\n## 2. Normativa ",
+      "length": 47,
+      "is_complete": false,
+      "conversation_id": "test_flow_123"
+    },
+    {
+      "content": "Fiscal y Tributaria Relevante\n\n### Real Decreto ",
+      "length": 48,
+      "is_complete": false,
+      "conversation_id": "test_flow_123"
+    },
+    {
+      "content": "1432/2003, de 21 de noviembre\n- **Descripción:** ",
+      "length": 49,
+      "is_complete": false,
+      "conversation_id": "test_flow_123"
+    },
+    {
+      "content": "Regula la emisión de informes motivados sobre ",
+      "length": 46,
+      "is_complete": false,
+      "conversation_id": "test_flow_123"
+    },
+    {
+      "content": "deducciones fiscales por actividades de ",
+      "length": 40,
+      "is_complete": false,
+      "conversation_id": "test_flow_123"
+    },
+    {
+      "content": "investigación y desarrollo, aunque no se centra ",
+      "length": 48,
+      "is_complete": false,
+      "conversation_id": "test_flow_123"
+    },
+    {
+      "content": "específicamente en artistas.\n- **Publicación:** ",
+      "length": 48,
+      "is_complete": false,
+      "conversation_id": "test_flow_123"
+    },
+    {
+      "content": "BOE núm. 286, 29 de noviembre de 2003.\n- **URL:** ",
+      "length": 50,
+      "is_complete": false,
+      "conversation_id": "test_flow_123"
+    },
+    {
+      "content": "[BOE-A-2003-21847](https://www.boe.",
+      "length": 35,
+      "is_complete": false,
+      "conversation_id": "test_flow_123"
+    },
+    {
+      "content": "es/eli/es/rd/2003/11/21/1432)\n\n## 3. ",
+      "length": 37,
+      "is_complete": false,
+      "conversation_id": "test_flow_123"
+    },
+    {
+      "content": "Disposiciones sobre Derechos de Autor\nNo se han ",
+      "length": 48,
+      "is_complete": false,
+      "conversation_id": "test_flow_123"
+    },
+    {
+      "content": "encontrado disposiciones específicas sobre ",
+      "length": 43,
+      "is_complete": false,
+      "conversation_id": "test_flow_123"
+    },
+    {
+      "content": "derechos de autor que incluyan deducciones ",
+      "length": 43,
+      "is_complete": false,
+      "conversation_id": "test_flow_123"
+    },
+    {
+      "content": "fiscales para artistas en la normativa reciente.\n\n",
+      "length": 50,
+      "is_complete": false,
+      "conversation_id": "test_flow_123"
+    },
+    {
+      "content": "## Resumen\nAunque no existen deducciones fiscales ",
+      "length": 50,
+      "is_complete": false,
+      "conversation_id": "test_flow_123"
+    },
+    {
+      "content": "específicas claramente definidas para artistas en ",
+      "length": 50,
+      "is_complete": false,
+      "conversation_id": "test_flow_123"
+    },
+    {
+      "content": "la legislación actual, se recomienda revisar las ",
+      "length": 49,
+      "is_complete": false,
+      "conversation_id": "test_flow_123"
+    },
+    {
+      "content": "leyes mencionadas para obtener información más ",
+      "length": 47,
+      "is_complete": false,
+      "conversation_id": "test_flow_123"
+    },
+    {
+      "content": "detallada sobre las obligaciones fiscales y ",
+      "length": 44,
+      "is_complete": false,
+      "conversation_id": "test_flow_123"
+    },
+    {
+      "content": "posibles deducciones aplicables. Además, la ",
+      "length": 44,
+      "is_complete": false,
+      "conversation_id": "test_flow_123"
+    },
+    {
+      "content": "legislación reciente puede ofrecer incentivos y ",
+      "length": 48,
+      "is_complete": false,
+      "conversation_id": "test_flow_123"
+    },
+    {
+      "content": "mejoras en la protección social que podrían ser ",
+      "length": 48,
+      "is_complete": false,
+      "conversation_id": "test_flow_123"
+    },
+    {
+      "content": "beneficiosos para los artistas.\n\n### ",
+      "length": 37,
+      "is_complete": false,
+      "conversation_id": "test_flow_123"
+    },
+    {
+      "content": "Recomendación\nPara un análisis más profundo y ",
+      "length": 46,
+      "is_complete": false,
+      "conversation_id": "test_flow_123"
+    },
+    {
+      "content": "personalizado de la situación fiscal, se aconseja ",
+      "length": 50,
+      "is_complete": false,
+      "conversation_id": "test_flow_123"
+    },
+    {
+      "content": "consultar con un asesor fiscal especializado en ",
+      "length": 48,
+      "is_complete": false,
+      "conversation_id": "test_flow_123"
+    },
+    {
+      "content": "el ámbito artístico.",
+      "length": 20,
+      "is_complete": true,
+      "conversation_id": "test_flow_123"
+    }
+  ],
+  "total_content": "# Deducciones Fiscales para Artistas en España\n\nSegún la información recopilada del BOE, las deducciones fiscales específicas para artistas no están claramente definidas en la normativa actual. Sin embargo, se pueden considerar algunas referencias relevantes que pueden influir en su situación fiscal:\n\n## 1. Legislación Específica\n\n### Real Decreto-ley 1/2023, de 10 de enero\n- **Descripción:** Este decreto establece medidas urgentes en materia de incentivos a la contratación laboral y mejora de la protección social de las personas artistas.\n- **Publicación:** BOE núm. 9, 11 de enero de 2023.\n- **URL:** [BOE-A-2023-625](https://www.boe.es/eli/es/rdl/2023/01/10/1)\n\n### Orden de 30 de noviembre de 1987\n- **Descripción:** Desarrolla la acción protectora para artistas integrados en el Régimen General de la Seguridad Social.\n- **Publicación:** BOE núm. 296, 11 de diciembre de 1987.\n- **URL:** [BOE-A-1987-27400](https://www.boe.es/eli/es/o/1987/11/30/(2))\n\n### Real Decreto 2621/1986, de 24 de diciembre\n- **Descripción:** Integra a los artistas en el Régimen General de la Seguridad Social, lo que puede afectar su situación fiscal.\n- **Publicación:** BOE núm. 312, 30 de diciembre de 1986.\n- **URL:** [BOE-A-1986-33763](https://www.boe.es/eli/es/rd/1986/12/24/2621)\n\n## 2. Normativa Fiscal y Tributaria Relevante\n\n### Real Decreto 1432/2003, de 21 de noviembre\n- **Descripción:** Regula la emisión de informes motivados sobre deducciones fiscales por actividades de investigación y desarrollo, aunque no se centra específicamente en artistas.\n- **Publicación:** BOE núm. 286, 29 de noviembre de 2003.\n- **URL:** [BOE-A-2003-21847](https://www.boe.es/eli/es/rd/2003/11/21/1432)\n\n## 3. Disposiciones sobre Derechos de Autor\nNo se han encontrado disposiciones específicas sobre derechos de autor que incluyan deducciones fiscales para artistas en la normativa reciente.\n\n## Resumen\nAunque no existen deducciones fiscales específicas claramente definidas para artistas en la legislación actual, se recomienda revisar las leyes mencionadas para obtener información más detallada sobre las obligaciones fiscales y posibles deducciones aplicables. Además, la legislación reciente puede ofrecer incentivos y mejoras en la protección social que podrían ser beneficiosos para los artistas.\n\n### Recomendación\nPara un análisis más profundo y personalizado de la situación fiscal, se aconseja consultar con un asesor fiscal especializado en el ámbito artístico.",
+  "total_chunks": 54,
+  "total_length": 2457
+}

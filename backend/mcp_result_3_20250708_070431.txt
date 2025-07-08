@@ -1,0 +1,47 @@
+Query: Deducciones fiscales para artistas según el BOE
+BOE Query: 
+        Busca información legal actualizada sobre: Deducciones fiscales para artistas según el BOE
+        
+        Prioriza:
+        1. Legislación específica para profesionales culturales
+        2. Normativa fiscal y tributaria relevante
+        3. Referencias BOE recientes
+        4. Disposiciones sobre derechos de autor si aplica
+        
+        Proporciona las referencias BOE completas y fechas de publicación.
+        
+Duration: 15.16s
+
+Result:
+He recopilado información sobre las deducciones fiscales para artistas según el BOE, priorizando la legislación específica, normativa fiscal y tributaria relevante, así como disposiciones sobre derechos de autor. A continuación, se presentan las referencias encontradas:
+
+### 1. Legislación específica para profesionales culturales
+1. **Real Decreto-ley 1/2023, de 10 de enero**
+   - **Título:** Medidas urgentes en materia de incentivos a la contratación laboral y mejora de la protección social de las personas artistas.
+   - **Publicación:** BOE núm. 9, 11 de enero de 2023.
+   - **URL:** [BOE-A-2023-625](https://www.boe.es/eli/es/rdl/2023/01/10/1)
+
+2. **Orden de 30 de noviembre de 1987**
+   - **Título:** Aplicación y desarrollo, en materia de acción protectora, del Real Decreto 2621/1986, de 24 de diciembre, por el que se integran los Regímenes Especiales de la Seguridad Social de Trabajadores Ferroviarios, Jugadores de Fútbol, Representantes de Comercio, Toreros y Artistas.
+   - **Publicación:** BOE núm. 296, 11 de diciembre de 1987.
+   - **URL:** [BOE-A-1987-27400](https://www.boe.es/eli/es/o/1987/11/30/(2))
+
+3. **Real Decreto 2621/1986, de 24 de diciembre**
+   - **Título:** Integración de los Regímenes Especiales de la Seguridad Social de Trabajadores Ferroviarios, Jugadores de Fútbol, Representantes de Comercio, Toreros y Artistas en el Régimen General.
+   - **Publicación:** BOE núm. 312, 30 de diciembre de 1986.
+   - **URL:** [BOE-A-1986-33763](https://www.boe.es/eli/es/rd/1986/12/24/2621)
+
+### 2. Normativa fiscal y tributaria relevante
+No se encontraron referencias específicas sobre deducciones fiscales para artistas en la normativa fiscal y tributaria reciente.
+
+### 3. Referencias BOE recientes
+1. **Real Decreto-ley 24/2021, de 2 de noviembre**
+   - **Título:** Transposición de directivas de la Unión Europea en materias de derechos de autor y derechos afines aplicables a determinadas transmisiones en línea.
+   - **Publicación:** BOE núm. 263, 3 de noviembre de 2021.
+   - **URL:** [BOE-A-2021-17910](https://www.boe.es/eli/es/rdl/2021/11/02/24)
+
+### 4. Disposiciones sobre derechos de autor
+La referencia anterior también incluye disposiciones sobre derechos de autor, que son relevantes para los profesionales culturales.
+
+### Resumen
+Se han encontrado varias normativas relevantes para artistas, especialmente en el contexto de la protección social y derechos de autor. Sin embargo, no se identificaron deducciones fiscales específicas en la normativa reciente. Se recomienda revisar las leyes mencionadas para obtener información más detallada sobre las obligaciones fiscales y posibles deducciones aplicables a artistas.

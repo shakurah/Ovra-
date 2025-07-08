@@ -1,0 +1,37 @@
+User Query: How should I invoice as a cultural freelancer 2025
+BOE Query: 
+        Busca información legal actualizada sobre: How should I invoice as a cultural freelancer 2025
+        
+        Prioriza:
+        1. Legislación específica para profesionales culturales
+        2. Normativa fiscal y tributaria relevante
+        3. Referencias BOE recientes
+        4. Disposiciones sobre derechos de autor si aplica
+        
+        Proporciona las referencias BOE completas y fechas de publicación.
+        
+Result Length: 1880
+
+--- BOE RESULT ---
+He encontrado información relevante sobre la legislación para profesionales culturales, normativa fiscal y disposiciones sobre derechos de autor. A continuación, se presentan las referencias del BOE y sus fechas de publicación:
+
+### 1. Legislación específica para profesionales culturales
+No se encontraron resultados específicos en la búsqueda de legislación para "profesionales culturales". Sin embargo, es recomendable revisar normativas relacionadas con la cultura y el arte en el contexto de la legislación general.
+
+### 2. Normativa fiscal y tributaria relevante
+No se encontraron resultados específicos en la búsqueda de "normativa fiscal". Es posible que debas consultar la legislación tributaria general aplicable a los autónomos y freelancers en España.
+
+### 3. Referencias BOE recientes sobre derechos de autor
+- **Título**: [Real Decreto-ley 24/2021, de 2 de noviembre](https://www.boe.es/buscar/act.php?id=BOE-A-2021-17910)
+  - **Identificador**: BOE-A-2021-17910
+  - **Fecha de publicación**: 3 de noviembre de 2021
+  - **Diario**: Boletín Oficial del Estado
+  - **Número de diario**: 263
+  - **Fecha de vigencia**: 4 de noviembre de 2021
+  - **Descripción**: Este decreto-ley transfiere directivas de la Unión Europea en varias materias, incluyendo derechos de autor y derechos afines aplicables a determinadas transmisiones en línea.
+
+### 4. Disposiciones sobre derechos de autor
+El Real Decreto-ley mencionado incluye disposiciones sobre derechos de autor, que son relevantes para los profesionales culturales que facturan por sus servicios.
+
+### Conclusión
+Para una facturación adecuada como freelancer cultural en 2025, es esencial estar al tanto de la normativa fiscal aplicable y las disposiciones sobre derechos de autor. Te recomendaría consultar con un asesor fiscal especializado en el ámbito cultural para obtener información más detallada y actualizada.

@@ -56,6 +56,7 @@ export interface ChatResponse {
     queries_used: number
     queries_remaining: number
   }
+  usage?: any
 }
 
 export interface ConversationListResponse {
@@ -67,36 +68,37 @@ export interface ConversationListResponse {
 
 export class ChatService extends BaseApiService {
   constructor() {
-    super(process.env.NEXT_PUBLIC_API_URL || 'https://0b44-182-180-150-188.ngrok-free.app/api/v1')
+    super(process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1')
   }
   /**
    * Send a message to the AI assistant (non-streaming)
    */
   async sendMessage(request: ChatRequest): Promise<ChatResponse> {
     const payload = {
-      question: request.message,
-      session_id: request.conversation_id,
-      law_filter: request.context?.law_filter,
-      stream: false
+      message: request.message,
+      conversation_id: request.conversation_id,
+      context: request.context ? [
+        { role: 'system', content: `User profession: ${request.context.user_profession || 'General'}` }
+      ] : []
     }
 
     try {
-      const response = await this.post<any>('/chat/', payload, true)
+      const response = await this.post<any>('/chat/message/', payload, true)
 
       return {
         message: {
           id: generateUUID(),
           role: 'assistant',
-          content: response.data.answer,
+          content: response.message || response.data?.message,
           timestamp: new Date().toISOString(),
           metadata: {
-            legal_references: response.data.citations || [],
+            legal_references: response.data?.citations || [],
             confidence_score: 0.9,
-            processing_time: response.data.duration_ms
+            processing_time: response.data?.duration_ms
           }
         },
-        conversation_id: response.data.session_id || request.conversation_id,
-        usage: response.data.usage
+        conversation_id: response.conversation_id || response.data?.conversation_id || request.conversation_id,
+        usage: response.data?.usage
       }
     } catch (error: any) {
       // Handle session not found - automatically create new session
@@ -104,25 +106,25 @@ export class ChatService extends BaseApiService {
         // Try again without session_id to create a new session
         const newPayload = {
           ...payload,
-          session_id: undefined
+          conversation_id: undefined
         }
 
-        const retryResponse = await this.post<any>('/chat/', newPayload, true)
+        const retryResponse = await this.post<any>('/chat/message/', newPayload, true)
 
         return {
           message: {
             id: generateUUID(),
             role: 'assistant',
-            content: retryResponse.data.answer,
+            content: retryResponse.message || retryResponse.data?.message,
             timestamp: new Date().toISOString(),
             metadata: {
-              legal_references: retryResponse.data.citations || [],
+              legal_references: retryResponse.data?.citations || [],
               confidence_score: 0.9,
-              processing_time: retryResponse.data.duration_ms
+              processing_time: retryResponse.data?.duration_ms
             }
           },
-          conversation_id: retryResponse.data.session_id,
-          usage: retryResponse.data.usage
+          conversation_id: retryResponse.conversation_id || retryResponse.data?.conversation_id,
+          usage: retryResponse.data?.usage
         }
       }
 
@@ -137,7 +139,7 @@ export class ChatService extends BaseApiService {
   async sendStreamingMessage(
     request: ChatRequest,
     onChunk: (chunk: string) => void,
-    onComplete: (conversationId: string) => void,
+    onComplete: (conversationId: string, citations?: any[]) => void,
     onError: (error: string) => void
   ): Promise<void> {
     const payload = {
@@ -232,8 +234,8 @@ export class ChatService extends BaseApiService {
                 conversationId = data.conversation_id
               }
 
-              if (data.is_complete) {
-                onComplete(conversationId, [])
+              if (data.is_complete || data.done) {
+                onComplete(conversationId, data.citations || [])
                 return
               }
             } catch (e) {
@@ -285,11 +287,11 @@ export class ChatService extends BaseApiService {
       const response = await this.get<any>(`/chat/sessions/${conversationId}/`, true)
       
       // Validate response structure
-      if (!response || !response.data) {
+      if (!response || !response.session) {
         throw new Error('Invalid response structure')
       }
       
-      const { session, messages } = response.data
+      const { session, messages } = response
       
       // Validate messages array
       if (!Array.isArray(messages)) {
@@ -357,24 +359,14 @@ export class ChatService extends BaseApiService {
     page: number
     page_size: number
   }> {
-    try {
-      const response = await this.get<any>(`/chat/history/?page=${page}&page_size=${pageSize}`, true)
-      return {
-        success: true,
-        data: response.data || response.results || [],
-        total: response.total || response.count || 0,
-        page: response.page || page,
-        page_size: response.page_size || pageSize
-      }
-    } catch (error) {
-      console.error('Error fetching chat history:', error)
-      return {
-        success: false,
-        data: [],
-        total: 0,
-        page: 1,
-        page_size: pageSize
-      }
+    // TODO: Implement when backend supports chat history
+    console.warn('Chat history not yet implemented in backend')
+    return {
+      success: false,
+      data: [],
+      total: 0,
+      page: 1,
+      page_size: pageSize
     }
   }
 
@@ -388,7 +380,7 @@ export class ChatService extends BaseApiService {
     try {
       const response = await this.get<any>(`/chat/sessions/?page=${page}&limit=${limit}`, true)
       
-      const sessions = response.data || response.results || []
+      const sessions = response.results || []
       
       const conversations: Conversation[] = sessions.map((session: any) => ({
         id: session.id,
@@ -401,9 +393,9 @@ export class ChatService extends BaseApiService {
 
       return {
         results: conversations,
-        count: response.total || response.count || conversations.length,
-        next: response.next || null,
-        previous: response.previous || null
+        count: response.total || conversations.length,
+        next: null, // Backend uses page/limit instead of next/previous
+        previous: null
       }
     } catch (error) {
       console.error('Error fetching conversations:', error)

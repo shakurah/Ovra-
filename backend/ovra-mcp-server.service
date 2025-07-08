@@ -1,0 +1,17 @@
+[Unit]
+Description=OVRA AI HTTP MCP Server
+After=network.target
+Wants=ovra-backend.service
+
+[Service]
+Type=simple
+User=ali
+Group=ali
+WorkingDirectory=/home/ali/development/ovra_ai/backend
+Environment=PATH=/home/ali/development/ovra_ai/backend/venv/bin
+ExecStart=/home/ali/development/ovra_ai/backend/venv/bin/python boe_mcp_http_server.py
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,33 @@
+{
+  "test_timestamp": "2025-07-08T06:21:03.334491",
+  "test_type": "BOE MCP Integration Test",
+  "queries_results": [
+    {
+      "query": "Buscar legislación consolidada sobre tipos impositivos de IRPF para salarios en 2025",
+      "result": "No se encontró legislación consolidada sobre tipos impositivos de IRPF para salarios en el año 2025. Es posible que no haya normativa específica publicada o que la búsqueda no haya devuelto resultados relevantes. Si necesitas información adicional o buscas otro tipo de legislación, házmelo saber.",
+      "timestamp": "2025-07-08T06:20:42.205491"
+    },
+    {
+      "query": "Mostrar las tablas de retenciones del IRPF para trabajadores por cuenta ajena 2025",
+      "result": "No se encontraron tablas de retenciones del IRPF para trabajadores por cuenta ajena para el año 2025 en la legislación consolidada. Esto puede deberse a que aún no se ha publicado normativa específica para ese año o que no hay resultados relevantes en la búsqueda.\n\nSi necesitas información adicional o deseas buscar otro tipo de normativa, por favor házmelo saber.",
+      "timestamp": "2025-07-08T06:20:46.836745"
+    },
+    {
+      "query": "Consultar normativa vigente sobre deducciones fiscales en el IRPF 2025",
+      "result": "No se encontró normativa vigente sobre deducciones fiscales en el IRPF para el año 2025. Esto puede indicar que aún no se ha publicado normativa específica para ese año o que no hay resultados relevantes en la búsqueda.\n\nSi necesitas información adicional o deseas buscar otro tipo de normativa, por favor házmelo saber.",
+      "timestamp": "2025-07-08T06:20:53.182304"
+    }
+  ],
+  "streaming_result": "Error in streaming: 'MCPAgent' object has no attribute 'astream'",
+  "openai_summary": "### Resumen sobre la legislación fiscal del IRPF para 2025\n\n#### 1. Tipos impositivos vigentes para salarios\n- **Estado actual**: No se ha encontrado legislación consolidada sobre los tipos impositivos del IRPF aplicables a salarios para el año 2025. Esto sugiere que la normativa específica aún no ha sido publicada o no está disponible en la búsqueda realizada.\n\n#### 2. Tablas de retenciones aplicables\n- **Estado actual**: No se han encontrado tablas de retenciones del IRPF para trabajadores por cuenta ajena para el año 2025. Esto puede indicar que la normativa correspondiente aún no ha sido publicada o no se ha podido acceder a información relevante.\n\n#### 3. Principales deducciones disponibles\n- **Estado actual**: No se ha encontrado normativa vigente sobre deducciones fiscales en el IRPF para el año 2025. Esto sugiere que la información sobre deducciones aún no está disponible o no se ha publicado.\n\n#### 4. Cambios relevantes respecto a años anteriores\n- **Estado actual**: Dado que no se ha encontrado información específica para 2025, no es posible identificar cambios relevantes respecto a años anteriores en términos de tipos impositivos, retenciones o deducciones.\n\n#### 5. Recomendaciones prácticas\n- **Consultar regularmente el BOE**: Dado que la normativa para 2025 aún no está disponible, es recomendable revisar periódicamente el Boletín Oficial del Estado (BOE) para estar al tanto de cualquier actualización o publicación relacionada con el IRPF.\n- **Asesoría fiscal**: Considerar la posibilidad de consultar a un asesor fiscal para obtener información actualizada y específica sobre la situación fiscal personal, especialmente en un año donde la normativa aún no está clara.\n- **Preparación anticipada**: Mantener un registro de ingresos y gastos a lo largo del año para facilitar la declaración de la renta una vez que se publique la normativa correspondiente.\n\n### Conclusión\nLa falta de información específica sobre los tipos impositivos, tablas de retenciones y deducciones para el IRPF en 2025 indica que se debe estar atento a futuras publicaciones para cumplir adecuadamente con las obligaciones fiscales.",
+  "configuration": {
+    "mcpServers": {
+      "boe_mcp": {
+        "command": "uvx",
+        "args": [
+          "boe_mcp"
+        ]
+      }
+    }
+  }
+}
