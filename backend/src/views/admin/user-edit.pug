@@ -1,0 +1,38 @@
+extends layout
+
+block content
+  .row
+    .col-md-6
+      .box.box-primary
+        .box-header.with-border
+          h3.box-title Edit User
+        
+        form(action=`/admin/users/${editUser.id}/edit`, method='post')
+          .box-body
+            .form-group
+              label(for='email') Email
+              input#email.form-control(type='email', name='email', value=editUser.email, required)
+            
+            .form-group
+              label(for='firstName') First Name
+              input#firstName.form-control(type='text', name='firstName', value=editUser.firstName || '')
+            
+            .form-group
+              label(for='lastName') Last Name
+              input#lastName.form-control(type='text', name='lastName', value=editUser.lastName || '')
+            
+            .form-group
+              .checkbox
+                label
+                  input(type='checkbox', name='isActive', checked=editUser.isActive)
+                  |  Active
+            
+            .form-group
+              .checkbox
+                label
+                  input(type='checkbox', name='isSuperuser', checked=editUser.isSuperuser)
+                  |  Superuser
+          
+          .box-footer
+            button.btn.btn-primary(type='submit') Update User
+            a.btn.btn-default(href='/admin/users') Cancel

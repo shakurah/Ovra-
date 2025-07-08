@@ -1,0 +1,66 @@
+extends layout
+
+block content
+  .row
+    .col-md-8
+      .box.box-primary
+        .box-header.with-border
+          h3.box-title Session Details
+        
+        .box-body
+          .form-group
+            label Session ID:
+            p #{session.id}
+          
+          .form-group
+            label User:
+            p #{session.user.email} (#{session.user.firstName || ''} #{session.user.lastName || ''})
+          
+          .form-group
+            label Title:
+            p #{session.title}
+          
+          .form-group
+            label Status:
+            p
+              if session.isActive
+                span.label.label-success Active
+              else
+                span.label.label-danger Inactive
+          
+          .form-group
+            label Created:
+            p #{new Date(session.createdAt).toLocaleString()}
+          
+          .form-group
+            label Updated:
+            p #{new Date(session.updatedAt).toLocaleString()}
+        
+        .box-footer
+          a.btn.btn-primary(href=`/admin/sessions/${session.id}/edit`) Edit Session
+          a.btn.btn-default(href='/admin/sessions') Back to Sessions
+    
+    .col-md-12
+      .box.box-info
+        .box-header.with-border
+          h3.box-title Messages in this Session
+        
+        .box-body
+          if session.messages && session.messages.length > 0
+            each message in session.messages
+              .message(class=message.role === 'user' ? 'message-user' : 'message-assistant')
+                .message-header
+                  strong #{message.role === 'user' ? 'User' : 'Assistant'}
+                  small.pull-right #{new Date(message.createdAt).toLocaleString()}
+                .message-body
+                  p #{message.content}
+                hr
+          else
+            p No messages in this session yet.
+
+block scripts
+  style.
+    .message-user { background-color: #e3f2fd; padding: 10px; border-radius: 5px; margin-bottom: 10px; }
+    .message-assistant { background-color: #f3e5f5; padding: 10px; border-radius: 5px; margin-bottom: 10px; }
+    .message-header { margin-bottom: 5px; }
+    .message-body { margin-bottom: 0; }

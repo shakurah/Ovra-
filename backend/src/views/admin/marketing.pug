@@ -1,0 +1,80 @@
+extends layout
+
+block content
+  .row
+    .col-xs-12
+      .box
+        .box-header
+          h3.box-title Marketing Emails Management
+          .box-tools
+            a.btn.btn-success(href='/admin/marketing/create')
+              i.fa.fa-plus
+              |  Add New Email
+        
+        .box-body
+          .table-responsive
+            table#marketing-table.table.table-bordered.table-striped
+              thead
+                tr
+                  th ID
+                  th Email
+                  th Source Website
+                  th Privacy Accepted
+                  th Terms Accepted
+                  th Status
+                  th Created
+                  th Actions
+              tbody
+                each email in emails
+                  tr
+                    td #{email.id.substring(0, 8)}...
+                    td #{email.email}
+                    td #{email.sourceWebsite || 'N/A'}
+                    td
+                      if email.privacyAccepted
+                        span.label.label-success Yes
+                      else
+                        span.label.label-danger No
+                    td
+                      if email.termsAccepted
+                        span.label.label-success Yes
+                      else
+                        span.label.label-danger No
+                    td
+                      if email.isActive
+                        span.label.label-success Active
+                      else
+                        span.label.label-danger Inactive
+                    td #{new Date(email.createdAt).toLocaleDateString()}
+                    td
+                      a.btn.btn-sm.btn-info(href=`/admin/marketing/${email.id}`)
+                        i.fa.fa-eye
+                        |  View
+                      a.btn.btn-sm.btn-primary(href=`/admin/marketing/${email.id}/edit`)
+                        i.fa.fa-edit
+                        |  Edit
+                      a.btn.btn-sm.btn-danger(href=`/admin/marketing/${email.id}/delete`, onclick='return confirm("Are you sure?")')
+                        i.fa.fa-trash
+                        |  Delete
+
+block scripts
+  script
+    | $(document).ready(function() {
+    |   $('#marketing-table').DataTable({
+    |     "responsive": true,
+    |     "lengthChange": false,
+    |     "autoWidth": false,
+    |     "searching": true,
+    |     "ordering": true,
+    |     "info": true,
+    |     "paging": true,
+    |     "pageLength": 25,
+    |     "language": {
+    |       "search": "Search emails:",
+    |       "lengthMenu": "Show _MENU_ emails per page",
+    |       "info": "Showing _START_ to _END_ of _TOTAL_ emails",
+    |       "infoEmpty": "No emails found",
+    |       "infoFiltered": "(filtered from _MAX_ total emails)"
+    |     }
+    |   });
+    | });

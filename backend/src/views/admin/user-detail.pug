@@ -1,0 +1,49 @@
+extends layout
+
+block content
+  .row
+    .col-md-6
+      .box.box-primary
+        .box-header.with-border
+          h3.box-title User Details
+        
+        .box-body
+          .form-group
+            label Email:
+            p #{viewUser.email}
+          
+          .form-group
+            label First Name:
+            p #{viewUser.firstName || 'N/A'}
+          
+          .form-group
+            label Last Name:
+            p #{viewUser.lastName || 'N/A'}
+          
+          .form-group
+            label Status:
+            p
+              if viewUser.isActive
+                span.label.label-success Active
+              else
+                span.label.label-danger Inactive
+          
+          .form-group
+            label Superuser:
+            p
+              if viewUser.isSuperuser
+                span.label.label-warning Yes
+              else
+                span.label.label-default No
+          
+          .form-group
+            label Created:
+            p #{new Date(viewUser.createdAt).toLocaleString()}
+          
+          .form-group
+            label Updated:
+            p #{new Date(viewUser.updatedAt).toLocaleString()}
+        
+        .box-footer
+          a.btn.btn-primary(href=`/admin/users/${viewUser.id}/edit`) Edit User
+          a.btn.btn-default(href='/admin/users') Back to Users

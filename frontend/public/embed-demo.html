@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OVRA Widget - Ejemplo de Integración</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .container {
+            max-width: 800px;
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            margin: 20px;
+        }
+        
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+        }
+        
+        .subtitle {
+            text-align: center;
+            color: #666;
+            font-size: 1.2em;
+            margin-bottom: 40px;
+        }
+        
+        .features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+        
+        .feature {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+        }
+        
+        .feature h3 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+        
+        .feature p {
+            color: #666;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+        
+        .code-example {
+            background: #1a1a1a;
+            color: #f8f8f2;
+            padding: 20px;
+            border-radius: 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            overflow-x: auto;
+            margin: 20px 0;
+        }
+        
+        .integration-section {
+            background: #f8f9fa;
+            padding: 30px;
+            border-radius: 15px;
+            margin: 30px 0;
+        }
+        
+        .integration-section h2 {
+            color: #333;
+            margin-bottom: 20px;
+        }
+        
+        .note {
+            background: #e3f2fd;
+            border-left: 4px solid #2196f3;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 0 5px 5px 0;
+        }
+        
+        .config-options {
+            background: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+        
+        .config-options h3 {
+            color: #333;
+            margin-bottom: 15px;
+        }
+        
+        .config-option {
+            margin-bottom: 10px;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 5px;
+            font-family: monospace;
+        }
+        
+        .try-button {
+            background: #4CAF50;
+            color: white;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 25px;
+            font-size: 16px;
+            cursor: pointer;
+            display: block;
+            margin: 30px auto;
+            box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);
+            transition: all 0.3s ease;
+        }
+        
+        .try-button:hover {
+            background: #45a049;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(76, 175, 80, 0.4);
+        }
+        
+        .arrow {
+            position: fixed;
+            bottom: 100px;
+            right: 100px;
+            font-size: 24px;
+            color: #4CAF50;
+            animation: bounce 2s infinite;
+        }
+        
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% {
+                transform: translateY(0);
+            }
+            40% {
+                transform: translateY(-10px);
+            }
+            60% {
+                transform: translateY(-5px);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🤖 OVRA AI Widget</h1>
+        <p class="subtitle">Integra nuestro asistente fiscal en tu sitio web</p>
+        
+        <div class="features">
+            <div class="feature">
+                <h3>🚀 Fácil Integración</h3>
+                <p>Solo necesitas incluir un script para tener el widget funcionando</p>
+            </div>
+            <div class="feature">
+                <h3>🎨 Personalizable</h3>
+                <p>Configura colores, posición y otros aspectos visuales</p>
+            </div>
+            <div class="feature">
+                <h3>📱 Responsive</h3>
+                <p>Funciona perfectamente en móviles y tablets</p>
+            </div>
+            <div class="feature">
+                <h3>🔒 Seguro</h3>
+                <p>Cumple con normativas de privacidad y protección de datos</p>
+            </div>
+        </div>
+        
+        <div class="integration-section">
+            <h2>🔧 Integración Básica</h2>
+            <p>Agrega estas líneas a tu HTML:</p>
+            
+            <div class="code-example">
+&lt;!-- Incluir el widget de OVRA --&gt;
+&lt;script src="https://tudominio.com/ovra-widget.js"&gt;&lt;/script&gt;
+
+&lt;!-- Configuración opcional --&gt;
+&lt;script&gt;
+window.ovraWidgetConfig = {
+    apiUrl: 'https://api.ovra.ai',
+    buttonColor: '#007bff',
+    position: 'bottom-right'
+};
+&lt;/script&gt;
+            </div>
+            
+            <div class="note">
+                <strong>¡Eso es todo!</strong> El widget aparecerá automáticamente en la esquina inferior derecha de tu página.
+            </div>
+        </div>
+        
+        <div class="integration-section">
+            <h2>⚙️ Opciones de Configuración</h2>
+            
+            <div class="config-options">
+                <h3>Opciones Disponibles:</h3>
+                <div class="config-option">
+                    <strong>apiUrl:</strong> 'https://api.ovra.ai' - URL de la API
+                </div>
+                <div class="config-option">
+                    <strong>buttonColor:</strong> '#000000' - Color del botón
+                </div>
+                <div class="config-option">
+                    <strong>position:</strong> 'bottom-right' | 'bottom-left' - Posición del widget
+                </div>
+                <div class="config-option">
+                    <strong>theme:</strong> 'light' | 'dark' - Tema del widget
+                </div>
+                <div class="config-option">
+                    <strong>title:</strong> 'Asistente Fiscal OVRA' - Título del widget
+                </div>
+            </div>
+            
+            <div class="code-example">
+&lt;script&gt;
+window.ovraWidgetConfig = {
+    apiUrl: 'https://api.ovra.ai',
+    buttonColor: '#ff6b6b',
+    position: 'bottom-left',
+    theme: 'light',
+    title: 'Mi Asistente Fiscal'
+};
+&lt;/script&gt;
+            </div>
+        </div>
+        
+        <div class="integration-section">
+            <h2>🎯 WordPress Integration</h2>
+            <p>Para WordPress, puedes añadir el código en:</p>
+            <ul>
+                <li><strong>Tema:</strong> En el archivo <code>footer.php</code> antes de <code>&lt;/body&gt;</code></li>
+                <li><strong>Plugin:</strong> Usando un plugin como "Insert Headers and Footers"</li>
+                <li><strong>Customizer:</strong> En la sección "HTML/CSS/JavaScript adicional"</li>
+            </ul>
+        </div>
+        
+        <button class="try-button" onclick="alert('¡Prueba el widget haciendo clic en el botón de la esquina inferior derecha!')">
+            Probar Widget
+        </button>
+    </div>
+    
+    <div class="arrow">
+        ↘️ Haz clic aquí
+    </div>
+    
+    <!-- Widget Configuration -->
+    <script>
+        window.ovraWidgetConfig = {
+            apiUrl: 'http://localhost:8000',
+            position: 'bottom-right',
+            theme: 'auto', // Matches user's system preference
+            title: 'Asistente Fiscal OVRA - Demo'
+        };
+    </script>
+    
+    <!-- OVRA Widget -->
+    <script src="ovra-widget.js"></script>
+</body>
+</html>
