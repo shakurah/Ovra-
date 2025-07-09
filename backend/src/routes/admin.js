@@ -37,8 +37,7 @@ router.use('/users', requireAdmin, usersRouter);
 router.use('/sessions', requireAdmin, sessionsRouter);
 router.use('/messages', requireAdmin, messagesRouter);
 router.use('/marketing', requireAdmin, marketingRouter);
-router.use('/widget-sessions', requireAdmin, widgetRouter);
-router.use('/widget-messages', requireAdmin, widgetRouter);
+router.use('/widget', requireAdmin, widgetRouter);
 
 // Root redirect
 router.get('/', (req, res) => {

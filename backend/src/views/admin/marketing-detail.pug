@@ -1,0 +1,52 @@
+extends layout
+
+block content
+  .row
+    .col-xs-12
+      .box
+        .box-header
+          h3.box-title Marketing Email Details
+        
+        .box-body
+          .row
+            .col-md-6
+              .form-group
+                label Email ID:
+                p #{email.id}
+              .form-group
+                label Email:
+                p #{email.email}
+              .form-group
+                label Source Website:
+                p #{email.sourceWebsite || 'N/A'}
+              .form-group
+                label Privacy Accepted:
+                p
+                  if email.privacyAccepted
+                    span.label.label-success Yes
+                  else
+                    span.label.label-danger No
+              .form-group
+                label Terms Accepted:
+                p
+                  if email.termsAccepted
+                    span.label.label-success Yes
+                  else
+                    span.label.label-danger No
+              .form-group
+                label Status:
+                p
+                  if email.isActive
+                    span.label.label-success Active
+                  else
+                    span.label.label-danger Inactive
+              .form-group
+                label Created:
+                p #{new Date(email.createdAt).toLocaleString()}
+              .form-group
+                label Updated:
+                p #{new Date(email.updatedAt).toLocaleString()}
+        
+        .box-footer
+          a.btn.btn-primary(href=`/admin/marketing/${email.id}/edit`) Edit Email
+          a.btn.btn-default(href='/admin/marketing') Back to Marketing

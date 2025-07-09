@@ -1,0 +1,41 @@
+extends layout
+
+block content
+  .row
+    .col-xs-12
+      .box
+        .box-header
+          h3.box-title Edit Marketing Email
+        
+        .box-body
+          form(method='POST', action=`/admin/marketing/${email.id}/edit`)
+            .row
+              .col-md-6
+                .form-group
+                  label Email ID:
+                  p #{email.id}
+                .form-group
+                  label Email
+                  input.form-control(type='email', name='email', value=email.email, required)
+                .form-group
+                  label Source Website
+                  input.form-control(type='text', name='sourceWebsite', value=email.sourceWebsite || '')
+                .form-group
+                  .checkbox
+                    label
+                      input(type='checkbox', name='privacyAccepted', checked=email.privacyAccepted)
+                      | Privacy Accepted
+                .form-group
+                  .checkbox
+                    label
+                      input(type='checkbox', name='termsAccepted', checked=email.termsAccepted)
+                      | Terms Accepted
+                .form-group
+                  .checkbox
+                    label
+                      input(type='checkbox', name='isActive', checked=email.isActive)
+                      | Active
+            
+            .form-group
+              button.btn.btn-primary(type='submit') Update Email
+              a.btn.btn-default(href='/admin/marketing') Cancel

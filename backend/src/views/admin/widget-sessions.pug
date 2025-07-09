@@ -7,7 +7,7 @@ block content
         .box-header
           h3.box-title Widget Sessions Management
           .box-tools
-            a.btn.btn-success(href='/admin/widget-sessions/create')
+            a.btn.btn-success(href='/admin/widget/sessions/create')
               i.fa.fa-plus
               |  Add New Widget Session
         
@@ -33,13 +33,13 @@ block content
                         span.label.label-danger Inactive
                     td #{new Date(session.createdAt).toLocaleDateString()}
                     td
-                      a.btn.btn-sm.btn-info(href=`/admin/widget-sessions/${session.id}`)
+                      a.btn.btn-sm.btn-info(href=`/admin/widget/sessions/${session.id}`)
                         i.fa.fa-eye
                         |  View
-                      a.btn.btn-sm.btn-primary(href=`/admin/widget-sessions/${session.id}/edit`)
+                      a.btn.btn-sm.btn-primary(href=`/admin/widget/sessions/${session.id}/edit`)
                         i.fa.fa-edit
                         |  Edit
-                      a.btn.btn-sm.btn-danger(href=`/admin/widget-sessions/${session.id}/delete`, onclick='return confirm("Are you sure?")')
+                      a.btn.btn-sm.btn-danger(href=`/admin/widget/sessions/${session.id}/delete`, onclick='return confirm("Are you sure?")')
                         i.fa.fa-trash
                         |  Delete
 

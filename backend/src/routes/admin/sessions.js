@@ -58,6 +58,53 @@ router.get('/:id', async (req, res) => {
   }
 });
 
+// Edit session form
+router.get('/:id/edit', async (req, res) => {
+  try {
+    const session = await prisma.chatSession.findUnique({
+      where: { id: req.params.id },
+      include: {
+        user: {
+          select: { email: true, firstName: true, lastName: true }
+        }
+      }
+    });
+    
+    if (!session) {
+      return res.redirect('/admin/sessions');
+    }
+    
+    res.render('admin/session-edit', {
+      title: 'Edit Session',
+      user: req.session.adminUser,
+      session
+    });
+  } catch (error) {
+    console.error('Edit session error:', error);
+    res.redirect('/admin/sessions');
+  }
+});
+
+// Update session
+router.post('/:id/edit', async (req, res) => {
+  try {
+    const { title, isActive } = req.body;
+    
+    await prisma.chatSession.update({
+      where: { id: req.params.id },
+      data: {
+        title,
+        isActive: isActive === 'on'
+      }
+    });
+    
+    res.redirect('/admin/sessions');
+  } catch (error) {
+    console.error('Update session error:', error);
+    res.redirect('/admin/sessions');
+  }
+});
+
 // Delete session
 router.get('/:id/delete', async (req, res) => {
   try {

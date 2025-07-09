@@ -7,7 +7,7 @@ block content
         .box-header
           h3.box-title Widget Messages Management
           .box-tools
-            a.btn.btn-success(href='/admin/widget-messages/create')
+            a.btn.btn-success(href='/admin/widget/messages/create')
               i.fa.fa-plus
               |  Add New Widget Message
         
@@ -35,13 +35,13 @@ block content
                     td #{message.content.substring(0, 100)}#{message.content.length > 100 ? '...' : ''}
                     td #{new Date(message.createdAt).toLocaleDateString()}
                     td
-                      a.btn.btn-sm.btn-info(href=`/admin/widget-messages/${message.id}`)
+                      a.btn.btn-sm.btn-info(href=`/admin/widget/messages/${message.id}`)
                         i.fa.fa-eye
                         |  View
-                      a.btn.btn-sm.btn-primary(href=`/admin/widget-messages/${message.id}/edit`)
+                      a.btn.btn-sm.btn-primary(href=`/admin/widget/messages/${message.id}/edit`)
                         i.fa.fa-edit
                         |  Edit
-                      a.btn.btn-sm.btn-danger(href=`/admin/widget-messages/${message.id}/delete`, onclick='return confirm("Are you sure?")')
+                      a.btn.btn-sm.btn-danger(href=`/admin/widget/messages/${message.id}/delete`, onclick='return confirm("Are you sure?")')
                         i.fa.fa-trash
                         |  Delete
 
