@@ -26,8 +26,13 @@ app.use(helmet({
       scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'", "https://cdn.jsdelivr.net"],
       imgSrc: ["'self'", "data:", "https:"],
       fontSrc: ["'self'", "https://fonts.gstatic.com", "https://cdn.jsdelivr.net"],
+      upgradeInsecureRequests: null, // Disable upgrade-insecure-requests for HTTP
     },
   },
+  crossOriginOpenerPolicy: false, // Disable for HTTP connections
+  crossOriginResourcePolicy: false, // Disable for HTTP connections
+  originAgentCluster: false, // Disable for HTTP connections
+  hsts: false, // Disable HSTS for HTTP connections
 }));
 app.use(cors({
   origin: function (origin, callback) {
@@ -66,6 +71,7 @@ app.use('/api/v1/chat', chatRoutes);
 app.use('/api/chat', chatRoutes); // API prefix for frontend
 app.use('/chat', chatRoutes); // Also support direct /chat for frontend
 app.use('/widget', widgetRoutes); // Widget routes for chat widget
+app.use('/api/widget', widgetRoutes); // API prefix for widget routes
 
 // Health check
 app.get('/health', (req, res) => {

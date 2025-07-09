@@ -3,7 +3,7 @@
     
     // Configuration
     const DEFAULT_CONFIG = {
-        apiUrl: 'http://localhost:8000',
+        apiUrl: 'http://167.99.143.136:8000',
         position: 'bottom-right',
         theme: 'auto', // auto, light, dark
         language: 'es',
@@ -726,7 +726,7 @@
             this.showLoadingMessage();
             
             try {
-                const response = await fetch(`${this.config.apiUrl}/chat/message/`, {
+                const response = await fetch(`${this.config.apiUrl}/widget/chat/`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',

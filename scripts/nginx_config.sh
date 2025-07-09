@@ -1,77 +1,111 @@
 #!/bin/bash
 
-# Configure Nginx for OVRA AI - Direct Port Configuration
-echo "🌐 Configuring Nginx for OVRA AI (Direct Port Access)..."
+# Configure Nginx for OVRA AI - Reverse Proxy Configuration
+echo "🌐 Configuring Nginx for OVRA AI..."
 
-# Since frontend runs on port 80 and backend on port 8000, we'll disable nginx proxy
-# and just use nginx for serving static files and optional SSL termination
-
-# Disable nginx service to avoid port conflicts
-echo "🛑 Disabling nginx service to avoid port conflicts..."
+# Stop nginx temporarily
+echo "🛑 Stopping nginx temporarily for configuration..."
 sudo systemctl stop nginx
-sudo systemctl disable nginx
 
-# Remove nginx sites
+# Remove default sites
 sudo rm -f /etc/nginx/sites-enabled/ovra-ai
 sudo rm -f /etc/nginx/sites-enabled/default
 
-# Create a simple nginx configuration for port 8080 (as backup/admin interface)
-sudo tee /etc/nginx/sites-available/ovra-ai-admin << 'EOF'
-# OVRA AI Admin Interface on port 8080
-# Frontend: Next.js on port 80 (direct)
-# Backend: Express.js on port 8000 (direct)
-# MCP BOE: SSE Server on port 9000 (direct)
+# Create nginx configuration for OVRA AI
+sudo tee /etc/nginx/sites-available/ovra-ai << 'EOF'
+# OVRA AI Nginx Configuration
+# Frontend: Next.js served by nginx on port 80
+# Backend: Express.js proxied to port 8000
 
 server {
-    listen 8080;
-    server_name localhost ovra.local _;
-    
-    # Simple status page
+    listen 80;
+    server_name 167.99.143.136 localhost _;
+
+    # Frontend - serve Next.js static files
     location / {
-        return 200 "OVRA AI Services Status\n\nFrontend: http://localhost:80\nBackend: http://localhost:8000\nMCP BOE: http://localhost:9000\n\nAll services are running directly on their respective ports.\n";
-        add_header Content-Type text/plain;
+        proxy_pass http://127.0.0.1:3000;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_cache_bypass $http_upgrade;
+        proxy_read_timeout 86400;
     }
-    
-    # Static files for backend (if any)
+
+    # Backend API - proxy to Express.js
+    location /api/ {
+        proxy_pass http://127.0.0.1:8000;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_cache_bypass $http_upgrade;
+        proxy_read_timeout 86400;
+    }
+
+    # Static files for backend
     location /static/ {
-        alias /home/ali/development/ovra_ai/backend/static/;
+        alias /home/ovra_ai/backend/static/;
         expires 1y;
         add_header Cache-Control "public, immutable";
         try_files $uri =404;
     }
-    
-    # Uploads/media files (if any)
+
+    # Uploads/media files
     location /uploads/ {
-        alias /home/ali/development/ovra_ai/backend/uploads/;
+        alias /home/ovra_ai/backend/uploads/;
         expires 1y;
         add_header Cache-Control "public";
         try_files $uri =404;
     }
-    
+
+    # Security headers
+    add_header X-Frame-Options "SAMEORIGIN" always;
+    add_header X-XSS-Protection "1; mode=block" always;
+    add_header X-Content-Type-Options "nosniff" always;
+    add_header Referrer-Policy "no-referrer-when-downgrade" always;
+    add_header Content-Security-Policy "default-src 'self' http: https: data: blob: 'unsafe-inline'" always;
+
     # Logs
-    access_log /var/log/nginx/ovra-ai-admin.access.log;
-    error_log /var/log/nginx/ovra-ai-admin.error.log;
+    access_log /var/log/nginx/ovra-ai.access.log;
+    error_log /var/log/nginx/ovra-ai.error.log;
 }
 EOF
+
+# Enable the site
+sudo ln -sf /etc/nginx/sites-available/ovra-ai /etc/nginx/sites-enabled/
 
 # Create log directory
 sudo mkdir -p /var/log/nginx
 
-echo "✅ Nginx configuration updated for direct port access!"
-echo ""
-echo "📋 Configuration Summary:"
-echo "  🌐 Frontend (Next.js): http://localhost:80 (direct)"
-echo "  📡 Backend API: http://localhost:8000 (direct)"  
-echo "  🔧 MCP BOE Server: http://localhost:9000 (direct)"
-echo "  🛠️  Admin Interface: http://localhost:8080 (nginx, optional)"
-echo ""
-echo "⚠️  Important Notes:"
-echo "  - Services run directly on their ports (no proxy)"
-echo "  - Frontend requires sudo/root to bind to port 80"
-echo "  - Nginx is disabled to avoid port conflicts"
-echo "  - Admin interface on port 8080 can be enabled if needed"
-echo ""
-echo "🔧 To enable admin interface on port 8080:"
-echo "  sudo ln -sf /etc/nginx/sites-available/ovra-ai-admin /etc/nginx/sites-enabled/"
-echo "  sudo systemctl enable nginx"
-echo "  sudo systemctl start nginx"
+# Test nginx configuration
+echo "🔍 Testing nginx configuration..."
+sudo nginx -t
+
+if [ $? -eq 0 ]; then
+    echo "✅ Nginx configuration is valid!"
+
+    # Enable and start nginx
+    sudo systemctl enable nginx
+    sudo systemctl start nginx
+
+    echo "✅ Nginx configured and started successfully!"
+    echo ""
+    echo "📋 Configuration Summary:"
+    echo "  🌐 Frontend: http://167.99.143.136:80 (nginx → Next.js:3000)"
+    echo "  📡 Backend API: http://167.99.143.136:80/api/ (nginx → Express.js:8000)"
+    echo ""
+    echo "⚠️  Important Notes:"
+    echo "  - Frontend runs on port 3000, proxied through nginx on port 80"
+    echo "  - Backend API accessible via /api/ path on port 80"
+    echo "  - Direct backend access: http://167.99.143.136:8000"
+else
+    echo "❌ Nginx configuration test failed!"
+    exit 1
+fi

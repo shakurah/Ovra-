@@ -5,7 +5,7 @@
 
 export const API_CONFIG = {
   // Base URLs
-  BASE_URL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1',
+  BASE_URL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api',
   WEBSOCKET_URL: process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:8000/ws',
   
   // Timeouts (in milliseconds)
@@ -51,14 +51,14 @@ export const API_CONFIG = {
   // API endpoints
   ENDPOINTS: {
     // Authentication
-    LOGIN: '/auth/login/',
-    REGISTER: '/auth/register/',
-    LOGOUT: '/auth/logout/',
-    REFRESH_TOKEN: '/auth/token/refresh/',
-    VERIFY_TOKEN: '/auth/token/verify/',
-    PASSWORD_RESET: '/auth/password-reset/',
-    PASSWORD_RESET_CONFIRM: '/auth/password-reset/confirm/',
-    CHANGE_PASSWORD: '/auth/change-password/',
+    LOGIN: '/auth/login',
+    REGISTER: '/auth/register',
+    LOGOUT: '/auth/logout',
+    REFRESH_TOKEN: '/auth/token/refresh',
+    VERIFY_TOKEN: '/auth/token/verify',
+    PASSWORD_RESET: '/auth/password-reset',
+    PASSWORD_RESET_CONFIRM: '/auth/password-reset/confirm',
+    CHANGE_PASSWORD: '/auth/change-password',
     
     // User management
     USER_PROFILE: '/user/profile/',
@@ -96,7 +96,7 @@ export const getEnvironmentConfig = () => {
   const configs = {
     development: {
       ...API_CONFIG,
-      BASE_URL: 'http://localhost:8000/api/v1',
+      BASE_URL: 'http://localhost:8000/api',
       WEBSOCKET_URL: 'ws://localhost:8000/ws',
       REQUEST_TIMEOUT: 10000, // Shorter timeout for dev
       FEATURES: {
@@ -107,7 +107,7 @@ export const getEnvironmentConfig = () => {
     
     production: {
       ...API_CONFIG,
-      BASE_URL: process.env.NEXT_PUBLIC_API_URL || 'https://api.ovra-ai.com/api/v1',
+      BASE_URL: process.env.NEXT_PUBLIC_API_URL || 'https://api.ovra-ai.com/api',
       WEBSOCKET_URL: process.env.NEXT_PUBLIC_WS_URL || 'wss://api.ovra-ai.com/ws',
       REQUEST_TIMEOUT: 30000,
       FEATURES: {
@@ -118,7 +118,7 @@ export const getEnvironmentConfig = () => {
     
     test: {
       ...API_CONFIG,
-      BASE_URL: 'http://localhost:8001/api/v1',
+      BASE_URL: 'http://localhost:8001/api',
       WEBSOCKET_URL: 'ws://localhost:8001/ws',
       REQUEST_TIMEOUT: 5000,
       MAX_RETRIES: 1,

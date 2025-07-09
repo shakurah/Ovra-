@@ -34,6 +34,12 @@ sudo apt install -y postgresql postgresql-contrib libpq-dev
 sudo systemctl start postgresql
 sudo systemctl enable postgresql
 
+# Install Redis
+echo "🔴 Installing Redis..."
+sudo apt install -y redis-server
+sudo systemctl start redis-server
+sudo systemctl enable redis-server
+
 # Create database and user
 echo "🔐 Setting up PostgreSQL database..."
 sudo -u postgres psql -c "CREATE DATABASE ovra_ai;"
@@ -70,8 +76,8 @@ sudo ufw --force enable
 
 # Create project directories
 echo "📁 Creating project directories..."
-sudo mkdir -p /home/ali/development/ovra_ai/logs
-sudo chown -R ali:ali /home/ali/development/ovra_ai
+sudo mkdir -p /home/ovra_ai/logs
+sudo chown -R $USER:$USER /home/ovra_ai
 
 # Install Python dependencies (for any Python scripts)
 echo "🐍 Installing Python dependencies..."
@@ -87,14 +93,14 @@ sudo systemctl start postgresql
 # Set up log rotation
 echo "📄 Setting up log rotation..."
 sudo tee /etc/logrotate.d/ovra-ai << 'EOF'
-/home/ali/development/ovra_ai/logs/*.log {
+/home/ovra_ai/logs/*.log {
     daily
     missingok
     rotate 52
     compress
     delaycompress
     notifempty
-    create 644 ali ali
+    create 644 $USER $USER
     postrotate
         systemctl reload ovra-backend ovra-frontend ovra-mcp-boe 2>/dev/null || true
     endscript

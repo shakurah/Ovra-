@@ -5,7 +5,7 @@
 
 set -e
 
-PROJECT_ROOT="/home/ali/development/ovra_ai"
+PROJECT_ROOT="/home/ovra_ai"
 SCRIPTS_DIR="$PROJECT_ROOT/scripts"
 
 echo "🚀 Starting Complete OVRA AI Deployment..."
