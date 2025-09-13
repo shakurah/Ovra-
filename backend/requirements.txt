@@ -1,0 +1,14 @@
+Django>=5.0
+djangorestframework>=3.15
+django-cors-headers>=3.13
+psycopg2-binary>=2.9
+requests>=2.26
+celery>=5.2
+redis>=4.0
+openai>=0.27
+pytest>=7.0
+pytest-django>=4.5
+pytest-asyncio>=0.18
+black>=22.3
+mypy>=0.910
+ruff>=0.0.1

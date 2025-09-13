@@ -1,43 +1,36 @@
 #!/bin/bash
 
-# Setup Django backend with Gunicorn
-echo "Setting up Django backend..."
+# This script sets up the backend environment for the ARTISTING project.
 
-cd backend
+# Update package list and install necessary packages
+echo "Updating package list..."
+sudo apt-get update
 
-# Activate virtual environment
+echo "Installing Python and pip..."
+sudo apt-get install -y python3 python3-pip python3-venv
+
+# Create a virtual environment
+echo "Creating a virtual environment..."
+python3 -m venv venv
+
+# Activate the virtual environment
+echo "Activating the virtual environment..."
 source venv/bin/activate
 
-# Install additional production dependencies
-pip install gunicorn
+# Install required Python packages
+echo "Installing required packages from requirements.txt..."
+pip install -r requirements.txt
 
-# Collect static files
-python manage.py collectstatic --noinput
+# Run database migrations
+echo "Running database migrations..."
+python manage.py migrate
 
-# Create Gunicorn configuration
-cat > gunicorn.conf.py << 'EOF'
-# Gunicorn configuration file
-bind = "0.0.0.0:8000"
-workers = 3
-worker_class = "sync"
-worker_connections = 1000
-max_requests = 1000
-max_requests_jitter = 100
-timeout = 30
-keepalive = 2
-preload_app = True
-daemon = False
-user = "www-data"
-group = "www-data"
-tmp_upload_dir = None
-errorlog = "/var/log/gunicorn/error.log"
-accesslog = "/var/log/gunicorn/access.log"
-access_log_format = '%(h)s %(l)s %(u)s %(t)s "%(r)s" %(s)s %(b)s "%(f)s" "%(a)s"'
-loglevel = "info"
-EOF
+# Create a superuser (optional)
+echo "Creating a superuser..."
+python manage.py createsuperuser
 
-# Create log directories
-sudo mkdir -p /var/log/gunicorn
-sudo chown -R www-data:www-data /var/log/gunicorn
+# Start the Django development server
+echo "Starting the Django development server..."
+python manage.py runserver
 
-echo "Backend setup completed!"
+echo "Backend setup completed successfully!"
