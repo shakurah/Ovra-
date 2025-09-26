@@ -3,7 +3,7 @@
  * Handles user authentication, registration, and token management
  */
 
-import { BaseApiService, ApiResponse } from './base.service'
+import { BaseApiService } from './base.service'
 
 export interface LoginRequest {
   email: string
@@ -29,7 +29,8 @@ export interface User {
 }
 
 export interface AuthResponse {
-  token: string
+  access: string
+  refresh: string
   user: User
 }
 
@@ -47,10 +48,12 @@ export class AuthService extends BaseApiService {
   async login(credentials: LoginRequest): Promise<AuthResponse> {
     const response = await this.post<AuthResponse>('/auth/login', credentials)
 
-    // Store token and user data
-    this.setTokens(response.token, '')
-    this.setUser(response.user)
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('access_token', response.access)
+      localStorage.setItem('refresh_token', response.refresh)
+    }
 
+    this.setUser(response.user)
     return response
   }
 
@@ -58,11 +61,9 @@ export class AuthService extends BaseApiService {
    * Register new user
    */
   async register(userData: RegisterRequest): Promise<AuthResponse> {
-    // Register endpoint returns user and token
     const response = await this.post<AuthResponse>('/auth/register', userData)
-    
-    // Store token and user data
-    this.setTokens(response.token, '')
+
+    this.setTokens(response.access, response.refresh || '')
     this.setUser(response.user)
 
     return response
@@ -73,15 +74,12 @@ export class AuthService extends BaseApiService {
    */
   async logout(): Promise<void> {
     try {
-      // Call logout endpoint if token exists
       if (this.getAccessToken()) {
         await this.post('/auth/logout/', {}, true)
       }
     } catch (error) {
       console.error('Logout API error:', error)
-      // Continue with local cleanup even if API call fails
     } finally {
-      // Always clear local storage
       this.clearTokens()
     }
   }
@@ -91,21 +89,18 @@ export class AuthService extends BaseApiService {
    */
   async refreshToken(): Promise<TokenRefreshResponse> {
     const refreshToken = this.getRefreshToken()
-    if (!refreshToken) {
-      throw new Error('No refresh token available')
-    }
+    if (!refreshToken) throw new Error('No refresh token available')
 
     const response = await this.post<TokenRefreshResponse>(
-      '/auth/token/refresh/', 
+      '/auth/token/refresh/',
       { refresh_token: refreshToken }
     )
-    
-    // Update both tokens in localStorage
+
     if (typeof window !== 'undefined') {
       localStorage.setItem('access_token', response.access_token)
       localStorage.setItem('refresh_token', response.refresh_token)
     }
-    
+
     return response
   }
 
@@ -116,7 +111,7 @@ export class AuthService extends BaseApiService {
     try {
       const token = this.getAccessToken()
       if (!token) return false
-      
+
       await this.post('/auth/token/verify/', { token }, false)
       return true
     } catch {
@@ -132,7 +127,7 @@ export class AuthService extends BaseApiService {
   }
 
   /**
-   * Get current user data from localStorage
+   * Get current user data
    */
   getCurrentUser(): User | null {
     return this.getUser()
@@ -141,13 +136,26 @@ export class AuthService extends BaseApiService {
   /**
    * Get stored access token
    */
-  getStoredToken(): string | null {
-    return this.getAccessToken()
+  getAccessToken(): string | null {
+    if (typeof window === 'undefined') return null
+    return localStorage.getItem('access_token')
   }
 
   /**
    * Get stored refresh token
    */
+  getRefreshToken(): string | null {
+    if (typeof window === 'undefined') return null
+    return localStorage.getItem('refresh_token')
+  }
+
+  /**
+   * Backward compatibility with old naming
+   */
+  getStoredToken(): string | null {
+    return this.getAccessToken()
+  }
+
   getStoredRefreshToken(): string | null {
     return this.getRefreshToken()
   }
@@ -160,55 +168,56 @@ export class AuthService extends BaseApiService {
   }
 
   /**
-   * Reset password with token
+   * Reset password
    */
   async resetPassword(
-    token: string, 
-    newPassword: string, 
+    token: string,
+    newPassword: string,
     confirmPassword: string
   ): Promise<{ message: string }> {
     return this.post('/auth/password-reset/confirm/', {
       token,
       new_password: newPassword,
-      confirm_password: confirmPassword
+      confirm_password: confirmPassword,
     })
   }
 
   /**
-   * Change password for authenticated user
+   * Change password
    */
   async changePassword(
     currentPassword: string,
     newPassword: string,
     confirmPassword: string
   ): Promise<{ message: string }> {
-    return this.post('/auth/change-password/', {
-      current_password: currentPassword,
-      new_password: newPassword,
-      confirm_password: confirmPassword
-    }, true)
+    return this.post(
+      '/auth/change-password/',
+      {
+        current_password: currentPassword,
+        new_password: newPassword,
+        confirm_password: confirmPassword,
+      },
+      true
+    )
   }
 
   /**
-   * Auto-refresh token if it's about to expire
-   * Call this method periodically or before making API calls
+   * Auto refresh if close to expiry
    */
   async autoRefreshToken(): Promise<boolean> {
     try {
       const token = this.getAccessToken()
       if (!token) return false
 
-      // Decode JWT to check expiration (basic check)
       const payload = JSON.parse(atob(token.split('.')[1]))
       const currentTime = Math.floor(Date.now() / 1000)
       const timeUntilExpiry = payload.exp - currentTime
 
-      // Refresh if token expires in less than 5 minutes
       if (timeUntilExpiry < 300) {
         await this.refreshToken()
         return true
       }
-      
+
       return false
     } catch (error) {
       console.error('Auto refresh token error:', error)

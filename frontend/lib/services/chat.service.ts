@@ -134,54 +134,73 @@ export class ChatService extends BaseApiService {
    * Send a streaming message to the AI assistant
    */
   async sendStreamingMessage(
-    request: ChatRequest,
-    onChunk: (chunk: string) => void,
-    onComplete: (conversationId: string, citations?: any[]) => void,
-    onError: (error: string) => void
-  ): Promise<void> {
-    const payload = {
-      message: request.message,
-      conversation_id: request.conversation_id,
-      context: request.context ? [
-        { role: 'system', content: `User profession: ${request.context.user_profession || 'General'}` }
-      ] : []
-    }
+  payload: { message: string; conversation_id?: string },
+  onChunk: (chunk: string) => void,
+  onComplete: (conversationId: string) => void,
+  onError: (error: string) => void
+) {
+  try {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/chat/stream/`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        // Add auth headers if needed
+      },
+      body: JSON.stringify({ message: payload.message, conversation_id: payload.conversation_id }),
+    })
 
-    try {
-      const response = await fetch(`${this.baseUrl}/chat/stream/`, {
-        method: 'POST',
-        headers: this.getAuthHeaders(),
-        body: JSON.stringify(payload)
-      })
+    if (!response.body) throw new Error('No response body')
 
-      if (!response.ok) {
-        if (response.status === 404) {
-          // Try again without conversation_id to create a new session
-          const newPayload = {
-            ...payload,
-            conversation_id: undefined
+    const reader = response.body.getReader()
+    const decoder = new TextDecoder()
+    let buffer = ''
+    let conversationId = payload.conversation_id || ''
+
+        while (true) {
+      const { done, value } = await reader.read()
+      if (done) break
+      buffer += decoder.decode(value, { stream: true })
+      const lines = buffer.split('\n')
+      buffer = lines.pop() || ''
+      for (const line of lines) {
+        if (line.startsWith('data: ')) {
+          const dataStr = line.slice(6).trim()
+          if (dataStr === '[DONE]') {
+            onComplete(conversationId)
+            return
           }
-
-          const retryResponse = await fetch(`${this.baseUrl}/chat/stream/`, {
-            method: 'POST',
-            headers: this.getAuthHeaders(),
-            body: JSON.stringify(newPayload)
-          })
-
-          if (!retryResponse.ok) {
-            throw new Error(`HTTP error! status: ${retryResponse.status}`)
+          try {
+            const data = JSON.parse(dataStr)
+            let chunkContent = ''
+            // Handle OpenAI/Deepseek chunk format
+            if (
+              data.choices &&
+              Array.isArray(data.choices) &&
+              data.choices[0] &&
+              data.choices[0].delta &&
+              typeof data.choices[0].delta.content === 'string'
+            ) {
+              chunkContent = data.choices[0].delta.content
+            } else if (typeof data.content === 'string') {
+              chunkContent = data.content
+            }
+            if (chunkContent) {
+              onChunk(chunkContent)
+              console.log('Parsed chunkContent:', chunkContent);
+            }
+            if (data.conversation_id) conversationId = data.conversation_id
+          } catch (err: any) {
+            onError(err.message || 'Streaming error')
           }
-
-          return this.processStreamingResponse(retryResponse, onChunk, onComplete, onError)
         }
-        throw new Error(`HTTP error! status: ${response.status}`)
       }
-
-      return this.processStreamingResponse(response, onChunk, onComplete, onError)
-    } catch (error) {
-      onError(error instanceof Error ? error.message : 'Unknown error')
     }
+  } catch (err: any) {
+    onError(err.message || 'Streaming error')
   }
+}
+// ...existing code...
+// ...existing code...
 
   /**
    * Process streaming response (extracted for reuse)
