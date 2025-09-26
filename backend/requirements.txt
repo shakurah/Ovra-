@@ -12,3 +12,10 @@ pytest-asyncio>=0.18
 black>=22.3
 mypy>=0.910
 ruff>=0.0.1
+requests
+beautifulsoup4
+python-dotenv
+opensearch-py>=2.0.0
+psycopg2-binary
+pdfminer.six        # optional (PDF text extraction)
+tika               # optional (better PDF/OCR if you set up Apache Tika)

@@ -1,0 +1,33 @@
+<h1>Metrics Dashboard</h1>
+
+<div>
+  <h3>Accuracy</h3>
+  <p>Average Accuracy: {{ accuracy_avg|floatformat:2 }}%</p>
+</div>
+
+<div>
+  <h3>Latency</h3>
+  <p>Average Latency: {{ latency_avg|floatformat:2 }} ms</p>
+</div>
+
+<div>
+  <h3>Usage</h3>
+  <p>Total Usage Count: {{ usage_count }}</p>
+</div>
+
+<canvas id="metricsChart"></canvas>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    const ctx = document.getElementById('metricsChart').getContext('2d');
+    const metricsChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: ['Accuracy', 'Latency', 'Usage'],
+            datasets: [{
+                label: 'Metrics Overview',
+                data: [{{ accuracy_avg|default:0 }}, {{ latency_avg|default:0 }}, {{ usage_count|default:0 }}],
+                backgroundColor: ['#36a2eb', '#ff6384', '#4bc0c0']
+            }]
+        }
+    });
+</script>
