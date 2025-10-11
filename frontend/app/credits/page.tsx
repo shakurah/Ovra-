@@ -109,7 +109,7 @@ function CreditsPageContent() {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center space-x-2">
-                  <CreditCard className="h-5 w-5 text-blue-600" />
+                  <CreditCard className="h-5 w-5 text-black-600" />
                   <span>Estado Actual de Créditos</span>
                 </CardTitle>
               </CardHeader>
@@ -132,7 +132,7 @@ function CreditsPageContent() {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center space-x-2">
-                  <Clock className="h-5 w-5 text-blue-600" />
+                  <Clock className="h-5 w-5 text-black-600" />
                   <span>Historial de Uso Reciente</span>
                 </CardTitle>
                 <CardDescription>Tus últimas consultas legales</CardDescription>
@@ -163,7 +163,7 @@ function CreditsPageContent() {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center space-x-2">
-                  <Zap className="h-5 w-5 text-blue-600" />
+                  <Zap className="h-5 w-5 text-black-600" />
                   <span>Comprar Créditos</span>
                 </CardTitle>
                 <CardDescription>Elige el paquete que mejor se adapte a tus necesidades</CardDescription>
@@ -181,7 +181,7 @@ function CreditsPageContent() {
                     <div className="space-y-2">
                       <div className="flex items-center justify-between">
                         <h3 className="font-semibold text-gray-900">{pkg.name}</h3>
-                        <span className="text-2xl font-bold text-blue-600">€{pkg.price}</span>
+                        <span className="text-2xl font-bold text-black-600">€{pkg.price}</span>
                       </div>
                       <p className="text-sm text-gray-600">{pkg.description}</p>
                       <div className="flex items-center space-x-2">

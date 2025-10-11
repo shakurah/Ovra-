@@ -85,7 +85,7 @@ export default function SignupPage() {
         {/* Logo */}
         <div className="text-center mb-8">
           <Link href="/" className="inline-flex items-center space-x-2">
-            <Scale className="h-10 w-10 text-blue-600" />
+            <Scale className="h-10 w-10 text-black-600" />
             <span className="text-3xl font-bold text-gray-900 dark:text-white">ARTISTING</span>
           </Link>
           <p className="text-gray-600 dark:text-white mt-2">{t("auth.signup.subtitle")}</p>
@@ -224,15 +224,15 @@ export default function SignupPage() {
               <h4 className="font-medium text-blue-900 mb-2">Tu prueba gratuita incluye:</h4>
               <ul className="space-y-1 text-sm text-blue-800">
                 <li className="flex items-center space-x-2">
-                  <CheckCircle className="h-4 w-4 text-blue-600" />
+                  <CheckCircle className="h-4 w-4 text-black-600" />
                   <span>10 consultas legales gratuitas</span>
                 </li>
                 <li className="flex items-center space-x-2">
-                  <CheckCircle className="h-4 w-4 text-blue-600" />
+                  <CheckCircle className="h-4 w-4 text-black-600" />
                   <span>Acceso a toda la legislación</span>
                 </li>
                 <li className="flex items-center space-x-2">
-                  <CheckCircle className="h-4 w-4 text-blue-600" />
+                  <CheckCircle className="h-4 w-4 text-black-600" />
                   <span>Soporte por email</span>
                 </li>
               </ul>
@@ -240,7 +240,7 @@ export default function SignupPage() {
 
             <p className="text-center text-sm text-gray-600 mt-6">
               {t("auth.signup.have.account")}{" "}
-              <Link href="/login" className="text-blue-600 hover:underline font-medium">
+              <Link href="/login" className="text-black-600 hover:underline font-medium">
                 {t("auth.signup.login.link")}
               </Link>
             </p>

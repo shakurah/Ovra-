@@ -100,7 +100,7 @@ export default function ForgotAndResetPassword() {
         {/* Logo */}
         <div className="text-center mb-8">
           <Link href="/" className="inline-flex items-center space-x-2">
-            <Scale className="h-10 w-10 text-blue-600" />
+            <Scale className="h-10 w-10 text-black-600" />
             <span className="text-3xl font-bold text-gray-900 dark:text-white">ARTISTING</span>
           </Link>
           <p className="text-gray-600 dark:text-white mt-2">
@@ -217,7 +217,7 @@ export default function ForgotAndResetPassword() {
 
             <p className="text-center text-sm text-gray-600 mt-6">
               Remember your password?{" "}
-              <Link href="/login" className="text-blue-600 hover:underline font-medium">
+              <Link href="/login" className="text-black-600 hover:underline font-medium">
                 Go back to login
               </Link>
             </p>
