@@ -47,11 +47,11 @@ BASEDIR = Path(__file__).resolve().parent.parent
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'ovra_db',
-        'USER': 'ovra_user',
-        'PASSWORD': 'password123',
-        'HOST': 'localhost',
-        'PORT': '5432',
+        'NAME': 'defaultdb',
+        'USER': 'doadmin',
+        'PASSWORD': 'AVNS_wazD9wv4PE49pVB9Ny5',
+        'HOST': 'db-postgresql-fra1-39785-do-user-23421971-0.f.db.ondigitalocean.com',
+        'PORT': '25060',
     }
 }
 INSTALLED_APPS = [
