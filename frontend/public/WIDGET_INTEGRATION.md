@@ -1,4 +1,4 @@
-# OVRA AI Widget - Guía de Integración
+# ARTISTING Widget - Guía de Integración
 
 ## 🚀 Integración Rápida
 

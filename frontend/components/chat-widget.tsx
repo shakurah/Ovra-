@@ -477,7 +477,7 @@ export function ChatWidget({
                   </Button>
                 </div>
                 <p className="text-xs text-muted-foreground mt-2 text-center">
-                  Powered by OVRA AI
+                  Powered by ARTISTING
                 </p>
               </div>
             </>

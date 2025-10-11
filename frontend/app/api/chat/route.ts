@@ -10,7 +10,7 @@ export async function POST(req: Request) {
   const result = streamText({
     model: openai("gpt-4o"),
     messages,
-    system: `Eres OVRA AI, un asistente legal especializado en legislación fiscal española para profesionales del sector cultural y artístico.
+    system: `Eres ARTISTING, un asistente legal especializado en legislación fiscal española para profesionales del sector cultural y artístico.
 
 ACCESO A BASE DE CONOCIMIENTO:
 Tienes acceso a una base de conocimiento completa y actualizada que incluye:

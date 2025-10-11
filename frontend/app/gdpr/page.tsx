@@ -153,7 +153,7 @@ export default function GDPRPage() {
             <CardContent className="prose prose-sm max-w-none text-muted-foreground">
               <p>{t("gdpr.contact.dpo.content")}</p>
               <div className="mt-4 p-4 bg-muted rounded-lg">
-                <p className="font-medium">OVRA AI - Data Protection Officer</p>
+                <p className="font-medium">ARTISTING - Data Protection Officer</p>
                 <p>Email: dpo@ovra-ai.com</p>
                 <p>Address: Madrid, Spain</p>
                 <p className="text-sm mt-2 text-muted-foreground">

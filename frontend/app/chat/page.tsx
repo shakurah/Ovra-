@@ -37,43 +37,7 @@ function ChatPageContent() {
   const [isInitialized, setIsInitialized] = useState(false)
   const [sessionLoading, setSessionLoading] = useState(false)
 
-  // BOE-related loading messages
-  const loadingMessages = [
-    'Consultando Boletín Oficial del Estado...',
-    'Analizando normativa fiscal vigente...',
-    'Revisando últimas actualizaciones del BOE...',
-    'Procesando legislación tributaria...',
-    'Verificando disposiciones administrativas...',
-    'Accediendo a jurisprudencia fiscal...',
-    'Consultando reglamentos específicos...',
-    'Analizando circular normativa...',
-    'Revisando ordenanzas municipales...',
-    'Procesando Real Decreto vigente...',
-    'Verificando Ley General Tributaria...',
-    'Consultando instrucciones AEAT...',
-    'Analizando resoluciones DGT...',
-    'Revisando normativa autonómica...',
-    'Procesando documentación oficial...'
-  ]
-
-  // Loading message rotation effect
-  useEffect(() => {
-    if (!isLoading) {
-      setLoadingMessage('')
-      return
-    }
-
-    let messageIndex = 0
-    setLoadingMessage(loadingMessages[0])
-
-    const interval = setInterval(() => {
-      messageIndex = (messageIndex + 1) % loadingMessages.length
-      setLoadingMessage(loadingMessages[messageIndex])
-    }, 1500) // Change every 1.5 seconds
-
-    return () => clearInterval(interval)
-  }, [isLoading])
-
+  
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
   }
@@ -244,7 +208,7 @@ function ChatPageContent() {
 
   return (
     <ProtectedLayout
-      title={t("chat.title")}
+      title={t("")}
       credits={47}
     >
       <div className="flex flex-col h-full">
@@ -260,17 +224,10 @@ function ChatPageContent() {
                   className="text-muted-foreground hover:text-foreground"
                 >
                   <Trash2 className="h-4 w-4 mr-2" />
-                  Clear Chat
+                  New Chat
                 </Button>
               )}
             </div>
-            <Badge
-              variant="outline"
-              className="text-green-600 border-green-200 dark:text-green-400 dark:border-green-800"
-            >
-              <Sparkles className="h-3 w-3 mr-1" />
-              GPT-4 Activo
-            </Badge>
           </div>
         </div>
 
@@ -283,21 +240,12 @@ function ChatPageContent() {
                   <Scale className="h-8 w-8 text-primary" />
                 </div>
                 <h2 className="text-2xl font-bold text-foreground mb-2">{t("chat.welcome.title")}</h2>
-                <p className="text-muted-foreground mb-6">{t("chat.welcome.description")}</p>
+                <p className="text-foreground mb-6">{t("chat.welcome.description")}</p>
               </div>
 
               <div className="grid gap-3 mb-6">
                 <h3 className="font-medium text-foreground mb-2">{t("chat.welcome.examples")}</h3>
-                {exampleQuestions.map((question, index) => (
-                  <Button
-                    key={index}
-                    variant="outline"
-                    className="text-left justify-start h-auto p-4 whitespace-normal bg-transparent border-border hover:bg-muted"
-                    onClick={() => handleExampleClick(question)}
-                  >
-                    {question}
-                  </Button>
-                ))}
+                
               </div>
             </div>
           ) : (
@@ -381,7 +329,7 @@ function ChatPageContent() {
                             ></div>
                           </div>
                           <span className="text-sm text-muted-foreground italic">
-                            {loadingMessage || t("chat.input.analyzing")}
+                            {loadingMessage || t("")}
                           </span>
                         </div>
                       </CardContent>

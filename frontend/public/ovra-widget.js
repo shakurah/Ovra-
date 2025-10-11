@@ -153,7 +153,7 @@
                         </div>
                         
                         <div class="ovra-footer">
-                            <small>Powered by OVRA AI</small>
+                            <small>Powered by ARTISTING</small>
                         </div>
                     </div>
                 </div>
@@ -326,7 +326,7 @@
                 
                 .ovra-email-input:focus {
                     outline: none;
-                    border-color: hsl(var(--primary));
+                    border-color: #D4AF37;
                     box-shadow: 0 0 0 2px hsl(var(--primary) / 0.2);
                 }
                 
@@ -347,18 +347,18 @@
                 .ovra-checkboxes input[type="checkbox"] {
                     margin-right: 8px;
                     margin-top: 2px;
-                    accent-color: hsl(var(--primary));
+                    accent-color: #D4AF37;
                 }
                 
                 .ovra-checkboxes a {
-                    color: hsl(var(--primary));
+                    color: #D4AF37;
                     text-decoration: underline;
                 }
                 
                 .ovra-register {
                     width: 100%;
                     padding: 12px;
-                    background: hsl(var(--primary));
+                    background: #D4AF37;
                     color: hsl(var(--primary-foreground));
                     border: none;
                     border-radius: calc(var(--radius) * 0.5);
@@ -431,7 +431,7 @@
                 }
                 
                 .ovra-message.user .ovra-message-content {
-                    background: hsl(var(--primary));
+                    background: #D4AF37;
                     color: hsl(var(--primary-foreground));
                 }
                 
@@ -461,13 +461,13 @@
                 
                 .ovra-input:focus {
                     outline: none;
-                    border-color: hsl(var(--primary));
+                    border-color: #D4AF37;
                     box-shadow: 0 0 0 2px hsl(var(--primary) / 0.2);
                 }
                 
                 .ovra-send {
                     padding: 10px 12px;
-                    background: hsl(var(--primary));
+                    background: #D4AF37;
                     color: hsl(var(--primary-foreground));
                     border: none;
                     border-radius: calc(var(--radius) * 0.5);

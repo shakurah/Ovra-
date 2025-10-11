@@ -1,6 +1,6 @@
 # API Services - Modular Architecture
 
-This directory contains the modular API service architecture for the Ovra AI Tax Assistant frontend application. Each service is responsible for a specific domain of functionality, making the codebase more maintainable, testable, and scalable.
+This directory contains the modular API service architecture for the ARTISTING Tax Assistant frontend application. Each service is responsible for a specific domain of functionality, making the codebase more maintainable, testable, and scalable.
 
 ## 📁 Service Structure
 

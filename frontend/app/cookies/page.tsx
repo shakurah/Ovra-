@@ -178,7 +178,7 @@ export default function CookiesPage() {
             <CardContent className="prose prose-sm max-w-none text-muted-foreground">
               <p>{t("cookies.contact.content")}</p>
               <div className="mt-4 p-4 bg-muted rounded-lg">
-                <p className="font-medium">OVRA AI</p>
+                <p className="font-medium">ARTISTING</p>
                 <p>Email: privacy@ovra-ai.com</p>
                 <p>Address: Madrid, Spain</p>
               </div>
