@@ -89,7 +89,7 @@ export default function LandingPage() {
             <Card className="text-center border-border bg-card hover:shadow-md transition-shadow">
               <CardContent className="p-6">
                 <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/20 rounded-lg flex items-center justify-center mx-auto mb-4">
-                  <BookOpen className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+                  <BookOpen className="h-6 w-6 text-black-600 dark:text-blue-400" />
                 </div>
                 <div className="text-3xl font-bold text-foreground mb-1">50</div>
                 <div className="text-sm text-muted-foreground">{t("stats.laws")}</div>
@@ -141,7 +141,7 @@ export default function LandingPage() {
             <Card className="border-border bg-card hover:shadow-md transition-shadow">
               <CardContent className="p-8">
                 <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/20 rounded-lg flex items-center justify-center mb-6">
-                  <Shield className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+                  <Shield className="h-6 w-6 text-black-600 dark:text-blue-400" />
                 </div>
                 <h3 className="text-xl font-semibold text-foreground mb-3">{t("why.legislation.title")}</h3>
                 <p className="text-muted-foreground">{t("why.legislation.desc")}</p>
@@ -278,7 +278,7 @@ export default function LandingPage() {
                 <p className="text-muted-foreground mb-4">"{t("testimonials.maria")}"</p>
                 <div className="flex items-center space-x-3">
                   <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900/20 rounded-full flex items-center justify-center">
-                    <span className="text-blue-600 dark:text-blue-400 font-semibold text-sm">MG</span>
+                    <span className="text-black-600 dark:text-blue-400 font-semibold text-sm">MG</span>
                   </div>
                   <div>
                     <div className="font-semibold text-foreground">María García</div>
@@ -335,7 +335,7 @@ export default function LandingPage() {
       <section className="py-20 px-4 sm:px-6 lg:px-8 bg-muted/30">
         <div className="max-w-4xl mx-auto text-center">
           <div className="w-16 h-16 bg-blue-100 dark:bg-blue-900/20 rounded-full flex items-center justify-center mx-auto mb-6">
-            <Lightbulb className="h-8 w-8 text-blue-600 dark:text-blue-400" />
+            <Lightbulb className="h-8 w-8 text-black-600 dark:text-blue-400" />
           </div>
 
           <h2 className="text-4xl font-bold text-foreground mb-4">{t("cta.title")}</h2>

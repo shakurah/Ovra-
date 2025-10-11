@@ -50,7 +50,7 @@ export default function LoginPage() {
         {/* Logo */}
         <div className="text-center mb-8">
           <Link href="/" className="inline-flex items-center space-x-2">
-            <Scale className="h-10 w-10 text-blue-600" />
+            <Scale className="h-10 w-10 text-black-600" />
             <span className="text-3xl font-bold text-gray-900 dark:text-white">ARTISTING</span>
           </Link>
           <p className="text-gray-600 dark:text-white mt-2">{t("auth.tagline")}</p>
@@ -119,7 +119,7 @@ export default function LoginPage() {
               </div>
 
               <div className="flex items-center justify-between">
-                <Link href="/forgot-password" className="text-sm text-blue-600 hover:underline">
+                <Link href="/forgot-password" className="text-sm text-black-600 hover:underline">
                   {t("auth.login.forgot.password")}
                 </Link>
               </div>
@@ -176,7 +176,7 @@ export default function LoginPage() {
 
             <p className="text-center text-sm text-gray-600 mt-6">
               {t("auth.login.no.account")}{" "}
-              <Link href="/signup" className="text-blue-600 hover:underline font-medium">
+              <Link href="/signup" className="text-black-600 hover:underline font-medium">
                 {t("auth.login.signup.link")}
               </Link>
             </p>

@@ -29,7 +29,7 @@ export default function AnalyticsPage() {
       value: "156",
       change: "+12%",
       icon: MessageSquare,
-      color: "text-blue-600 dark:text-blue-400",
+      color: "text-black-600 dark:text-blue-400",
       bgColor: "bg-blue-100 dark:bg-blue-900/20",
     },
     {
