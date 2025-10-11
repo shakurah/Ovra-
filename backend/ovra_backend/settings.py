@@ -33,7 +33,9 @@ CELERY_RESULT_BACKEND = "redis://localhost:6379/0"
 # Optional settings
 CELERY_TASK_TRACK_STARTED = True
 CELERY_TASK_TIME_LIMIT = 30 * 60  # 30 minutes
+from pathlib import Path
 
+BASEDIR = Path(__file__).resolve().parent.parent
 # Database configuration for PostgreSQL
 DATABASES = {
     'default': {
@@ -79,8 +81,8 @@ REST_FRAMEWORK = {
 }
 
 
-ALLOWED_HOSTS = ['*']
 
+ALLOWED_HOSTS = ["chat.artisting.es", "www.chat.artisting.es"]
 
 TEMPLATES = [
     {
@@ -112,7 +114,13 @@ MIDDLEWARE = [
     "django_prometheus.middleware.PrometheusAfterMiddleware",
 ]
 APPEND_SLASH = False
+CSRF_TRUSTED_ORIGINS = ['https://chat.artisting.es']
 CORS_ALLOW_ALL_ORIGINS = True
 ROOT_URLCONF = 'ovra_backend.urls'
 DEBUG = True
 STATIC_URL = '/static/'
+STATIC_ROOT = BASEDIR / "staticfiles"
+MEDIA_URL =  '/media/'
+MEDIA_ROOT = BASEDIR / "media"
+
+
