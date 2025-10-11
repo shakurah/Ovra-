@@ -75,7 +75,7 @@ function SettingsPageContent() {
       <div className="p-6 max-w-4xl mx-auto">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-foreground mb-2">{t("settings.title")}</h1>
-          <p className="text-muted-foreground">Customize your OVRA AI experience</p>
+          <p className="text-muted-foreground">Customize your ARTISTING experience</p>
         </div>
 
         <div className="space-y-6">

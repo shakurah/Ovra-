@@ -10,7 +10,7 @@ import { Toaster } from "react-hot-toast"
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "Ovra AI - AI Legal Assistant for Cultural Professionals",
+  title: "ARTISTING - AI Legal Assistant for Cultural Professionals",
   description:
     "Instant consultation on Spanish tax legislation. Specialized in VAT, IRPF, billing and more for artists and cultural professionals.",
   keywords: "legal assistant, AI, Spanish legislation, VAT, IRPF, cultural professionals, freelancers, artists",
@@ -40,7 +40,7 @@ export default function RootLayout({
                   },
                   success: {
                     iconTheme: {
-                      primary: 'hsl(var(--primary))',
+                      primary: '#D4AF37',
                       secondary: 'hsl(var(--primary-foreground))',
                     },
                   },

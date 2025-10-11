@@ -16,7 +16,7 @@ export function SharedFooter() {
               <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
                 <Scale className="h-5 w-5 text-primary-foreground" />
               </div>
-              <span className="text-xl font-bold text-foreground">OVRA AI</span>
+              <span className="text-xl font-bold text-foreground">ARTISTING</span>
             </div>
             <p className="text-muted-foreground">{t("footer.description")}</p>
           </div>
@@ -87,7 +87,7 @@ export function SharedFooter() {
           </div>
         </div>
         <div className="border-t border-border mt-8 pt-8 text-center text-muted-foreground">
-          <p>&copy; 2024 OVRA AI. {t("footer.rights")}</p>
+          <p>&copy; 2024 ARTISTING. {t("footer.rights")}</p>
         </div>
       </div>
     </footer>

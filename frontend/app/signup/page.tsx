@@ -86,7 +86,7 @@ export default function SignupPage() {
         <div className="text-center mb-8">
           <Link href="/" className="inline-flex items-center space-x-2">
             <Scale className="h-10 w-10 text-blue-600" />
-            <span className="text-3xl font-bold text-gray-900 dark:text-white">Ovra AI</span>
+            <span className="text-3xl font-bold text-gray-900 dark:text-white">ARTISTING</span>
           </Link>
           <p className="text-gray-600 dark:text-white mt-2">{t("auth.signup.subtitle")}</p>
         </div>

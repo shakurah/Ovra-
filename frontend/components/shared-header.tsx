@@ -22,7 +22,7 @@ export function SharedHeader() {
             </div>
             <Link href="/">
               <span className="text-xl font-bold text-foreground hover:text-primary transition-colors">
-                OVRA AI
+                ARTISTING
               </span>
             </Link>
           </div>

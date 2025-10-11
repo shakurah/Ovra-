@@ -1,8 +1,8 @@
-# Ovra AI Tax Assistant - Complete App Structure
+# ARTISTING Tax Assistant - Complete App Structure
 
 ## 🏗️ Project Overview
 
-**Ovra AI Tax Assistant** is an AI-powered legal chatbot system that helps freelancers and professionals in arts/cultural sectors with tax questions. Built with Django (backend) and Next.js (frontend). The system defaults to English with Spanish as a secondary language.
+**ARTISTING Tax Assistant** is an AI-powered legal chatbot system that helps freelancers and professionals in arts/cultural sectors with tax questions. Built with Django (backend) and Next.js (frontend). The system defaults to English with Spanish as a secondary language.
 
 ## 📁 Root Directory Structure
 
@@ -257,4 +257,4 @@ Each service can be tested independently with proper TypeScript support.
 - Backend: http://localhost:8000
 - API Base: http://localhost:8000/api/v1
 
-This structure provides a scalable, maintainable, and well-organized foundation for the Ovra AI Tax Assistant application.
+This structure provides a scalable, maintainable, and well-organized foundation for the ARTISTING Tax Assistant application.

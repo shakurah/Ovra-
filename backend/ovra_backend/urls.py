@@ -5,7 +5,7 @@ from rest_framework_simplejwt.views import (
     TokenRefreshView,
     TokenVerifyView
 )
-from users.views import RegisterView, logout_view, me_view
+from users.views import RegisterView, logout_view, me_view, forgot_password_view, reset_password_view
 
 urlpatterns = [
     path("admin/", admin.site.urls),
@@ -18,6 +18,8 @@ urlpatterns = [
     path('api/v1/auth/logout/', logout_view, name='logout'),
     path('api/v1/auth/register', RegisterView.as_view(), name='register'),
     path('api/v1/auth/me', me_view, name='me'),
+    path('api/v1/forgot-password/', forgot_password_view, name='forgot-password'),  # Include password reset URLs
+    path('api/v1/reset-password/<str:token>', reset_password_view, name='reset-password'),  # Include password reset URLs
     path("api/v1/auth", include("users.urls")),  # Include user app URLs
     # App routes
     path("api/v1/", include("chat.urls")),

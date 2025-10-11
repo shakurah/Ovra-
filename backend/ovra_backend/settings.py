@@ -17,6 +17,13 @@ OPENSEARCH_USER = os.getenv("OPENSEARCH_USER", None)
 OPENSEARCH_PASS = os.getenv("OPENSEARCH_PASS", None)
 OPENSEARCH_INDEX = os.getenv("OPENSEARCH_INDEX", "boe-articles")
 
+EMAIL_HOST = os.getenv("EMAIL_HOST", "smtp.example.com")
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_PORT = int(os.getenv("EMAIL_PORT", 587))
+EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER")
+EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD")
+EMAIL_USE_TLS = os.getenv("EMAIL_USE_TLS", "True") == "True"
+DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 
 # Deepseek config
 AGENT_URL = os.getenv("DEEPSEEK_AGENT_URL", None) + "/api/v1/chat/completions"
@@ -40,14 +47,13 @@ BASEDIR = Path(__file__).resolve().parent.parent
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'defaultdb',
-        'USER': 'doadmin',
-        'PASSWORD': 'AVNS_wazD9wv4PE49pVB9Ny5',
-        'HOST': 'db-postgresql-fra1-39785-do-user-23421971-0.f.db.ondigitalocean.com',
-        'PORT': '25060',
+        'NAME': 'ovra_db',
+        'USER': 'ovra_user',
+        'PASSWORD': 'password123',
+        'HOST': 'localhost',
+        'PORT': '5432',
     }
 }
-
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -117,10 +123,15 @@ APPEND_SLASH = False
 CSRF_TRUSTED_ORIGINS = ['https://chat.artisting.es']
 CORS_ALLOW_ALL_ORIGINS = True
 ROOT_URLCONF = 'ovra_backend.urls'
-DEBUG = True
+DEBUG = False
 STATIC_URL = '/static/'
 STATIC_ROOT = BASEDIR / "staticfiles"
 MEDIA_URL =  '/media/'
 MEDIA_ROOT = BASEDIR / "media"
 
 
+CSRF_TRUSTED_ORIGINS = [
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+    "https://chat.artisting.es",  # add this when you deploy
+]
