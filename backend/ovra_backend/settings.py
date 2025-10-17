@@ -52,6 +52,10 @@ DATABASES = {
         'PASSWORD': 'AVNS_wazD9wv4PE49pVB9Ny5',
         'HOST': 'db-postgresql-fra1-39785-do-user-23421971-0.f.db.ondigitalocean.com',
         'PORT': '25060',
+        'OPTIONS': {
+            'sslmode': 'require',
+            'sslrootcert': '/etc/ssl/certs/ca-certificate.crt',
+        },
     }
 }
 INSTALLED_APPS = [
@@ -74,9 +78,9 @@ INSTALLED_APPS = [
 
 ]
 REST_FRAMEWORK = {
-    'DEFAULT_AUTHENTICATION_CLASSES': (
-        'rest_framework_simplejwt.authentication.JWTAuthentication',
-        ),
+    "DEFAULT_AUTHENTICATION_CLASSES": (
+        "rest_framework_simplejwt.authentication.JWTAuthentication",
+    ),
     "DEFAULT_RENDERER_CLASSES": [
         "rest_framework.renderers.JSONRenderer",
         "rest_framework.renderers.BrowsableAPIRenderer",  
@@ -88,7 +92,7 @@ REST_FRAMEWORK = {
 
 
 
-ALLOWED_HOSTS = ["chat.artisting.es", "www.chat.artisting.es"]
+ALLOWED_HOSTS = ["chat.artisting.es", "www.chat.artisting.es", "localhost"]
 
 TEMPLATES = [
     {
@@ -123,7 +127,7 @@ APPEND_SLASH = False
 CSRF_TRUSTED_ORIGINS = ['https://chat.artisting.es']
 CORS_ALLOW_ALL_ORIGINS = True
 ROOT_URLCONF = 'ovra_backend.urls'
-DEBUG = False
+DEBUG = True
 STATIC_URL = '/static/'
 STATIC_ROOT = BASEDIR / "staticfiles"
 MEDIA_URL =  '/media/'

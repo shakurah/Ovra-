@@ -210,34 +210,24 @@ export default function SignupPage() {
                   onCheckedChange={(checked) => setAcceptTerms(checked as boolean)}
                 />
                 <Label htmlFor="terms" className="text-sm text-gray-600">
-                  {t("auth.signup.terms")}
+                  <a
+                    href="https://artisting.es/condiciones"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="hover:underline"
+                  >
+                    {t("auth.signup.terms")}
+                  </a>
                 </Label>
               </div>
+
 
               <Button type="submit" className="w-full h-11" disabled={isLoading || !acceptTerms}>
                 {isLoading ? `${t("auth.signup.submit")}...` : t("auth.signup.submit")}
               </Button>
             </form>
 
-            {/* Benefits */}
-            <div className="mt-6 p-4 bg-blue-50 rounded-lg">
-              <h4 className="font-medium text-blue-900 mb-2">Tu prueba gratuita incluye:</h4>
-              <ul className="space-y-1 text-sm text-blue-800">
-                <li className="flex items-center space-x-2">
-                  <CheckCircle className="h-4 w-4 text-black-600" />
-                  <span>10 consultas legales gratuitas</span>
-                </li>
-                <li className="flex items-center space-x-2">
-                  <CheckCircle className="h-4 w-4 text-black-600" />
-                  <span>Acceso a toda la legislación</span>
-                </li>
-                <li className="flex items-center space-x-2">
-                  <CheckCircle className="h-4 w-4 text-black-600" />
-                  <span>Soporte por email</span>
-                </li>
-              </ul>
-            </div>
-
+            
             <p className="text-center text-sm text-gray-600 mt-6">
               {t("auth.signup.have.account")}{" "}
               <Link href="/login" className="text-black-600 hover:underline font-medium">

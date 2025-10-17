@@ -97,7 +97,7 @@ function SettingsPageContent() {
                     <p className="text-sm text-muted-foreground">Choose your preferred language</p>
                   </div>
                 </div>
-                <div className="flex items-center space-x-2">
+                {/*<div className="flex items-center space-x-2">
                   <Button
                     variant={language === "en" ? "default" : "outline"}
                     size="sm"
@@ -105,6 +105,7 @@ function SettingsPageContent() {
                   >
                     🇺🇸 English
                   </Button>
+                  
                   <Button
                     variant={language === "es" ? "default" : "outline"}
                     size="sm"
@@ -112,7 +113,7 @@ function SettingsPageContent() {
                   >
                     🇪🇸 Español
                   </Button>
-                </div>
+                </div>*/}
               </div>
 
               <div className="flex items-center justify-between">
