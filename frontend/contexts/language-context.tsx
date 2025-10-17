@@ -21,7 +21,7 @@ const translations = {
     "nav.history": "History",
     "nav.search": "Search",
     "nav.signin": "Sign in",
-    "nav.signup": "Sign up",
+    "nav.signup": "Regístrate",
 
     // Hero Section
     "hero.badge": "🤖 AI-Powered Tax Assistant for Cultural Professionals",
@@ -252,29 +252,29 @@ const translations = {
     "settings.account.delete.confirm": "Are you sure you want to delete your account? This action cannot be undone.",
 
     // Auth Pages
-    "auth.login.title": "Sign In",
-    "auth.login.subtitle": "Access your account to continue with your legal consultations",
-    "auth.login.email": "Email Address",
-    "auth.login.password": "Password",
-    "auth.login.show.password": "Show password",
-    "auth.login.hide.password": "Hide password",
-    "auth.login.forgot.password": "Forgot your password?",
-    "auth.login.submit": "Sign In",
-    "auth.login.no.account": "Don't have an account?",
-    "auth.login.signup.link": "Sign up here",
-    "auth.signup.title": "Create Account",
-    "auth.signup.subtitle": "Join thousands of professionals",
+    "auth.login.title": "Iniciar sesión",
+    "auth.login.subtitle": "Accede a la plataforma de referencia del sector cultural y creativo",
+    "auth.login.email": "Email ",
+    "auth.login.password": "Contraseña",
+    "auth.login.show.password": "Show Contraseña",
+    "auth.login.hide.password": "Hide Contraseña",
+    "auth.login.forgot.password": "¿Has olvidado tu contraseña?",
+    "auth.login.submit": "Iniciar sesión",
+    "auth.login.no.account": "¿No tienes una cuenta? ",
+    "auth.login.signup.link": "Regístrate aquí",
+    "auth.signup.title": "Crea tu cuenta",
+    "auth.signup.subtitle": "Únete a la plataforma de referencia del sector cultural y creativo",
     "auth.signup.first.name": "First Name",
     "auth.signup.last.name": "Last Name",
-    "auth.signup.email": "Email Address",
-    "auth.signup.password": "Password",
-    "auth.signup.confirm.password": "Confirm Password",
-    "auth.signup.terms": "I accept the terms and conditions",
-    "auth.signup.submit": "Create Account",
+    "auth.signup.email": "Email ",
+    "auth.signup.password": "Contraseña",
+    "auth.signup.confirm.password": "Confirm Contraseña",
+    "auth.signup.terms": "TÉRMINOS Y CONDICIONES",
+    "auth.signup.submit": "Crea tu cuenta",
     "auth.signup.have.account": "Already have an account?",
-    "auth.signup.login.link": "Sign in here",
+    "auth.signup.login.link": "Iniciar sesión",
     "auth.error.passwords.mismatch": "Passwords do not match",
-    "auth.error.accept.terms": "You must accept the terms and conditions",
+    "auth.error.accept.terms": "You must accept the TÉRMINOS Y CONDICIONES",
     "auth.error.create.account": "Error creating account",
     "auth.error.login.failed": "Login failed",
     "auth.login.success": "Successfully signed in!",
@@ -597,7 +597,7 @@ const translations = {
     "community.cta.title": "Ready to Join Our Community?",
     "community.cta.description": "Connect with fellow professionals, share experiences, and get expert advice",
     "community.cta.join": "Join Community",
-    "community.cta.signup": "Sign Up for ARTISTING",
+    "community.cta.signup": "Regístrate for ARTISTING",
 
     // Terms of Service
     "terms.title": "Terms of Service",
@@ -1236,7 +1236,7 @@ const translations = {
     "terms.intellectual.property.title": "Propiedad Intelectual",
     "terms.intellectual.property.content": "Todo el contenido, características y funcionalidad de ARTISTING, incluyendo pero no limitado a texto, gráficos, logotipos y software, son propiedad de ARTISTING y están protegidos por leyes internacionales de derechos de autor, marcas comerciales y otras leyes de propiedad intelectual.",
     "terms.privacy.title": "Privacidad y Protección de Datos",
-    "terms.privacy.content": "Su privacidad es importante para nosotros. Nuestra Política de Privacidad explica cómo recopilamos, utilizamos y protegemos su información cuando utiliza nuestros servicios. Al utilizar ARTISTING, usted consiente la recopilación y uso de información de acuerdo con nuestra Política de Privacidad.",
+    "terms.privacy.content": "Su privacidad es importante para nosotros. Nuestra Política de Privacidad explica cómo recopilamos, utilizamos, y protegemos su información cuando utiliza nuestros servicios. Al utilizar ARTISTING, usted consiente la recopilación y uso de información de acuerdo con nuestra Política de Privacidad.",
     "terms.payment.title": "Pago y Facturación",
     "terms.payment.content": "ARTISTING opera con un sistema basado en créditos. Los usuarios compran créditos para acceder a consultas de IA. Todos los pagos se procesan de forma segura, y los términos de facturación se muestran claramente antes de la compra. Los reembolsos están disponibles de acuerdo con nuestra política de reembolsos.",
     "terms.limitation.title": "Limitación de Responsabilidad",
@@ -1282,4 +1282,12 @@ export function useLanguage() {
     throw new Error("useLanguage must be used within a LanguageProvider")
   }
   return context
+}
+
+export async function getConversations(page = 1, limit = 20) {
+  const token = await authService.getAccessToken() // adapt to your auth helper
+  const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/chat/sessions/?page=${page}&limit=${limit}`, {
+    headers: { Authorization: `Bearer ${token}` }
+  })
+  return res.json()
 }

@@ -136,137 +136,159 @@ export class ChatService extends BaseApiService {
   async sendStreamingMessage(
   payload: { message: string; conversation_id?: string },
   onChunk: (chunk: string) => void,
-  onComplete: (conversationId: string) => void,
-  onError: (error: string) => void
+  onConversationId?: (id: string) => void,
+  onError?: (err: string) => void
 ) {
+  const controller = new AbortController()
+  let reader: ReadableStreamDefaultReader<Uint8Array> | null = null
+  let finished = false
   try {
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/chat/stream/`, {
-      method: 'POST',
+    const token = localStorage.getItem("accessToken")
+    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/chat/stream/`, {
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
-        // Add auth headers if needed
+        "Content-Type": "application/json",
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
       },
-      body: JSON.stringify({ message: payload.message, conversation_id: payload.conversation_id }),
+      body: JSON.stringify(payload),
+      signal: controller.signal,
     })
 
-    if (!response.body) throw new Error('No response body')
+    if (!res.ok) {
+      onError?.(await res.text().catch(() => `HTTP ${res.status}`))
+      return
+    }
 
-    const reader = response.body.getReader()
+    reader = res.body?.getReader() ?? null
+    if (!reader) {
+      onError?.("No response body")
+      return
+    }
+
     const decoder = new TextDecoder()
-    let buffer = ''
-    let conversationId = payload.conversation_id || ''
+    let buffer = ""
 
-        while (true) {
-      const { done, value } = await reader.read()
+    while (!finished) {
+      const { value, done } = await reader.read()
       if (done) break
-      buffer += decoder.decode(value, { stream: true })
-      const lines = buffer.split('\n')
-      buffer = lines.pop() || ''
-      for (const line of lines) {
-        if (line.startsWith('data: ')) {
-          const dataStr = line.slice(6).trim()
-          if (dataStr === '[DONE]') {
-            onComplete(conversationId)
-            return
+      if (value) buffer += decoder.decode(value, { stream: true })
+
+      // process any complete SSE-style events separated by double newline
+      const parts = buffer.split("\n\n")
+      buffer = parts.pop() || ""
+
+      for (const part of parts) {
+        const lines = part.split("\n").map(l => l.trim()).filter(Boolean)
+        for (const line of lines) {
+          if (!line) continue
+          // accept lines that start with "data:" or raw JSON
+          const payloadStr = line.startsWith("data:") ? line.slice(5).trim() : line.trim()
+
+          // handle DONE even when combined / split
+          if (payloadStr === "[DONE]" || payloadStr.includes("[DONE]")) {
+            finished = true
+            break
           }
+
+          // try parse JSON payload like {"content": "...}
           try {
-            const data = JSON.parse(dataStr)
-            let chunkContent = ''
-            // Handle OpenAI/Deepseek chunk format
-            if (
-              data.choices &&
-              Array.isArray(data.choices) &&
-              data.choices[0] &&
-              data.choices[0].delta &&
-              typeof data.choices[0].delta.content === 'string'
-            ) {
-              chunkContent = data.choices[0].delta.content
-            } else if (typeof data.content === 'string') {
-              chunkContent = data.content
-            }
-            if (chunkContent) {
-              onChunk(chunkContent)
-              console.log('Parsed chunkContent:', chunkContent);
-            }
-            if (data.conversation_id) conversationId = data.conversation_id
-          } catch (err: any) {
-            onError(err.message || 'Streaming error')
+            const obj = JSON.parse(payloadStr)
+            if (obj.conversation_id) onConversationId?.(obj.conversation_id)
+            const content = (obj.content ?? "").toString()
+            if (content && content.trim() !== "") onChunk(content)
+          } catch {
+            // not JSON — forward raw text
+            if (payloadStr && payloadStr.trim() !== "") onChunk(payloadStr)
           }
         }
+        if (finished) break
       }
+
+      if (finished) break
     }
+
+    // cancel reader so fetch resolves and connection closes
+    try { await reader.cancel() } catch {}
+    return
   } catch (err: any) {
-    onError(err.message || 'Streaming error')
+    if (err?.name === "AbortError") onError?.("stream aborted")
+    else onError?.(err?.message || String(err))
+    return
+  } finally {
+    try { if (reader) await reader.releaseLock?.() } catch {}
+    try { controller.abort() } catch {}
   }
 }
-// ...existing code...
-// ...existing code...
 
   /**
    * Process streaming response (extracted for reuse)
    */
   private async processStreamingResponse(
-    response: Response,
-    onChunk: (chunk: string) => void,
-    onComplete: (conversationId: string, citations?: any[]) => void,
-    onError: (error: string) => void
-  ): Promise<void> {
-    const reader = response.body?.getReader()
-    if (!reader) {
-      throw new Error('No response body')
-    }
+  res: Response,
+  onChunk: (chunk: string) => void,
+  onConversationId?: (id: string) => void,
+  onError?: (err: string) => void
+) {
+  const reader = res.body?.getReader()
+  if (!reader) {
+    onError?.("No response body")
+    return
+  }
 
-    const decoder = new TextDecoder()
-    let conversationId = ''
-    let buffer = ''
+  const decoder = new TextDecoder()
+  let buffer = ""
 
-    try {
-      while (true) {
-        const { done, value } = await reader.read()
-        if (done) break
+  try {
+    while (true) {
+      const { value, done } = await reader.read()
+      if (done) break
+      if (value) buffer += decoder.decode(value, { stream: true })
 
-        buffer += decoder.decode(value, { stream: true })
-        const lines = buffer.split('\n')
-        
-        // Keep the last incomplete line in the buffer
-        buffer = lines.pop() || ''
+      const parts = buffer.split("\n\n")
+      buffer = parts.pop() || ""
 
+      for (const part of parts) {
+        const lines = part.split("\n").map(l => l.trim()).filter(Boolean)
         for (const line of lines) {
-          if (line.startsWith('data: ')) {
-            try {
-              const jsonData = line.slice(6).trim()
-              if (jsonData === '[DONE]') {
-                onComplete(conversationId, [])
-                return
-              }
+          const payloadStr = line.startsWith("data:") ? line.slice(5).trim() : line.trim()
+          if (!payloadStr) continue
 
-              const data = JSON.parse(jsonData)
+          // handle DONE even when combined or split
+          if (payloadStr === "[DONE]" || payloadStr.includes("[DONE]")) {
+            return
+          }
 
-              if (data.content) {
-                onChunk(data.content)
-              }
-              
-              if (data.conversation_id) {
-                conversationId = data.conversation_id
-              }
-
-              if (data.is_complete || data.done) {
-                onComplete(conversationId, data.citations || [])
-                return
-              }
-            } catch (e) {
-              // Ignore malformed JSON chunks
-              console.warn('Failed to parse SSE data:', e)
-            }
+          try {
+            const obj = JSON.parse(payloadStr)
+            if (obj.conversation_id) onConversationId?.(obj.conversation_id)
+            const content = (obj.content ?? "").toString()
+            if (content && content.trim() !== "") onChunk(content)
+          } catch {
+            // not JSON — forward raw chunk
+            onChunk(payloadStr)
           }
         }
       }
-    } catch (error) {
-      onError(error instanceof Error ? error.message : 'Streaming error')
-    } finally {
-      reader.releaseLock()
     }
+
+    // flush any leftover buffer
+    if (buffer.trim() && buffer.trim() !== "[DONE]") {
+      const b = buffer.trim()
+      try {
+        const obj = JSON.parse(b.startsWith("data:") ? b.slice(5).trim() : b)
+        if (obj.conversation_id) onConversationId?.(obj.conversation_id)
+        if (obj.content) onChunk(obj.content)
+      } catch {
+        onChunk(b)
+      }
+    }
+  } catch (err: any) {
+    onError?.(err?.message || String(err))
+  } finally {
+    try { await reader.cancel() } catch {}
+    try { reader.releaseLock?.() } catch {}
   }
+}
 
   /**
    * Start a new conversation
@@ -583,5 +605,12 @@ export class ChatService extends BaseApiService {
   }
 }
 
-// Export singleton instance
-export const chatService = new ChatService()
+ // Export singleton instance
+ export const chatService = new ChatService()
+
+ export const sendStreamingMessage = (
+   payload: { message: string; conversation_id?: string },
+   onChunk: (chunk: string) => void,
+   onConversationId?: (id: string) => void,
+   onError?: (err: string) => void
+ ) => chatService.sendStreamingMessage(payload, onChunk, onConversationId, onError)

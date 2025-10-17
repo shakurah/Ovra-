@@ -1,4 +1,7 @@
 import uuid
+import json
+import datetime
+from django.utils import timezone
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from django.contrib.auth import authenticate
@@ -12,11 +15,10 @@ from django.contrib.auth import logout
 from django.http import JsonResponse
 from django.core.mail import send_mail
 from django.conf import settings
-from django.utils.timezone import now, timedelta
 from django.contrib.auth.hashers import make_password
 from django.views.decorators.csrf import csrf_exempt
 from .models import PasswordResetToken
-import json
+
 class RegisterView(generics.CreateAPIView):
     queryset = User.objects.all()
     serializer_class = RegisterSerializer
@@ -89,52 +91,88 @@ def me_view(request):
         "firstName": user.first_name,
         "lastName": user.last_name,
     })
+
 @csrf_exempt
 def forgot_password_view(request):
+    """
+    Accepts POST { "email": "..." }.
+    If the email exists, create a time-limited token and send reset link.
+    Always return a generic success message to avoid account enumeration.
+    """
     if request.method != 'POST':
         return JsonResponse({'error': 'Invalid method'}, status=405)
 
-    data = json.loads(request.body)
-    email = data.get('email')
-
     try:
-        user = User.objects.get(email=email)
-    except User.DoesNotExist:
-        return JsonResponse({'error': 'User not found'}, status=404)
+        data = json.loads(request.body)
+    except Exception:
+        return JsonResponse({'error': 'Invalid JSON'}, status=400)
 
-    # Delete old tokens for the same user
+    email = (data.get('email') or '').strip()
+    if not email:
+        return JsonResponse({'error': 'Email is required'}, status=400)
+
+    # Look up user (case-insensitive)
+    user = User.objects.filter(email__iexact=email).first()
+
+    # Always respond with a generic message to prevent user enumeration.
+    generic_response = {'message': 'If an account with that email exists, a reset link has been sent.'}
+
+    if not user:
+        return JsonResponse(generic_response, status=200)
+
+    # Remove any previous tokens for this user
     PasswordResetToken.objects.filter(user=user).delete()
 
+    # Create a new token (UUID4). Use created_at on the model to enforce expiry.
     token = str(uuid.uuid4())
     PasswordResetToken.objects.create(user=user, token=token)
 
-    reset_link = f"{request.scheme}://{request.get_host()}/reset-password/{token}/"
+    frontend_url = getattr(settings, "FRONTEND_URL", "http://localhost:3000")
+    reset_link = f"{frontend_url.rstrip('/')}/reset-password/{token}"
 
-    send_mail(
-        subject="Password Reset Request",
-        message=f"Hi {user.username},\n\nClick the link below to reset your password:\n{reset_link}\n\nThis link will expire in 1 hour.",
-        from_email=settings.DEFAULT_FROM_EMAIL,
-        recipient_list=[email],
-        fail_silently=False,
-    )
+    # Send email (fail_silently=False so exceptions are surfaced)
+    try:
+        send_mail(
+            subject="Password Reset Request",
+            message=f"Hi {user.get_full_name() or user.username},\n\nClick the link below to reset your password:\n{reset_link}\n\nThis link will expire in 1 hour.",
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            recipient_list=[user.email],
+            fail_silently=False,
+        )
+    except Exception as e:
+        # Log or handle email sending failure; still return generic response
+        # Optionally: logger.exception("Failed to send reset email")
+        return JsonResponse(generic_response, status=200)
 
-    return JsonResponse({'message': 'Password reset email sent successfully.'})
+    return JsonResponse(generic_response, status=200)
 
 
+@csrf_exempt
 def reset_password_view(request, token):
+    """
+    Accepts POST { "new_password": "..." }.
+    Validates token expiry, sets new password, and deletes the token.
+    """
     if request.method != 'POST':
         return JsonResponse({'error': 'Invalid method'}, status=405)
 
-    data = json.loads(request.body)
-    new_password = data.get('new_password')
+    try:
+        data = json.loads(request.body)
+    except Exception:
+        return JsonResponse({'error': 'Invalid JSON'}, status=400)
+
+    new_password = data.get('new_password') or ''
+    if not new_password or len(new_password) < 8:
+        return JsonResponse({'error': 'Password must be at least 8 characters long.'}, status=400)
 
     try:
         reset_entry = PasswordResetToken.objects.get(token=token)
     except PasswordResetToken.DoesNotExist:
         return JsonResponse({'error': 'Invalid or expired token'}, status=400)
 
-    # Optional: expire after 1 hour
-    if now() - reset_entry.created_at > timedelta(hours=1):
+    # Expire after 1 hour (uses created_at on model)
+    created_at = reset_entry.created_at
+    if timezone.now() - created_at > datetime.timedelta(hours=1):
         reset_entry.delete()
         return JsonResponse({'error': 'Token expired. Please request a new one.'}, status=400)
 
@@ -142,6 +180,7 @@ def reset_password_view(request, token):
     user.password = make_password(new_password)
     user.save()
 
-    reset_entry.delete()  # remove used token
+    # Remove token after successful reset
+    reset_entry.delete()
 
     return JsonResponse({'message': 'Password reset successful! You can now log in.'})

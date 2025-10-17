@@ -1,39 +1,31 @@
 "use client"
 
 import { useState } from "react"
-import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Eye, EyeOff, Scale, AlertCircle } from "lucide-react"
-import { Alert, AlertDescription } from "@/components/ui/alert"
 import Link from "next/link"
 import { toastService } from "@/lib/services"
 
-export default function ForgotAndResetPassword() {
-  const router = useRouter()
-
-  // State for step management
-  const [step, setStep] = useState(1) // 1 = Email entry, 2 = New password entry
-
-  // Email form states
+export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("")
-  const [emailStatus, setEmailStatus] = useState(null) // loading | success | error
-  const [emailMessage, setEmailMessage] = useState("")
-
-  // Password form states
-  const [newPassword, setNewPassword] = useState("")
-  const [confirmPassword, setConfirmPassword] = useState("")
-  const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState("")
+  const [message, setMessage] = useState("")
 
-  // 🔹 Step 1: Handle email submission
-  const handleEmailSubmit = async (e) => {
+  const isValidEmail = (value: string) => {
+    return /\S+@\S+\.\S+/.test(value)
+  }
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setEmailStatus("loading")
-    setEmailMessage("")
+    if (!isValidEmail(email)) {
+      toastService.error("Por favor ingresa una dirección de correo electrónico válida.")
+      return
+    }
+
+    setIsLoading(true)
+    setMessage("")
 
     try {
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/forgot-password/`, {
@@ -43,187 +35,61 @@ export default function ForgotAndResetPassword() {
       })
 
       const data = await response.json()
-
-      if (response.ok) {
-        setEmailStatus("success")
-        setEmailMessage("Email verified! Enter your new password below.")
-        toastService.success("Email verified successfully!")
-        setStep(2) // Move to password step
-      } else {
-        setEmailStatus("error")
-        setEmailMessage(data.error || "Email not found.")
-        toastService.error(data.error || "Email not found.")
+      if (!response.ok) {
+        throw new Error(data.error || data.message || "Algo salió mal")
       }
-    } catch (err) {
-      setEmailStatus("error")
-      setEmailMessage("Network error. Please try again.")
-      toastService.error("Network error. Please try again.")
-    }
-  }
 
-  // 🔹 Step 2: Handle password reset
-  const handlePasswordSubmit = async (e) => {
-    e.preventDefault()
-    setError("")
-
-    if (newPassword !== confirmPassword) {
-      setError("Passwords do not match.")
-      toastService.error("Passwords do not match.")
-      return
-    }
-
-    setIsLoading(true)
-    try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/reset-password/`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, new_password: newPassword }),
-      })
-
-      const data = await response.json()
-
-      if (!response.ok) throw new Error(data.error || "Failed to reset password.")
-
-      toastService.success("Password reset successfully! You can now log in.")
-      router.push("/login")
-    } catch (err) {
-      setError(err.message)
-      toastService.error(err.message)
+      toastService.success("Si existe una cuenta con ese correo electrónico, se ha enviado un enlace de restablecimiento.")
+      setMessage("Si existe una cuenta con ese correo electrónico, revisa tu correo para el enlace de restablecimiento.")
+      setEmail("")
+    } catch (err: any) {
+      toastService.error(err.message || "Error al enviar el enlace de restablecimiento.")
+      setMessage(err.message || "Error al enviar el enlace de restablecimiento.")
     } finally {
       setIsLoading(false)
     }
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 dark:from-slate-900 to-blue-50 flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
-        {/* Logo */}
-        <div className="text-center mb-8">
-          <Link href="/" className="inline-flex items-center space-x-2">
-            <Scale className="h-10 w-10 text-black-600" />
-            <span className="text-3xl font-bold text-gray-900 dark:text-white">ARTISTING</span>
-          </Link>
-          <p className="text-gray-600 dark:text-white mt-2">
-            {step === 1 ? "Recover your password" : "Reset your password securely"}
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 flex items-center justify-center p-4">
+      <Card className="w-full max-w-md shadow-lg border-0">
+        <CardHeader>
+          <CardTitle className="text-2xl text-center">Olvidé mi contraseña</CardTitle>
+          <CardDescription className="text-center">
+            Ingresa tu correo electrónico para recibir un enlace de restablecimiento de contraseña.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <Label>Email</Label>
+              <Input
+                type="email"
+                placeholder="you@example.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                aria-invalid={!isValidEmail(email) && email.length > 0}
+              />
+            </div>
+
+            <Button type="submit" disabled={isLoading || !isValidEmail(email)} className="w-full">
+              {isLoading ? "Enviando..." : "Enviar enlace de restablecimiento"}
+            </Button>
+
+            {message && (
+              <p className="text-center text-sm mt-3 text-gray-600">{message}</p>
+            )}
+          </form>
+
+          <p className="text-center text-sm text-gray-600 mt-6">
+            ¿Recuerdas tu contraseña?{" "}
+            <Link href="/login" className="text-black-600 hover:underline font-medium">
+              Iniciar sesión
+            </Link>
           </p>
-        </div>
-
-        <Card className="shadow-xl border-0">
-          <CardHeader className="space-y-1">
-            <CardTitle className="text-2xl font-bold text-center">
-              {step === 1 ? "Forgot Password" : "Reset Password"}
-            </CardTitle>
-            <CardDescription className="text-center">
-              {step === 1
-                ? "Enter your email address to verify your account."
-                : "Enter and confirm your new password below."}
-            </CardDescription>
-          </CardHeader>
-
-          <CardContent>
-            {/* Step 1: Email Form */}
-            {step === 1 && (
-              <form onSubmit={handleEmailSubmit} className="space-y-4">
-                <div>
-                  <Label>Email Address</Label>
-                  <Input
-                    type="email"
-                    placeholder="you@example.com"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
-                    className="h-11"
-                  />
-                </div>
-
-                <Button
-                  type="submit"
-                  className="w-full h-11"
-                  disabled={emailStatus === "loading"}
-                >
-                  {emailStatus === "loading" ? "Checking..." : "Continue"}
-                </Button>
-
-                {emailMessage && (
-                  <p
-                    className={`text-center text-sm mt-3 ${
-                      emailStatus === "error" ? "text-red-600" : "text-green-600"
-                    }`}
-                  >
-                    {emailMessage}
-                  </p>
-                )}
-              </form>
-            )}
-
-            {/* Step 2: Password Reset Form */}
-            {step === 2 && (
-              <>
-                {error && (
-                  <Alert variant="destructive" className="mb-4">
-                    <AlertCircle className="h-4 w-4" />
-                    <AlertDescription>{error}</AlertDescription>
-                  </Alert>
-                )}
-
-                <form onSubmit={handlePasswordSubmit} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="newPassword">New Password</Label>
-                    <div className="relative">
-                      <Input
-                        id="newPassword"
-                        type={showPassword ? "text" : "password"}
-                        placeholder="Enter new password"
-                        value={newPassword}
-                        onChange={(e) => setNewPassword(e.target.value)}
-                        required
-                        className="h-11 pr-10"
-                      />
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                        onClick={() => setShowPassword(!showPassword)}
-                      >
-                        {showPassword ? (
-                          <EyeOff className="h-4 w-4 text-gray-400" />
-                        ) : (
-                          <Eye className="h-4 w-4 text-gray-400" />
-                        )}
-                      </Button>
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="confirmPassword">Confirm Password</Label>
-                    <Input
-                      id="confirmPassword"
-                      type="password"
-                      placeholder="Re-enter new password"
-                      value={confirmPassword}
-                      onChange={(e) => setConfirmPassword(e.target.value)}
-                      required
-                      className="h-11"
-                    />
-                  </div>
-
-                  <Button type="submit" className="w-full h-11" disabled={isLoading}>
-                    {isLoading ? "Resetting..." : "Reset Password"}
-                  </Button>
-                </form>
-              </>
-            )}
-
-            <p className="text-center text-sm text-gray-600 mt-6">
-              Remember your password?{" "}
-              <Link href="/login" className="text-black-600 hover:underline font-medium">
-                Go back to login
-              </Link>
-            </p>
-          </CardContent>
-        </Card>
-      </div>
+        </CardContent>
+      </Card>
     </div>
   )
 }

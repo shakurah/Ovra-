@@ -183,3 +183,67 @@ export function AuthProvider({ children }: AuthProviderProps) {
     </AuthContext.Provider>
   )
 }
+
+export async function refreshAccessToken(refreshToken: string) {
+  const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/auth/token/refresh/`, {
+     method: "POST",
+     headers: { "Content-Type": "application/json" },
+     body: JSON.stringify({ refresh: refreshToken }) // <-- must be "refresh"
+   })
+   const data = await res.json()
+   if (!res.ok) {
+     throw data
+   }
+   if (data.access) localStorage.setItem("accessToken", data.access)
+   if (data.refresh) localStorage.setItem("refreshToken", data.refresh) // rotate if provided
+   return data
+ }
+ 
+ export async function getValidAccessToken() {
+   let access = localStorage.getItem("accessToken");
+   const refresh = localStorage.getItem("refreshToken");
+   if (!access && !refresh) throw new Error("no tokens");
+   // Optional: check expiry of access token client-side if you decode it
+   // Try using current access; if a request fails with 401 call refreshAccessToken
+   return access;
+ }
+ 
+async function fetchWithAuth(url: string, options: RequestInit = {}) {
+  let accessToken = localStorage.getItem("accessToken");
+  const refreshToken = localStorage.getItem("refreshToken");
+  if (!accessToken && !refreshToken) throw new Error("no tokens");
+
+  if (accessToken) {
+    options.headers = {
+      ...options.headers,
+      "Authorization": `Bearer ${accessToken}`,
+    }
+  }
+  let res = await fetch(url, options);
+  if (res.status === 401 && refreshToken) {
+    // Access token might be expired, try to refresh
+    try {
+      const data = await refreshAccessToken(refreshToken);
+      accessToken = data.access;
+      options.headers = {
+        ...options.headers,
+        "Authorization": `Bearer ${accessToken}`,
+      }
+      res = await fetch(url, options); // Retry original request
+    }
+    catch (error) {
+      // Refresh failed, logout user
+      localStorage.removeItem("accessToken");
+      localStorage.removeItem("refreshToken");
+      throw new Error("Session expired, please log in again.");
+    }
+  }
+
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}));
+    const error = new Error(errorData.error || errorData.message || "API request failed");
+    throw error;
+  }
+  return res;
+}
+export { fetchWithAuth }

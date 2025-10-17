@@ -41,6 +41,94 @@ export interface TokenRefreshResponse {
   user: User
 }
 
+const API_BASE = (process.env.NEXT_PUBLIC_API_URL || "").replace(/\/$/, "")
+
+function getAccessToken() {
+  return localStorage.getItem("accessToken") || localStorage.getItem("access_token")
+}
+function getRefreshToken() {
+  return localStorage.getItem("refreshToken") || localStorage.getItem("refresh_token")
+}
+function setTokens(access?: string | null, refresh?: string | null) {
+  if (access) {
+    localStorage.setItem("accessToken", access)
+    localStorage.setItem("access_token", access)
+  }
+  if (refresh) {
+    localStorage.setItem("refreshToken", refresh)
+    localStorage.setItem("refresh_token", refresh)
+  }
+}
+function clearTokens() {
+  localStorage.removeItem("accessToken")
+  localStorage.removeItem("access_token")
+  localStorage.removeItem("refreshToken")
+  localStorage.removeItem("refresh_token")
+}
+
+let pendingRefresh: Promise<string> | null = null
+
+async function doRefreshOnce(): Promise<string> {
+  // If a refresh is already in progress, reuse it
+  if (pendingRefresh) return pendingRefresh
+
+  const refresh = getRefreshToken()
+  if (!refresh) throw new Error("no refresh token")
+
+  pendingRefresh = (async () => {
+    const res = await fetch(`${API_BASE}/auth/token/refresh/`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ refresh })
+    })
+
+    const body = await res.json().catch(() => ({}))
+    if (!res.ok || !body.access) {
+      clearTokens()
+      pendingRefresh = null
+      throw new Error("refresh failed")
+    }
+
+    setTokens(body.access, body.refresh || refresh)
+    const access = body.access
+    pendingRefresh = null
+    return access
+  })()
+
+  return pendingRefresh
+}
+
+/**
+ * Generic fetch wrapper that attaches Authorization and refreshes token once on 401.
+ */
+export async function fetchWithAuth(input: RequestInfo, init: RequestInit = {}): Promise<Response> {
+  const baseUrl = input.toString().startsWith("http") ? input.toString() : `${API_BASE}${input}`
+  const headers = { "Content-Type": "application/json", ...(init.headers || {}) } as Record<string, string>
+
+  let access = getAccessToken()
+  if (access) headers.Authorization = `Bearer ${access}`
+  const opts = { ...init, headers }
+
+  let res = await fetch(baseUrl, opts)
+  if (res.status !== 401) return res
+
+  // try refresh once
+  try {
+    const newAccess = await doRefreshOnce()
+    headers.Authorization = `Bearer ${newAccess}`
+    const retryOpts = { ...init, headers }
+    const retried = await fetch(baseUrl, retryOpts)
+    if (retried.status === 401) {
+      // final failure -> clear tokens
+      clearTokens()
+    }
+    return retried
+  } catch (err) {
+    clearTokens()
+    throw err
+  }
+}
+
 export class AuthService extends BaseApiService {
   /**
    * Login user with email and password
@@ -51,6 +139,9 @@ export class AuthService extends BaseApiService {
     if (typeof window !== 'undefined') {
       localStorage.setItem('access_token', response.access)
       localStorage.setItem('refresh_token', response.refresh)
+      // also store modern keys used elsewhere
+      localStorage.setItem('accessToken', response.access)
+      localStorage.setItem('refreshToken', response.refresh)
     }
 
     this.setUser(response.user)
@@ -87,18 +178,29 @@ export class AuthService extends BaseApiService {
   /**
    * Refresh access token using refresh token
    */
-  async refreshToken(): Promise<TokenRefreshResponse> {
+  async refreshToken(): Promise<any> {
     const refreshToken = this.getRefreshToken()
     if (!refreshToken) throw new Error('No refresh token available')
 
-    const response = await this.post<TokenRefreshResponse>(
+    // send key named "refresh" (SimpleJWT expects this)
+    const response = await this.post<any>(
       '/auth/token/refresh/',
-      { refresh_token: refreshToken }
+      { refresh: refreshToken }
     )
 
     if (typeof window !== 'undefined') {
-      localStorage.setItem('access_token', response.access_token)
-      localStorage.setItem('refresh_token', response.refresh_token)
+      // handle both possible response shapes { access } or { access_token }
+      const access = response.access || response.access_token
+      const refresh = response.refresh || response.refresh_token
+
+      if (access) {
+        localStorage.setItem('access_token', access)
+        localStorage.setItem('accessToken', access)
+      }
+      if (refresh) {
+        localStorage.setItem('refresh_token', refresh)
+        localStorage.setItem('refreshToken', refresh)
+      }
     }
 
     return response

@@ -7,8 +7,8 @@
         position: 'bottom-right',
         theme: 'auto', // auto, light, dark
         language: 'es',
-        buttonColor: '#3b82f6', // Primary blue from theme
-        title: 'Asistente Fiscal OVRA'
+        buttonColor: '#DEC369', 
+        title: 'Asistente Fiscal Artisting',
     };
     
     // Widget class
