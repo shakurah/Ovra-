@@ -742,10 +742,11 @@ const translations = {
     "chat.sidebar.payment": "Pagos y Facturación",
     "chat.sidebar.status": "Estado del Sistema",
     "chat.sidebar.logout": "Cerrar Sesión",
-    "chat.welcome.title": "¡Hola! Soy tu asistente legal IA",
+    "chat.welcome.title": "¿En qué puedo ayudarte hoy?",
     "chat.welcome.description":
-      "Especializado en legislación fiscal española para profesionales culturales. Puedo ayudarte con IVA, IRPF, facturación y más.",
-    "chat.welcome.examples": "Preguntas frecuentes:",
+      "Soy tu asistente contable, fiscal, laboral y legal especializado en el sector cultural y creativo y estoy aquí para resolver tus consultas.",
+    "chat.welcome.examples": "Tan solo necesito que me indiques quién eres, a qué te dedicas y cuál es la consulta quedeseas resolver. No obstante, cuanta más información aportes, más completa será la respuesta que recibirás.",
+    
     "chat.input.placeholder": "Escribe tu consulta legal aquí...",
     "chat.input.analyzing": "Analizando legislación...",
     "chat.input.nocredits": "Sin créditos restantes.",

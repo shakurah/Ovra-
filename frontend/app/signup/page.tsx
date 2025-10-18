@@ -114,7 +114,7 @@ export default function SignupPage() {
                     value={formData.firstName}
                     onChange={handleInputChange}
                     required
-                    className="h-11"
+                    className={`h-11 ${fieldErrors?.firstName ? 'border-red-500' : ''} focus:ring-white focus:border-black`}
                   />
                 </div>
                 <div className="space-y-2">
@@ -126,7 +126,7 @@ export default function SignupPage() {
                     value={formData.lastName}
                     onChange={handleInputChange}
                     required
-                    className="h-11"
+                    className={`h-11 ${fieldErrors?.lastName ? 'border-red-500' : ''} focus:ring-white focus:border-black`}
                   />
                 </div>
               </div>
@@ -141,7 +141,7 @@ export default function SignupPage() {
                   value={formData.email}
                   onChange={handleInputChange}
                   required
-                  className="h-11"
+                  className={`h-11 ${fieldErrors?.email ? 'border-red-500' : ''} focus:ring-white focus:border-black`}
                 />
               </div>
 
@@ -222,7 +222,11 @@ export default function SignupPage() {
               </div>
 
 
-              <Button type="submit" className="w-full h-11" disabled={isLoading || !acceptTerms}>
+              <Button 
+                type="submit" 
+                className="w-full h-11 bg-black text-white hover:bg-[#D4AF37] hover:text-black transition-colors" 
+                disabled={isLoading || !acceptTerms}
+              >
                 {isLoading ? `${t("auth.signup.submit")}...` : t("auth.signup.submit")}
               </Button>
             </form>
