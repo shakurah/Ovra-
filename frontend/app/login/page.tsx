@@ -79,7 +79,7 @@ export default function LoginPage() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
-                  className={`h-11 ${fieldErrors.email ? 'border-red-500' : ''}`}
+                  className={`h-11 ${fieldErrors.email ? 'border-red-500' : ''} focus:ring-white focus:border-black`}
                 />
                 {fieldErrors.email && (
                   <p className="text-sm text-red-500">{fieldErrors.email}</p>
@@ -96,7 +96,7 @@ export default function LoginPage() {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
-                    className={`h-11 pr-10 ${fieldErrors.password ? 'border-red-500' : ''}`}
+                    className={`h-11 pr-10 ${fieldErrors.password ? 'border-red-500' : ''} focus:ring-white focus:border-black`}
                   />
                   <Button
                     type="button"
@@ -123,7 +123,11 @@ export default function LoginPage() {
                 </Link>
               </div>
 
-              <Button type="submit" className="w-full h-11" disabled={isLoading}>
+              <Button 
+                type="submit" 
+                className="w-full h-11 bg-black text-white hover:bg-[#D4AF37] hover:text-black transition-colors" 
+                disabled={isLoading}
+              >
                 {isLoading ? `${t("auth.login.submit")}...` : t("auth.login.submit")}
               </Button>
             </form>
@@ -132,9 +136,6 @@ export default function LoginPage() {
               <div className="relative">
                 <div className="absolute inset-0 flex items-center">
                   <span className="w-full border-t" />
-                </div>
-                <div className="relative flex justify-center text-xs uppercase">
-                  <span className="bg-white px-2 text-gray-500">O continúa con</span>
                 </div>
               </div>
             </div>

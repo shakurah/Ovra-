@@ -94,15 +94,16 @@ def chat_api(request):
             profile = user.profile
         except Exception:
             profile = None
-        if profile and getattr(profile, "plan", None) == "free":
-            today = now().date()
-            count_today = ChatLog.objects.filter(user=user, created_at__date=today).count()
-            if count_today >= QUERY_LIMIT_FREE:
-                return StreamingHttpResponse(
-                    "data: {\"error\": \"Daily query limit reached (3). Upgrade to Pro for unlimited access.\"}\n\n",
-                    content_type="text/event-stream",
-                    status=403
-                )
+        if profile.credits <= 0:
+            return StreamingHttpResponse(
+                "data: {\"error\": \"You have 0 credits left. Please upgrade your plan.\"}\n\n",
+                content_type="text/event-stream",
+                status=403
+            )
+
+    # 💳 Deduct one credit for this consultation
+    profile.credits -= 1
+    profile.save()
 
     # Save user message
     log_entry = ChatLog.objects.create(
@@ -222,7 +223,7 @@ def chat_api(request):
             except Exception:
                 logger.exception("Failed to save ChatLog response")
 
-            yield "data: [DONE]\n\n"
+            yield "[DONE]"
 
         response = StreamingHttpResponse(event_stream(), content_type="text/event-stream")
 
