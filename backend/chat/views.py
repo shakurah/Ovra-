@@ -94,7 +94,7 @@ def chat_api(request):
             profile = user.profile
         except Exception:
             profile = None
-        if profile.credits <= 0:
+        if profile.credits == -1500:
             return StreamingHttpResponse(
                 "data: {\"error\": \"You have 0 credits left. Please upgrade your plan.\"}\n\n",
                 content_type="text/event-stream",
@@ -223,7 +223,7 @@ def chat_api(request):
             except Exception:
                 logger.exception("Failed to save ChatLog response")
 
-            yield "[DONE]"
+            yield "[DONE]\n\n"
 
         response = StreamingHttpResponse(event_stream(), content_type="text/event-stream")
 
