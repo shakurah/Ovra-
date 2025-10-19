@@ -44,18 +44,27 @@ function HistoryPageContent() {
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
+    // Only fetch history after auth/user is ready (prevents silent failures)
+    if (!user) {
+      console.debug('[history.page] user not ready yet, skipping fetchChatHistory')
+      return
+    }
+    console.debug('[history.page] user ready, calling fetchChatHistory', { userId: user?.id })
     fetchChatHistory()
   }, [])
 
   const fetchChatHistory = async () => {
     try {
       setLoading(true)
+      console.debug('[history.page] fetchChatHistory START')
       const response = await chatService.getConversations()
+      console.debug('[history.page] getConversations returned', { response })
       setSessions(response.results || [])
     } catch (error) {
       console.error("Error fetching chat sessions:", error)
       setError("Failed to load chat sessions")
     } finally {
+      console.debug('[history.page] fetchChatHistory FINISHED')
       setLoading(false)
     }
   }
