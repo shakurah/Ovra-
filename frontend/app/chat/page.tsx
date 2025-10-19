@@ -149,6 +149,7 @@ function ChatPageContent() {
     setMessages((prev) => [...prev, userMessage, assistantMessage])
     setInput("")
     setIsLoading(true)
+
     try {
       await chatService.sendStreamingMessage(
         {
@@ -169,6 +170,7 @@ function ChatPageContent() {
         },
         (newConversationId: string) => {
           setConversationId(newConversationId)
+          // leave clearing here optional — final block below always clears
           setIsLoading(false)
         },
         (error: string) => {
@@ -178,6 +180,8 @@ function ChatPageContent() {
       )
     } catch (error) {
       toastService.error(t("chat.error.failed"))
+    } finally {
+      // Always ensure loading is cleared when the streaming call finishes
       setIsLoading(false)
     }
   }

@@ -145,7 +145,10 @@ export function ChatWidget({
   }
 
   // ✅ FIXED STREAM HANDLER
+
   const handleSendMessage = async () => {
+    console.log("📩 handleSubmit triggered")
+
     if (!input.trim() || isLoading) return
 
     const userMessage: Message = {
@@ -167,17 +170,31 @@ export function ChatWidget({
       timestamp: new Date(),
     }])
 
+    console.log('[chat-widget] handleSendMessage START', { assistantId, sessionId })
     try {
+      console.log('[chat-widget] calling sendStreamingMessage (about to await)')
+      console.log('[chat-widget] sendStreamingMessage value', sendStreamingMessage)
+
+      // sanity guard: if missing, throw visible error
+      if (typeof sendStreamingMessage !== 'function') {
+        console.error('[chat-widget] sendStreamingMessage is not a function', sendStreamingMessage)
+        throw new Error('sendStreamingMessage missing')
+      }
+      
+      console.log("🚀 Calling sendStreamingMessage")
+
       await sendStreamingMessage(
-        { message: userMessage.content, conversation_id: sessionId },
+        { message: userMessage.content, conversation_id: sessionId ?? undefined },
         // onChunk
         (chunk: string) => {
+          console.log('[chat-widget] onChunk', { assistantId, len: chunk.length, preview: chunk.slice(0,100) })
           setMessages(prev =>
             prev.map(m => m.id === assistantId ? { ...m, content: (m.content || '') + chunk } : m)
           )
         },
         // onConversationId
         (convId: string) => {
+          console.log('[chat-widget] onConversationId', convId)
           if (!sessionId) {
             setSessionId(convId)
             localStorage.setItem('ovra_widget_session', convId)
@@ -185,12 +202,16 @@ export function ChatWidget({
         },
         // onError
         (err: string) => {
+          console.log('[chat-widget] onError', err)
           console.error('stream error', err)
           setMessages(prev => prev.map(m => m.id === assistantId ? { ...m, content: 'Lo siento, ha ocurrido un error.' } : m))
         }
       )
+      console.log('[chat-widget] sendStreamingMessage AWAIT returned')
     } finally {
+      console.log('[chat-widget] finally clearing isLoading (was)', isLoading)
       setIsLoading(false)
+      console.log('[chat-widget] isLoading cleared (now false)')
     }
   }
 
