@@ -128,7 +128,7 @@ def forgot_password_view(request):
     PasswordResetToken.objects.create(user=user, token=token)
 
     frontend_url = getattr(settings, "FRONTEND_URL", "http://localhost:3000")
-    reset_link = f"{frontend_url.rstrip('/')}/reset-password/{token}"
+    reset_link = f"{frontend_url}/reset-password/{token}"
 
     # Send email (fail_silently=False so exceptions are surfaced)
     try:

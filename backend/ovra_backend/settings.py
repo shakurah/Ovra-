@@ -145,6 +145,7 @@ STRIPE_PRICE_PLUS = os.getenv("STRIPE_PRICE_PLUS", "")
 REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379/0")
 
 # Where to redirect after checkout
+FRONTEND_URL = os.getenv("FRONTEND_URL")
 FRONTEND_SUCCESS_URL = os.getenv("FRONTEND_SUCCESS_URL", "http://localhost:3000/checkout/success")
 FRONTEND_CANCEL_URL = os.getenv("FRONTEND_CANCEL_URL", "http://localhost:3000/checkout/cancel")
 
