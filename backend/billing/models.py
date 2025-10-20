@@ -1,10 +1,7 @@
 from django.db import models
-
-# Create your models here.
-# billing/models.py
-from django.db import models
 from django.contrib.auth.models import User
 from django.utils import timezone
+from django.conf import settings
 
 class SubscriptionPlan(models.Model):
     # Define your plan catalog here or sync with Stripe product IDs
@@ -36,3 +33,23 @@ class PaymentRecord(models.Model):
     success = models.BooleanField(default=False)
     raw_event = models.JSONField(null=True, blank=True)
     created_at = models.DateTimeField(default=timezone.now)
+
+class Subscription(models.Model):
+    TIER_CHOICES = [
+        ('basic', 'Basic'),
+        ('plus', 'Plus'),
+        ('advanced', 'Advanced'),
+        ('enterprise', 'Enterprise'),
+    ]
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='subscriptions')
+    stripe_customer_id = models.CharField(max_length=255, blank=True, null=True)
+    stripe_subscription_id = models.CharField(max_length=255, blank=True, null=True)
+    tier = models.CharField(max_length=32, choices=TIER_CHOICES, default='basic')
+    status = models.CharField(max_length=64, default='inactive')
+    current_period_end = models.DateTimeField(blank=True, null=True)
+    credits = models.IntegerField(default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.user} {self.tier} {self.status}"
