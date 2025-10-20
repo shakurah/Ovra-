@@ -1,6 +1,7 @@
 "use client"
 
-import { useRef, useEffect, useState } from "react"
+import { useEffect, useState } from "react"
+import { useRef } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
@@ -30,13 +31,15 @@ function ChatPageContent() {
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const formRef = useRef<HTMLFormElement | null>(null)
   const textareaRef = useRef<HTMLTextAreaElement | null>(null)
-  const [credits] = useState(47)
-  const [messages, setMessages] = useState<Message[]>([])
+x  const [credits] = useState(47)
   const [input, setInput] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   const [loadingMessage, setLoadingMessage] = useState("")
-  const [conversationId, setConversationId] = useState<string | undefined>()
+  const [conversationId, setConversationId] = useState<string | null>(null)
+  const [messages, setMessages] = useState<Message[]>([])
+  // fix: declare initialization state and setter used by component
   const [isInitialized, setIsInitialized] = useState(false)
+  // track whether a session is being loaded (prevents undefined variable error)
   const [sessionLoading, setSessionLoading] = useState(false)
 
   const scrollToBottom = () => {
@@ -55,8 +58,6 @@ function ChatPageContent() {
   useEffect(() => {
     const initializeChat = async () => {
       try {
-        setSessionLoading(true)
-        
         // Check if session parameter is provided in URL
         const sessionParam = searchParams.get('session')
         
@@ -77,17 +78,17 @@ function ChatPageContent() {
             console.error('Error loading session:', error)
             toastService.error('Failed to load chat session. Starting new conversation.')
             // Fall back to creating new session - let it be created when first message is sent
-            setConversationId(undefined)
+            setConversationId(null)
           }
         } else {
           // Start with no conversation - it will be created when first message is sent
-          setConversationId(undefined)
+          setConversationId(null)
         }
 
         setIsInitialized(true)
       } catch (error) {
         console.error('Error initializing chat:', error)
-        setConversationId(undefined)
+        setConversationId(null)
         setIsInitialized(true)
       } finally {
         setSessionLoading(false)
@@ -97,7 +98,27 @@ function ChatPageContent() {
     initializeChat()
   }, [searchParams])
 
-  
+  useEffect(() => {
+    async function initFromSessionParam() {
+      const sessionParam = searchParams.get('session')
+      if (!sessionParam) return
+
+      console.debug("[chat.page] loading conversation", sessionParam)
+      try {
+        const resp = await chatService.getConversation(sessionParam)
+        console.debug("[chat.page] getConversation normalized", resp)
+        setConversationId(resp.conversation?.id ?? sessionParam)
+        setMessages(resp.messages ?? [])
+      } catch (err) {
+        console.error("[chat.page] error loading conversation", err)
+      } finally {
+        setSessionLoading(false)
+        setIsInitialized(true) // <- ensure setter is defined and called
+      }
+    }
+    initFromSessionParam()
+  }, [])
+
   useEffect(() => {
     scrollToBottom()
   }, [messages])
@@ -119,7 +140,7 @@ function ChatPageContent() {
 
     router.replace('/chat')
 
-    setConversationId(undefined)
+    setConversationId(null)
     
     setIsInitialized(true)
   }
@@ -367,3 +388,5 @@ function ChatPageContent() {
 export default function ChatPage() {
   return <ChatPageContent />
 }
+
+
