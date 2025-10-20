@@ -231,30 +231,43 @@ export class ChatService extends BaseApiService {
     return this.sendMessage({ message, conversation_id: conversationId })
   }
 
-  async getConversation(conversationId: string): Promise<{ conversation: Conversation; messages: ChatMessage[] }> {
-    // keep lightweight: call backend if available, otherwise return defaults
-    const response = await this.get<any>(`/chat/sessions/${conversationId}/`, true).catch(() => null)
-    if (!response || !response.session) {
-      return {
-        conversation: {
-          id: conversationId,
-          title: 'Chat Session',
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-          message_count: 0
-        },
-        messages: []
+  // add/replace getConversation implementation
+  async getConversation(conversationId: string): Promise<{ conversation: any; messages: any[] }> {
+    console.debug("[chat.service] getConversation START", { conversationId })
+    const raw = await this.get<any>(`/chat/sessions/${conversationId}/`, true).catch((err) => {
+      console.error("[chat.service] getConversation fetch error", err)
+      return null
+    })
+    console.debug("[chat.service] getConversation raw", raw)
+
+    if (!raw) return { conversation: { id: conversationId, title: "Chat", created_at: new Date().toISOString() }, messages: [] }
+
+    const session = raw.session ?? { id: conversationId }
+    const rows = raw.messages ?? []
+
+    // normalize: backend returns rows with user_message + response_text -> turn into two chat messages per row
+    const messages: any[] = []
+    for (const row of rows) {
+      const ts = row.created_at ?? new Date().toISOString()
+      if (row.user_message) {
+        messages.push({
+          id: `u-${row.id}`,
+          role: "user",
+          content: row.user_message,
+          timestamp: ts,
+        })
+      }
+      if (row.response_text) {
+        messages.push({
+          id: `a-${row.id}`,
+          role: "assistant",
+          content: row.response_text,
+          timestamp: ts,
+        })
       }
     }
-    // minimal mapping
-    const messages = (response.messages || []).map((m: any) => ({
-      id: m.id,
-      role: m.role,
-      content: m.content,
-      timestamp: m.created_at || new Date().toISOString(),
-      metadata: m.role === 'assistant' ? { legal_references: m.legal_references || [] } : undefined
-    }))
-    return { conversation: response.session, messages }
+
+    return { conversation: session, messages }
   }
 
   // Other helpers (return safe defaults)
