@@ -135,19 +135,18 @@ MEDIA_URL =  '/media/'
 MEDIA_ROOT = BASEDIR / "media"
 
 # settings (use env loader)
-STRIPE_SECRET_KEY = os.getenv("STRIPE_SECRET_KEY", "")
-STRIPE_WEBHOOK_SECRET = os.getenv("STRIPE_WEBHOOK_SECRET", "")
-STRIPE_PRICE_BASIC = os.getenv("STRIPE_PRICE_BASIC", "")   # price IDs
-STRIPE_PRICE_PLUS = os.getenv("STRIPE_PRICE_PLUS", "")
-# ... other price IDs
+import os
+STRIPE_SECRET_KEY = os.environ.get('STRIPE_SECRET_KEY')
+STRIPE_PUBLISHABLE_KEY = os.environ.get('STRIPE_PUBLISHABLE_KEY')
+STRIPE_WEBHOOK_SECRET = os.environ.get('STRIPE_WEBHOOK_SECRET')
+STRIPE_PRICE_BASIC = os.environ.get('STRIPE_PRICE_BASIC')
+STRIPE_PRICE_PLUS = os.environ.get('STRIPE_PRICE_PLUS')
+STRIPE_PRICE_ADVANCED = os.environ.get('STRIPE_PRICE_ADVANCED')
+FRONTEND_SUCCESS_URL = os.environ.get('FRONTEND_SUCCESS_URL', 'http://localhost:3000/billing/success')
+FRONTEND_CANCEL_URL = os.environ.get('FRONTEND_CANCEL_URL', 'http://localhost:3000/billing/cancel')
 
 # Redis used by Celery & semantic cache
 REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379/0")
-
-# Where to redirect after checkout
-FRONTEND_URL = os.getenv("FRONTEND_URL")
-FRONTEND_SUCCESS_URL = os.getenv("FRONTEND_SUCCESS_URL", "http://localhost:3000/checkout/success")
-FRONTEND_CANCEL_URL = os.getenv("FRONTEND_CANCEL_URL", "http://localhost:3000/checkout/cancel")
 
 
 CSRF_TRUSTED_ORIGINS = [

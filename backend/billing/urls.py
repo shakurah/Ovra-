@@ -1,8 +1,8 @@
 # billing/urls.py
 from django.urls import path
-from .views import create_checkout_session, stripe_webhook
+from . import views
 
 urlpatterns = [
-    path("create-checkout/", create_checkout_session, name="create_checkout"),
-    path("webhook/", stripe_webhook, name="stripe_webhook"),
+    path('create-checkout-session/', views.create_checkout_session, name='create_checkout_session'),
+    path('webhook/', views.stripe_webhook, name='stripe_webhook'),
 ]
