@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input"
 import { ProtectedLayout } from "@/components/protected-layout"
 import { useLanguage } from "@/contexts/language-context"
 import { useAuth } from "@/contexts/auth-context"
-import { chatService } from "@/lib/services"
+import { chatService } from "@/lib/services/chat.service"
 import { useRouter } from "next/navigation"
 import {
   Search,
@@ -40,32 +40,34 @@ function HistoryPageContent() {
   const [selectedFilter, setSelectedFilter] = useState("all")
   const [sortBy, setSortBy] = useState("newest")
   const [sessions, setSessions] = useState<ChatSession[]>([])
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    // Only fetch history after auth/user is ready (prevents silent failures)
     if (!user) {
-      console.debug('[history.page] user not ready yet, skipping fetchChatHistory')
+      console.debug("[history.page] user not ready, skipping fetchChatHistory")
       return
     }
-    console.debug('[history.page] user ready, calling fetchChatHistory', { userId: user?.id })
+    console.debug("[history.page] user ready, calling fetchChatHistory", { userId: user?.id })
     fetchChatHistory()
-  }, [])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user])
 
   const fetchChatHistory = async () => {
+    console.debug('[history.page] fetchChatHistory START')
+    setLoading(true)
     try {
-      setLoading(true)
-      console.debug('[history.page] fetchChatHistory START')
       const response = await chatService.getConversations()
-      console.debug('[history.page] getConversations returned', { response })
-      setSessions(response.results || [])
-    } catch (error) {
-      console.error("Error fetching chat sessions:", error)
-      setError("Failed to load chat sessions")
+      console.debug('[history.page] getConversations returned', response)
+      // response is normalized to { results: [], total }
+      const items = Array.isArray(response.results) ? response.results : []
+      setSessions(items)
+    } catch (err) {
+      console.error('[history.page] fetchChatHistory error', err)
+      setSessions([])
     } finally {
-      console.debug('[history.page] fetchChatHistory FINISHED')
       setLoading(false)
+      console.debug('[history.page] fetchChatHistory FINISHED loading=false')
     }
   }
 

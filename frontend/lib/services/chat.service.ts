@@ -259,23 +259,25 @@ export class ChatService extends BaseApiService {
 
   // Other helpers (return safe defaults)
   async getChatHistory(): Promise<any> { return { success: false, data: [], total: 0 } }
-  async getConversations(): Promise<{ results?: any[] }> {
+  async getConversations(): Promise<{ results: any[]; total?: number }> {
     console.debug('[chat.service] getConversations START')
-    const base = (process.env.NEXT_PUBLIC_API_URL || '').replace(/\/$/, '')
-    const token = typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null
-    console.debug('[chat.service] getConversations headers', { hasToken: !!token })
-    try {
-      // If your BaseApiService.get already handles base URL and auth, call it and still log.
-      const response = await this.get<any>('/chat/sessions/', true).catch((err) => {
-        console.debug('[chat.service] getConversations fetch error', err)
-        return null
-      })
-      console.debug('[chat.service] getConversations raw response', response)
-      return response || { results: [] }
-    } catch (err) {
-      console.error('[chat.service] getConversations caught error', err)
-      return { results: [] }
-    }
+    const raw = await this.get<any>('/chat/sessions/', true).catch((err) => {
+      console.debug('[chat.service] getConversations fetch error', err)
+      return null
+    })
+
+    console.debug('[chat.service] raw getConversations response', raw)
+
+    if (!raw) return { results: [], total: 0 }
+
+    // Normalize different backend shapes
+    if (Array.isArray(raw)) return { results: raw, total: raw.length }
+    if (raw.results) return { results: raw.results, total: raw.total ?? raw.count ?? (raw.results.length || 0) }
+    if (raw.sessions) return { results: raw.sessions, total: raw.total ?? raw.count ?? (raw.sessions.length || 0) }
+    if (raw.data && Array.isArray(raw.data)) return { results: raw.data, total: raw.total ?? raw.count ?? raw.data.length }
+
+    // fallback: wrap raw
+    return { results: [], total: 0 }
   }
   async deleteConversation(conversationId: string): Promise<{ message: string }> { return { message: 'not implemented' } }
   async updateConversationTitle(conversationId: string, title: string): Promise<Conversation> { throw new Error('not implemented') }
