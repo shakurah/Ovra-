@@ -7,6 +7,7 @@ import { LanguageToggle } from '@/components/language-toggle'
 import { ThemeToggle } from '@/components/theme-toggle'
 import { useAuth } from '@/contexts/auth-context'
 import { useLanguage } from '@/contexts/language-context'
+import { UpgradeButton } from '@/components/upgrade-button'
 
 export function SharedHeader() {
   const { isAuthenticated, user } = useAuth()
@@ -47,11 +48,14 @@ export function SharedHeader() {
                 </>
               )}
               {isAuthenticated && (
-                <Link href="/chat">
-                  <Button size="sm" className="bg-primary hover:bg-primary/90">
-                    {t("nav.chat")}
-                  </Button>
-                </Link>
+                <>
+                  <Link href="/chat">
+                    <Button size="sm" className="bg-primary hover:bg-primary/90">
+                      {t("nav.chat")}
+                    </Button>
+                  </Link>
+                  <UpgradeButton />
+                </>
               )}
             </div>
 
@@ -67,11 +71,14 @@ export function SharedHeader() {
                 </Link>
               )}
               {isAuthenticated && (
-                <Link href="/chat">
-                  <Button size="sm" className="bg-primary hover:bg-primary/90">
-                    {t("nav.chat")}
-                  </Button>
-                </Link>
+                <>
+                  <Link href="/chat">
+                    <Button size="sm" className="bg-primary hover:bg-primary/90">
+                      {t("nav.chat")}
+                    </Button>
+                  </Link>
+                  <UpgradeButton />
+                </>
               )}
             </div>
           </div>
