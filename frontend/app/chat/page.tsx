@@ -31,7 +31,7 @@ function ChatPageContent() {
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const formRef = useRef<HTMLFormElement | null>(null)
   const textareaRef = useRef<HTMLTextAreaElement | null>(null)
-x  const [credits] = useState(47)
+  const [credits] = useState(47)
   const [input, setInput] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   const [loadingMessage, setLoadingMessage] = useState("")

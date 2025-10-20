@@ -1,8 +1,7 @@
 "use client"
 
-import type React from "react"
-
-import { useState } from "react"
+import { useSearchParams } from "next/navigation"
+import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -16,15 +15,41 @@ import Link from "next/link"
 
 export default function PaymentPage() {
   const { t } = useLanguage()
-  const router = useRouter()
-  const [isProcessing, setIsProcessing] = useState(false)
-  const [selectedPackage] = useState({
-    id: "professional",
-    name: "Paquete Profesional",
-    credits: 200,
-    price: 29,
+  const searchParams = useSearchParams()
+  const planId = searchParams.get("plan")
+
+  const [selectedPlan, setSelectedPlan] = useState({
+    id: "",
+    name: "",
+    credits: 0,
+    price: 0,
   })
 
+  useEffect(() => {
+    // Get plan details based on planId
+    const plans = {
+      basic: {
+        id: "basic",
+        name: t("pricing.basic.name"),
+        credits: 50,
+        price: 9,
+      },
+      professional: {
+        id: "professional",
+        name: t("pricing.professional.name"),
+        credits: 200,
+        price: 29,
+      },
+      // ... other plans
+    }
+
+    if (planId && plans[planId as keyof typeof plans]) {
+      setSelectedPlan(plans[planId as keyof typeof plans])
+    }
+  }, [planId, t])
+
+  const router = useRouter()
+  const [isProcessing, setIsProcessing] = useState(false)
   const [paymentData, setPaymentData] = useState({
     cardNumber: "",
     expiryDate: "",
@@ -89,13 +114,13 @@ export default function PaymentPage() {
               <CardContent className="space-y-4">
                 <div className="p-4 bg-muted/30 rounded-lg">
                   <div className="flex items-center justify-between mb-2">
-                    <span className="font-medium text-foreground">{selectedPackage.name}</span>
+                    <span className="font-medium text-foreground">{selectedPlan.name}</span>
                     <Badge className="bg-primary/10 text-primary">Popular</Badge>
                   </div>
-                  <p className="text-sm text-muted-foreground mb-3">{selectedPackage.credits} créditos</p>
+                  <p className="text-sm text-muted-foreground mb-3">{selectedPlan.credits} créditos</p>
                   <div className="flex items-center justify-between text-lg font-bold text-foreground">
                     <span>Total</span>
-                    <span>€{selectedPackage.price}</span>
+                    <span>€{selectedPlan.price}</span>
                   </div>
                 </div>
 
@@ -262,7 +287,7 @@ export default function PaymentPage() {
                 ) : (
                   <>
                     <Lock className="h-4 w-4 mr-2" />
-                    {t("payment.complete.payment")} €{selectedPackage.price}
+                    {t("payment.complete.payment")} €{selectedPlan.price}
                   </>
                 )}
               </Button>
