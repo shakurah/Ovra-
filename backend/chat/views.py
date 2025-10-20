@@ -241,20 +241,48 @@ def chat_api(request):
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
-def chat_history(request):
+def chat_history(request, conversation_id: str = None):
     """
     Returns the chat history of the authenticated user.
-    Optional query param: conversation_id to filter specific conversation.
-    When no conversation_id is provided, returns a 'sessions' array summarizing conversations
-    so the frontend history page can render a list of sessions.
+    Optional conversation_id can be passed either as a query param (?conversation_id=...)
+    or as a path param (/chat/sessions/<conversation_id>/).
+    When no conversation_id is provided, returns session summaries grouped by conversation_id.
     """
-    conversation_id = request.query_params.get('conversation_id')
+    # prefer path param if provided, fall back to query param
+    conversation_id = conversation_id or request.query_params.get('conversation_id')
 
     if conversation_id:
-        # Return message-level logs for a specific conversation (existing behavior)
+        # Return message-level logs for a specific conversation in the shape frontend expects
         chats = ChatLog.objects.filter(user=request.user, conversation_id=conversation_id).order_by('created_at')
         serializer = ChatLogSerializer(chats, many=True)
-        return Response(serializer.data)
+
+        # Build small session summary so frontend chatService.getConversation can map easily
+        if chats.exists():
+            group_sorted = list(chats)
+            created_at = group_sorted[0].created_at
+            updated_at = group_sorted[-1].created_at
+            message_count = len(group_sorted)
+            title = (group_sorted[0].user_message or "").strip()[:100] or "Chat Session"
+            session_obj = {
+                "id": conversation_id,
+                "title": title,
+                "created_at": created_at.isoformat(),
+                "updated_at": updated_at.isoformat(),
+                "message_count": message_count,
+            }
+        else:
+            session_obj = {
+                "id": conversation_id,
+                "title": "Chat Session",
+                "created_at": now().isoformat(),
+                "updated_at": now().isoformat(),
+                "message_count": 0,
+            }
+
+        return Response({
+            "session": session_obj,
+            "messages": serializer.data
+        })
 
     # No conversation_id -> return session summaries grouped by conversation_id
     logs = ChatLog.objects.filter(user=request.user).order_by('created_at')
@@ -272,14 +300,8 @@ def chat_history(request):
         last_log = group_sorted[-1]
         last_message_preview = (last_log.response_text or last_log.user_message or "")[:200]
 
-        title = (group_sorted[0].user_message or "").strip()
-        if not title:
-            title = "Chat Session"
-        else:
-            title = title[:100]
-
-        session_id = key if key.startswith("no-convo-") is False else key
-
+        title = (group_sorted[0].user_message or "").strip()[:100] or "Chat Session"
+        session_id = key
         sessions.append({
             "id": session_id,
             "title": title,
