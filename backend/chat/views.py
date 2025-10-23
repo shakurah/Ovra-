@@ -16,10 +16,11 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from collections import defaultdict
+from semantic_cache.services import upsert_entry_async
 
 logger = logging.getLogger(__name__)
 
-QUERY_LIMIT_FREE = 400
+QUERY_LIMIT_FREE = 5
 def prepare_with_boe_context(user_message, top_k=3):
     hits = []
     try:
@@ -89,21 +90,36 @@ def chat_api(request):
             status=400
         )
 
-    if user:
-        try:
-            profile = user.profile
-        except Exception:
-            profile = None
-        if profile.credits == -1500:
-            return StreamingHttpResponse(
-                "data: {\"error\": \"You have 0 credits left. Please upgrade your plan.\"}\n\n",
-                content_type="text/event-stream",
-                status=403
-            )
+    # ensure user has a profile and sufficient credits before proceeding
+    try:
+        profile = user.profile
+    except Exception:
+        profile = None
 
-    # 💳 Deduct one credit for this consultation
-    profile.credits -= 1
-    profile.save()
+    if profile is None:
+        return StreamingHttpResponse(
+            "data: {\"error\": \"User profile not found.\"}\n\n",
+            content_type="text/event-stream",
+            status=400,
+        )
+
+    # treat missing/None credits as 0
+    try:
+        available = int(getattr(profile, "credits", 0) or 0)
+    except Exception:
+        available = 0
+
+    if available <= 0:
+        # explicit status and message so frontend can display an informative UI
+        return StreamingHttpResponse(
+            "data: {\"error\": \"You have 0 credits left. Please upgrade your plan.\"}\n\n",
+            content_type="text/event-stream",
+            status=402,
+        )
+
+    # Deduct one credit for this consultation and persist
+    profile.credits = available - 1
+    profile.save(update_fields=["credits"])
 
     # Save user message
     log_entry = ChatLog.objects.create(
@@ -222,6 +238,12 @@ def chat_api(request):
                 )
             except Exception:
                 logger.exception("Failed to save ChatLog response")
+
+            # create semantic cache entry (non-blocking is better — consider background task)
+            try:
+                upsert_entry_async(request.user, conversation_id, user_message or "", "".join(collected_response) or "", source="chat")
+            except Exception:
+                logger.exception("semantic cache upsert failed (non-fatal)")
 
             yield "[DONE]\n\n"
 

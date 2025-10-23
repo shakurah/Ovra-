@@ -1,6 +1,7 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
+import { useRouter, useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -12,9 +13,34 @@ import { CreditCard, Zap, Clock, CheckCircle, Sparkles } from "lucide-react"
 
 function CreditsPageContent() {
   const { t } = useLanguage()
-  const [currentCredits] = useState(47)
+  const searchParams = useSearchParams()
+  const sessionId = searchParams.get("session_id")
+  const [currentCredits, setCurrentCredits] = useState(47)
   const [totalCredits] = useState(200)
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null)
+  const [status, setStatus] = useState<"pending" | "success" | "failed" | "none">("none")
+
+  useEffect(() => {
+    if (!sessionId) return
+    setStatus("pending")
+    fetch(`/api/billing/verify-checkout-session/?session_id=${encodeURIComponent(sessionId)}`, {
+      credentials: "include",
+    })
+      .then(r => {
+        if (!r.ok) throw new Error("verify failed")
+        return r.json()
+      })
+      .then(data => {
+        if (data && (data.payment_status === "paid" || (data.subscription && data.subscription.status === "active"))) {
+          setStatus("success")
+          // TODO: Fetch fresh credits from your backend and update state
+          // setCurrentCredits(newCredits)
+        } else {
+          setStatus("failed")
+        }
+      })
+      .catch(() => setStatus("failed"))
+  }, [sessionId])
 
   const handlePurchase = async () => {
     if (!selectedPlan) {
@@ -99,8 +125,8 @@ function CreditsPageContent() {
     <ProtectedLayout title={t("credits.title")} credits={currentCredits}>
       <div className="p-6 max-w-7xl mx-auto">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Gestión de Créditos</h1>
-          <p className="text-gray-600">Administra tus créditos y consulta tu historial de uso</p>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">{t("credits.title")}</h1>
+          <p className="text-gray-600">{t("credits.subtitle")}</p>
         </div>
 
         <div className="grid lg:grid-cols-3 gap-8">
@@ -110,7 +136,7 @@ function CreditsPageContent() {
               <CardHeader>
                 <CardTitle className="flex items-center space-x-2">
                   <CreditCard className="h-5 w-5 text-black-600" />
-                  <span>Estado Actual de Créditos</span>
+                  <span>{t("credits.current.status")}</span>
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -121,8 +147,8 @@ function CreditsPageContent() {
                   </div>
                   <Progress value={(currentCredits / totalCredits) * 100} className="h-3" />
                   <div className="flex items-center justify-between text-sm text-gray-600">
-                    <span>Créditos utilizados: {totalCredits - currentCredits}</span>
-                    <span>Renovación: 15 Feb 2024</span>
+                    <span>{t("credits.used")}: {totalCredits - currentCredits}</span>
+                    <span>{t("credits.renewal")}: 15 Feb 2024</span>
                   </div>
                 </div>
               </CardContent>
@@ -133,9 +159,9 @@ function CreditsPageContent() {
               <CardHeader>
                 <CardTitle className="flex items-center space-x-2">
                   <Clock className="h-5 w-5 text-black-600" />
-                  <span>Historial de Uso Reciente</span>
+                  <span>{t("credits.history.title")}</span>
                 </CardTitle>
-                <CardDescription>Tus últimas consultas legales</CardDescription>
+                <CardDescription>{t("credits.history.subtitle")}</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
@@ -164,12 +190,12 @@ function CreditsPageContent() {
               <CardHeader>
                 <CardTitle className="flex items-center space-x-2">
                   <Zap className="h-5 w-5 text-black-600" />
-                  <span>Comprar Créditos</span>
+                  <span>{t("credits.purchase.title")}</span>
                 </CardTitle>
-                <CardDescription>Elige el paquete que mejor se adapte a tus necesidades</CardDescription>
+                <CardDescription>{t("credits.purchase.subtitle")}</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                {creditPackages.map((pkg) => (
+                {creditPackages.map(pkg => (
                   <div
                     key={pkg.id}
                     className={`relative p-4 border rounded-lg cursor-pointer transition-all ${
@@ -177,26 +203,39 @@ function CreditsPageContent() {
                     } ${pkg.popular ? "ring-2 ring-blue-500" : ""}`}
                     onClick={() => setSelectedPlan(pkg.id)}
                   >
-                    {pkg.popular && <Badge className="absolute -top-2 left-4 bg-blue-600">Más Popular</Badge>}
+                    {pkg.popular && <Badge className="absolute -top-2 left-4 bg-blue-600">{t("badge.popular")}</Badge>}
                     <div className="space-y-2">
                       <div className="flex items-center justify-between">
-                        <h3 className="font-semibold text-gray-900">{pkg.name}</h3>
-                        <span className="text-2xl font-bold text-black-600">€{pkg.price}</span>
+                        <h3 className="font-semibold text-gray-900">{t(`pricing.${pkg.id}.name`)}</h3>
+                        <span className="text-2xl font-bold text-black-600">
+                          {new Intl.NumberFormat(language === 'es' ? 'es-ES' : 'en-US', { 
+                            style: 'currency', 
+                            currency: 'EUR' 
+                          }).format(pkg.price)}
+                        </span>
                       </div>
-                      <p className="text-sm text-gray-600">{pkg.description}</p>
+                      <p className="text-sm text-gray-600">{t(`pricing.${pkg.id}.description`)}</p>
                       <div className="flex items-center space-x-2">
-                        <Badge variant="secondary">{pkg.credits} créditos</Badge>
+                        <Badge variant="secondary">{pkg.credits} {t("pricing.credits")}</Badge>
                         <span className="text-xs text-gray-500">
-                          €{(pkg.price / pkg.credits).toFixed(2)} por crédito
+                          {new Intl.NumberFormat(language === 'es' ? 'es-ES' : 'en-US', { 
+                            style: 'currency', 
+                            currency: 'EUR' 
+                          }).format(pkg.price / pkg.credits)} {t("credits.per.credit")}
                         </span>
                       </div>
                     </div>
                   </div>
                 ))}
 
-                <Button className="w-full mt-4" disabled={!selectedPlan} size="lg" onClick={handlePurchase}>
-                  <CreditCard className="h-4 w-4 mr-2" />
-                  {t("credits.purchase")}
+                <Button 
+                  className="w-full mt-4 bg-primary text-primary-foreground hover:bg-primary/90" 
+                  disabled={!selectedPlan} 
+                  size="lg" 
+                  onClick={() => router.push("/pricing")}
+                >
+                  <Sparkles className="h-4 w-4 mr-2" />
+                  {t("credits.upgrade.button")}
                 </Button>
               </CardContent>
             </Card>
@@ -204,34 +243,93 @@ function CreditsPageContent() {
             {/* Benefits */}
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg">Beneficios Incluidos</CardTitle>
+                <CardTitle className="text-lg">{t("credits.benefits.title")}</CardTitle>
               </CardHeader>
               <CardContent>
                 <ul className="space-y-3 text-sm">
                   <li className="flex items-center space-x-2">
                     <CheckCircle className="h-4 w-4 text-green-600" />
-                    <span>Respuestas con referencias legales</span>
+                    <span>{t("credits.benefits.legal")}</span>
                   </li>
                   <li className="flex items-center space-x-2">
                     <CheckCircle className="h-4 w-4 text-green-600" />
-                    <span>Acceso a legislación actualizada</span>
+                    <span>{t("credits.benefits.updated")}</span>
                   </li>
                   <li className="flex items-center space-x-2">
                     <CheckCircle className="h-4 w-4 text-green-600" />
-                    <span>Soporte especializado</span>
+                    <span>{t("credits.benefits.support")}</span>
                   </li>
                   <li className="flex items-center space-x-2">
                     <CheckCircle className="h-4 w-4 text-green-600" />
-                    <span>Historial de consultas</span>
+                    <span>{t("credits.benefits.history")}</span>
                   </li>
                   <li className="flex items-center space-x-2">
                     <CheckCircle className="h-4 w-4 text-green-600" />
-                    <span>Sin compromisos a largo plazo</span>
+                    <span>{t("credits.benefits.no_commitment")}</span>
                   </li>
                 </ul>
               </CardContent>
             </Card>
           </div>
+        </div>
+
+        {/* Payment Status Handling */}
+        <div className="mt-8">
+          {status === "pending" && (
+            <div className="flex items-center justify-center py-4">
+              <svg className="animate-spin h-5 w-5 mr-3 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4zm16 0a8 8 0 01-8 8v-8h8z"></path>
+              </svg>
+              <span className="text-gray-700">{t("credits.verifying.payment")}</span>
+            </div>
+          )}
+          {status === "success" && (
+            <div className="p-4 bg-green-50 border border-green-200 rounded-lg text-green-700">
+              <div className="flex items-center">
+                <svg className="h-5 w-5 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <path
+                    stroke="currentColor"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M9 12l2 2 4-4m2-2a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
+                </svg>
+                <span className="font-semibold">{t("credits.payment.success.title")}</span>
+              </div>
+              <div className="mt-2 text-sm">
+                <p>{t("credits.payment.success.message")}</p>
+                {/* Optionally show updated credits info */}
+                {/* <p>{t("credits.current.credits")}: {currentCredits}</p> */}
+              </div>
+            </div>
+          )}
+          {status === "failed" && (
+            <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
+              <div className="flex items-center">
+                <svg className="h-5 w-5 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <path
+                    stroke="currentColor"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M9 12l2 2 4-4m2-2a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
+                </svg>
+                <span className="font-semibold">{t("credits.payment.failed.title")}</span>
+              </div>
+              <div className="mt-2 text-sm">
+                <p>{t("credits.payment.failed.message")}</p>
+                <p>
+                  {t("credits.support.contact")}{" "}
+                  <a href="mailto:support@example.com" className="text-blue-600 hover:underline">
+                    support@example.com
+                  </a>
+                </p>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </ProtectedLayout>

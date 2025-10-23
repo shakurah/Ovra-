@@ -1,0 +1,9 @@
+{repeals,
+ 
+amends,
+ 
+develops,
+ 
+interprets,
+ 
+refersT o}

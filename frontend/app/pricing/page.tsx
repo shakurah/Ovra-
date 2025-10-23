@@ -153,14 +153,13 @@ export default function PricingPage() {
                     </div>
                   )}
                   
-                  <Link href="/signup" className="block">
+                  <Link href={`/payment?plan=${encodeURIComponent(plan.name === t("pricing.basic.name") ? 'basic' : plan.name === t("pricing.professional.name") ? 'professional' : 'enterprise')}&price=${plan.price}&duration=monthly`} className="block">
                     <Button 
-                      className={`w-full ${plan.popular ? 'bg-primary hover:bg-primary/90' : ''}`}
-                      variant={plan.popular ? 'default' : 'outline'}
+                      className="w-full bg-primary text-primary-foreground hover:bg-primary/90"
                       size="lg"
                     >
                       <CreditCard className="h-4 w-4 mr-2" />
-                      {t("pricing.get.started")}
+                      {t("pricing.upgrade.button")}
                     </Button>
                   </Link>
                 </CardContent>

@@ -68,6 +68,7 @@ INSTALLED_APPS = [
     'chat',
     'users',
     'boe',
+    'semantic_cache',
     'billing',
     'metrics',
     "django_prometheus",
@@ -88,7 +89,10 @@ REST_FRAMEWORK = {
     ],
     "DEFAULT_PARSER_CLASSES": [
         "rest_framework.parsers.JSONParser",
-    ]
+    ],
+    "DEFAULT_PERMISSION_CLASSES": [
+        "rest_framework.permissions.IsAuthenticated",
+    ],
 }
 
 
@@ -136,12 +140,16 @@ MEDIA_ROOT = BASEDIR / "media"
 
 # settings (use env loader)
 import os
-STRIPE_SECRET_KEY = os.environ.get('STRIPE_SECRET_KEY')
-STRIPE_PUBLISHABLE_KEY = os.environ.get('STRIPE_PUBLISHABLE_KEY')
-STRIPE_WEBHOOK_SECRET = os.environ.get('STRIPE_WEBHOOK_SECRET')
-STRIPE_PRICE_BASIC = os.environ.get('STRIPE_PRICE_BASIC')
-STRIPE_PRICE_PLUS = os.environ.get('STRIPE_PRICE_PLUS')
-STRIPE_PRICE_ADVANCED = os.environ.get('STRIPE_PRICE_ADVANCED')
+# Stripe configuration (support multiple env var names to match your .env)
+STRIPE_SECRET_KEY = os.environ.get("STRIPE_SECRET_KEY", "")
+# some files use STRIPE_PUBLISH_KEY; prefer STRIPE_PUBLISHABLE_KEY
+STRIPE_PUBLISHABLE_KEY = os.environ.get("STRIPE_PUBLISHABLE_KEY", os.environ.get("STRIPE_PUBLISH_KEY", ""))
+# webhook secret canonical name
+STRIPE_WEBHOOK_SECRET = os.environ.get("STRIPE_WEBHOOK_SECRET", os.environ.get("STRIPE_WEBHOOK", ""))
+# optional price id envs
+STRIPE_PRICE_BASIC = os.environ.get("STRIPE_PRICE_BASIC", "")
+STRIPE_PRICE_PLUS = os.environ.get("STRIPE_PRICE_PLUS", "")
+STRIPE_PRICE_ADVANCED = os.environ.get("STRIPE_PRICE_ADVANCED", "")
 FRONTEND_SUCCESS_URL = os.environ.get('FRONTEND_SUCCESS_URL', 'http://localhost:3000/billing/success')
 FRONTEND_CANCEL_URL = os.environ.get('FRONTEND_CANCEL_URL', 'http://localhost:3000/billing/cancel')
 
@@ -154,3 +162,6 @@ CSRF_TRUSTED_ORIGINS = [
     "http://127.0.0.1:3000",
     "https://chat.artisting.es",  # add this when you deploy
 ]
+
+# add near other flags or at bottom
+AGENT_REASONING_ENABLED = True
