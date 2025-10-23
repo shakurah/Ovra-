@@ -18,9 +18,6 @@ export function SharedHeader() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           <div className="flex items-center space-x-2">
-            <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-              <Scale className="h-5 w-5 text-primary-foreground" />
-            </div>
             <Link href="/">
               <span className="text-xl font-bold text-foreground hover:text-primary transition-colors">
                 ARTISTING

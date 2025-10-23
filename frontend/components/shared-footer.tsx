@@ -13,9 +13,6 @@ export function SharedFooter() {
         <div className="grid md:grid-cols-4 gap-8">
           <div>
             <div className="flex items-center space-x-2 mb-4">
-              <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-                <Scale className="h-5 w-5 text-primary-foreground" />
-              </div>
               <span className="text-xl font-bold text-foreground">ARTISTING</span>
             </div>
             <p className="text-muted-foreground">{t("footer.description")}</p>
