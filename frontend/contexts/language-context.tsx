@@ -15,6 +15,7 @@ const LanguageContext = createContext<LanguageContextType | undefined>(undefined
 
 export const translations = {
   es: {
+  "sidebar.settings": "Configuración",
     // Navigation
     "nav.chat": "Chat",
     "nav.analytics": "Analíticas",
@@ -144,6 +145,36 @@ export const translations = {
     "chat.examples.copyright": "¿Cómo tributan los derechos de autor?",
     "chat.examples.obligations": "¿Qué obligaciones tengo como autónomo cultural?",
 
+    // Credits Page
+    "credits.title": "Gestión de Créditos",
+    "credits.subtitle": "Administra tus créditos y consulta tu historial de uso",
+    "credits.current.status": "Estado Actual de Créditos",
+    "credits.used": "Créditos utilizados",
+    "credits.renewal": "Renovación",
+    "credits.history.title": "Historial de Uso Reciente",
+    "credits.history.subtitle": "Tus últimas consultas legales",
+    "credits.purchase.title": "Comprar Créditos",
+    "credits.purchase.subtitle": "Elige el paquete que mejor se adapte a tus necesidades",
+    "credits.per.credit": "por crédito",
+    "credits.select.plan": "Por favor selecciona un plan",
+    "credits.purchase": "Comprar Ahora",
+    "credits.purchase.success": "¡Compra exitosa!",
+    "credits.purchase.error": "Error en la compra",
+    "credits.upgrade.button": "Ver Planes",
+    "credits.verifying.payment": "Verificando el pago...",
+    "credits.payment.success.title": "¡Pago exitoso!",
+    "credits.payment.success.message": "Tu pago ha sido procesado. Los créditos se han añadido a tu cuenta.",
+    "credits.payment.failed.title": "Error en el pago",
+    "credits.payment.failed.message": "Lo sentimos, hubo un problema al procesar el pago.",
+    "credits.support.contact": "Contacta con soporte:",
+    "credits.benefits.title": "Beneficios Incluidos",
+    "credits.benefits.legal": "Respuestas con referencias legales",
+    "credits.benefits.updated": "Acceso a legislación actualizada",
+    "credits.benefits.support": "Soporte especializado",
+    "credits.benefits.history": "Historial de consultas",
+    "credits.benefits.no_commitment": "Sin compromisos a largo plazo",
+    "credits.security.notice": "Pago seguro con cifrado SSL",
+
     // Analytics Page
     "analytics.title": "Panel de Analíticas",
     "analytics.subtitle": "Rastrea tus patrones de consulta legal y obtén insights",
@@ -176,7 +207,6 @@ export const translations = {
     "history.no.results": "No se encontraron consultas",
     "history.load.more": "Cargar Más",
     "history.export": "Exportar Historial",
-    "history.export": "Exportar Historial",
 
     // Account/Profile Page
     "account.title": "Configuración de Cuenta",
@@ -207,9 +237,6 @@ export const translations = {
     "account.password.too.short": "La contraseña debe tener al menos 8 caracteres",
 
     // Credits & Payment
-    "credits.title": "Gestión de Créditos",
-    "credits.subtitle": "Gestiona tus créditos y facturación",
-    "credits.current.status": "Estado Actual de Créditos",
     "credits.usage.history": "Historial de Uso Reciente",
     "credits.buy.credits": "Comprar Créditos",
     "credits.auto.refill": "Recarga automática",
@@ -217,11 +244,7 @@ export const translations = {
     "credits.billing.history": "Historial de Facturación",
     "credits.invoice": "Factura",
     "credits.download": "Descargar",
-    "credits.purchase": "Comprar Créditos",
-    "credits.select.plan": "Por favor selecciona un paquete de créditos",
-    "credits.purchase.success": "¡Se compraron {credits} créditos exitosamente!",
-    "credits.purchase.error": "Error al comprar créditos",
-
+    
     // Payment Page
     "payment.title": "Pago",
     "payment.subtitle": "Completa tu compra de créditos",
@@ -237,6 +260,88 @@ export const translations = {
     "payment.complete.payment": "Completar Pago",
     "payment.secure": "Pago Seguro",
     "payment.processing": "Procesando...",
+  // Pricing
+  "pricing.badge": "Planes de Créditos",
+  "pricing.title": "Precios",
+  "pricing.subtitle": "Elige el plan que mejor se adapte a tus necesidades",
+  "pricing.month": "mes",
+  "pricing.credits": "créditos",
+  "pricing.included": "Incluye",
+  "pricing.limitations": "Limitaciones",
+  "pricing.get.started": "Comenzar",
+  "pricing.select": "Seleccionar Plan",
+  "pricing.popular": "Popular",
+  "pricing.upgrade.button": "Ver Planes",
+  // Basic plan
+  "pricing.basic.name": "Básico",
+  "pricing.basic.description": "Ideal para freelancers y consultas ocasionales.",
+  "pricing.basic.feature1": "50 créditos mensuales",
+  "pricing.basic.feature2": "Respuestas basadas en legislación española",
+  "pricing.basic.feature3": "Soporte por email",
+  "pricing.basic.feature4": "Acceso al historial de consultas",
+  "pricing.basic.limitation1": "Sin facturación avanzada",
+  "pricing.basic.limitation2": "Sin prioridad de soporte",
+  // Professional plan
+  "pricing.professional.name": "Profesional",
+  "pricing.professional.description": "Para profesionales que necesitan consultas frecuentes.",
+  "pricing.professional.feature1": "200 créditos mensuales",
+  "pricing.professional.feature2": "Soporte prioritario",
+  "pricing.professional.feature3": "Facturación y factura disponible",
+  "pricing.professional.feature4": "Acceso a análisis de uso",
+  "pricing.professional.feature5": "Respuestas más detalladas",
+  "pricing.professional.feature6": "Integraciones futuras",
+  // Enterprise plan
+  "pricing.enterprise.name": "Enterprise",
+  "pricing.enterprise.description": "Solución para equipos y organizaciones.",
+  "pricing.enterprise.feature1": "500 créditos mensuales",
+  "pricing.enterprise.feature2": "Cuenta multi-usuario",
+  "pricing.enterprise.feature3": "Soporte dedicado",
+  "pricing.enterprise.feature4": "Integraciones personalizadas",
+  "pricing.enterprise.feature5": "SLA por acuerdo",
+  "pricing.enterprise.feature6": "Facturación avanzada",
+  "pricing.enterprise.feature7": "Provisionamiento y onboarding",
+  // Pricing FAQ
+  "pricing.faq.title": "Preguntas sobre precios",
+  "pricing.faq.subtitle": "Dudas comunes sobre nuestros planes",
+  "pricing.faq.q1": "¿Puedo cambiar de plan más tarde?",
+  "pricing.faq.a1": "Sí, puedes actualizar o degradar tu plan en cualquier momento desde la sección de facturación.",
+  "pricing.faq.q2": "¿Hay facturas disponibles?",
+  "pricing.faq.a2": "Sí, ofrecemos facturas para todos los pagos realizados en la plataforma.",
+  "pricing.faq.q3": "¿Qué sucede si me quedo sin créditos?",
+  "pricing.faq.a3": "Podrás comprar paquetes adicionales o cambiar a un plan superior.",
+  "pricing.faq.q4": "¿Ofrecen reembolsos?",
+  "pricing.faq.a4": "Los reembolsos se gestionan caso por caso según nuestra política de reembolsos.",
+
+  // Forgot / Reset
+  "forgot.title": "Recuperar Contraseña",
+  "forgot.description": "Introduce tu correo y te enviaremos un enlace para restablecer tu contraseña.",
+  "forgot.sending": "Enviando...",
+  "forgot.send_link": "Enviar enlace de restablecimiento",
+  "forgot.success": "Enlace enviado",
+  "forgot.success_message": "Si existe una cuenta, recibirás un correo con el enlace para restablecer tu contraseña.",
+  "forgot.error": "Error enviando el enlace",
+  "forgot.remember": "¿Recordaste tu contraseña?",
+  "forgot.email.placeholder": "tu@ejemplo.com",
+
+  // Auth / Reset password keys
+  "auth.reset.title": "Restablecer Contraseña",
+  "auth.reset.token_required": "Se requiere un token en la URL",
+  "auth.reset.request_new": "Solicitar nuevo enlace",
+  "auth.reset.invalid_link": "Enlace inválido",
+  "auth.reset.invalid_token_message": "El enlace de restablecimiento no es válido o ha caducado.",
+  "auth.reset.link_expired": "El enlace ha expirado o es inválido.",
+  "auth.reset.success": "Contraseña restablecida con éxito",
+  "auth.reset.error": "Error al restablecer la contraseña",
+  "auth.reset.resetting": "Restableciendo...",
+  "auth.reset.submit": "Restablecer contraseña",
+  "auth.reset.remember_password": "¿Recordaste tu contraseña?",
+
+  // Password fields
+  "auth.password.label": "Nueva contraseña",
+  "auth.password.placeholder": "Introduce una contraseña segura",
+  "auth.password.requirements": "Mínimo 8 caracteres.",
+  "auth.password.confirm_label": "Confirmar contraseña",
+  "auth.password.confirm_placeholder": "Repite la contraseña",
   // Additional payment strings used in UI text (ES)
   "payment.order.package": "{name} - {credits} créditos",
   "payment.order.total": "Total",
@@ -266,27 +371,27 @@ export const translations = {
     "settings.account.delete.confirm": "¿Estás seguro de que quieres eliminar tu cuenta? Esta acción no se puede deshacer.",
 
     // Auth Pages
-    "auth.login.title": "Iniciar Sesión",
-    "auth.login.subtitle": "Accede a tu cuenta para continuar con tus consultas legales",
-    "auth.login.email": "Correo Electrónico",
-    "auth.login.password": "Contraseña",
+    "auth.login.title": "INICIAR SESIÓN EN ARTISTING",
+    "auth.login.subtitle": "Accede a la plataforma de referencia del sector cultural y creativo",
+    "auth.login.email": "EMAIL",
+    "auth.login.password": "CONTRASEÑA",
     "auth.login.show.password": "Mostrar contraseña",
     "auth.login.hide.password": "Ocultar contraseña",
-    "auth.login.forgot.password": "¿Olvidaste tu contraseña?",
-    "auth.login.submit": "Iniciar Sesión",
-    "auth.login.no.account": "¿No tienes cuenta?",
-    "auth.login.signup.link": "Regístrate aquí",
-    "auth.signup.title": "Crear Cuenta",
-    "auth.signup.subtitle": "Únete a miles de profesionales",
-    "auth.signup.first.name": "Nombre",
-    "auth.signup.last.name": "Apellidos",
-    "auth.signup.email": "Correo Electrónico",
-    "auth.signup.password": "Contraseña",
-    "auth.signup.confirm.password": "Confirmar Contraseña",
-    "auth.signup.terms": "Acepto los términos y condiciones",
-    "auth.signup.submit": "Crear Cuenta",
-    "auth.signup.have.account": "¿Ya tienes cuenta?",
-    "auth.signup.login.link": "Inicia sesión aquí",
+    "auth.login.forgot.password": "¿Has Olvidado tu contraseña?",
+    "auth.login.submit": "INICIAR SESIÓN",
+    "auth.login.no.account": "¿Aún no tienes cuenta?",
+    "auth.login.signup.link": "REGÍSTRATE AQUÍ",
+    "auth.signup.title": "CREA TU CUENTA EN ARTISTING",
+    "auth.signup.subtitle": "Únete a la plataforma de referencia del sector cultural y creativo",
+    "auth.signup.first.name": "NOMBRE",
+    "auth.signup.last.name": "APELLIDOS",
+    "auth.signup.email": "EMAIL",
+    "auth.signup.password": "CONTRASEÑA",
+    "auth.signup.confirm.password": "CONFIRMAR CONTRASEÑA",
+    "auth.signup.terms": "He leído y acepto los T&C",
+    "auth.signup.submit": "CREA MI CUENTA",
+    "auth.signup.have.account": "¿Ya tienes una cuenta?",
+    "auth.signup.login.link": "INICIA SESIÓN AQUÍ",
     "auth.error.passwords.mismatch": "Las contraseñas no coinciden",
     "auth.error.accept.terms": "Debes aceptar los términos y condiciones",
     "auth.error.create.account": "Error al crear la cuenta",
@@ -644,6 +749,7 @@ export const translations = {
     "terms.contact.content": "Si tiene alguna pregunta sobre estos Términos de Servicio, por favor contáctenos:",
   },
   en: {
+  "sidebar.settings": "Settings",
     // Mirror the Spanish structure with English translations
     "nav.chat": "Chat",
     "nav.analytics": "Analytics",
@@ -768,6 +874,13 @@ export const translations = {
     "chat.error.question_too_short": "Question is too short. Please provide more details.",
     "chat.examples.copyright": "How are copyright royalties taxed?",
     "chat.examples.obligations": "What obligations do I have as a cultural freelancer?",
+    "chat.sidebar.view_plans": "View Plans",
+    "chat.header.new_chat": "New Chat",
+    "chat.loading": "Loading chat session...",
+
+    // Pricing durations
+    "pricing.monthly": "monthly",
+    "pricing.yearly": "yearly",
 
     // Analytics Page
     "analytics.title": "Analytics Dashboard",
@@ -871,6 +984,77 @@ export const translations = {
   "payment.security.notice.title": "Secure checkout",
   "payment.security.notice.desc": "Payments are processed securely by our provider. We do not store your full card details.",
 
+  // Pricing
+  "pricing.badge": "Credit Plans",
+  "pricing.title": "Pricing",
+  "pricing.subtitle": "Choose the plan that best fits your needs",
+  "pricing.month": "month",
+  "pricing.credits": "credits",
+  "pricing.included": "Includes",
+  "pricing.limitations": "Limitations",
+  "pricing.get.started": "Get Started",
+  "pricing.select": "Select Plan",
+  "pricing.popular": "Popular",
+  "pricing.basic.name": "Basic",
+  "pricing.basic.description": "Ideal for freelancers and occasional consultations.",
+  "pricing.basic.feature1": "50 credits per month",
+  "pricing.basic.feature2": "Answers based on Spanish legislation",
+  "pricing.basic.feature3": "Email support",
+  "pricing.basic.feature4": "Access to consultation history",
+  "pricing.basic.limitation1": "No advanced billing",
+  "pricing.basic.limitation2": "No priority support",
+  "pricing.professional.name": "Professional",
+  "pricing.professional.description": "For professionals who need frequent consultations.",
+  "pricing.professional.feature1": "200 credits per month",
+  "pricing.professional.feature2": "Priority support",
+  "pricing.professional.feature3": "Billing and invoice available",
+  "pricing.professional.feature4": "Access to usage analytics",
+  "pricing.professional.feature5": "More detailed answers",
+  "pricing.professional.feature6": "Future integrations",
+  "pricing.enterprise.name": "Enterprise",
+  "pricing.enterprise.description": "Solution for teams and organizations.",
+  "pricing.enterprise.feature1": "500 credits per month",
+  "pricing.enterprise.feature2": "Multi-user account",
+  "pricing.enterprise.feature3": "Dedicated support",
+  "pricing.enterprise.feature4": "Custom integrations",
+  "pricing.enterprise.feature5": "SLA by agreement",
+  "pricing.enterprise.feature6": "Advanced billing",
+  "pricing.enterprise.feature7": "Provisioning and onboarding",
+  "pricing.faq.title": "Pricing Questions",
+  "pricing.faq.subtitle": "Common questions about our plans",
+  "pricing.faq.q1": "Can I change plans later?",
+  "pricing.faq.a1": "Yes, you can upgrade or downgrade your plan at any time from the billing section.",
+  "pricing.faq.q2": "Are invoices available?",
+  "pricing.faq.a2": "Yes, we provide invoices for all payments made on the platform.",
+  "pricing.faq.q3": "What happens if I run out of credits?",
+  "pricing.faq.a3": "You can purchase additional packages or switch to a higher plan.",
+  "pricing.faq.q4": "Do you offer refunds?",
+  "pricing.faq.a4": "Refunds are handled case-by-case according to our refund policy.",
+
+  // Forgot / Reset
+  "forgot.title": "Forgot Password",
+  "forgot.description": "Enter your email and we'll send a link to reset your password.",
+  "forgot.sending": "Sending...",
+  "forgot.send_link": "Send reset link",
+  "forgot.success": "Link sent",
+  "forgot.success_message": "If an account exists, you'll receive an email with the reset link.",
+  "forgot.error": "Error sending reset link",
+  "forgot.remember": "Remembered your password?",
+  "forgot.email.placeholder": "you@example.com",
+
+  // Auth / Reset password keys
+  "auth.reset.title": "Reset Password",
+  "auth.reset.token_required": "A token is required in the URL",
+  "auth.reset.request_new": "Request new link",
+  "auth.reset.invalid_link": "Invalid link",
+  "auth.reset.invalid_token_message": "The reset link is invalid or has expired.",
+  "auth.reset.link_expired": "The link has expired or is invalid.",
+  "auth.reset.success": "Password reset successfully",
+  "auth.reset.error": "Error resetting password",
+  "auth.reset.resetting": "Resetting...",
+  "auth.reset.submit": "Reset password",
+  "auth.reset.remember_password": "Remembered your password?",
+
     // Settings
     "settings.title": "Settings",
     "settings.general": "General",
@@ -890,7 +1074,7 @@ export const translations = {
     "settings.account.delete.confirm": "Are you sure you want to delete your account? This action cannot be undone.",
 
     // Auth Pages
-    "auth.login.title": "Login",
+    "auth.login.title": "Sign In",
     "auth.login.subtitle": "Access the platform for the cultural and creative sector",
     "auth.login.email": "Email ",
     "auth.login.password": "Password",
@@ -1304,9 +1488,7 @@ export function useLanguage() {
 }
 
 export async function getConversations(page = 1, limit = 20) {
-  const token = await authService.getAccessToken() // adapt to your auth helper
-  const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/chat/sessions/?page=${page}&limit=${limit}`, {
-    headers: { Authorization: `Bearer ${token}` }
-  })
+  // If you have an auth helper, add Authorization header. For now perform an unauthenticated fetch as a safe fallback.
+  const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/chat/sessions/?page=${page}&limit=${limit}`)
   return res.json()
 }

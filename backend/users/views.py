@@ -3,7 +3,9 @@ import json
 import datetime
 from django.utils import timezone
 from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
+import logging
+logger = logging.getLogger(__name__)
 from django.contrib.auth import authenticate
 from rest_framework import generics, status
 from rest_framework.response import Response
@@ -22,6 +24,7 @@ from .models import PasswordResetToken
 class RegisterView(generics.CreateAPIView):
     queryset = User.objects.all()
     serializer_class = RegisterSerializer
+    permission_classes = [AllowAny]
     def post(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -41,6 +44,7 @@ class RegisterView(generics.CreateAPIView):
     })
 
 class LoginView(APIView):
+    permission_classes = [AllowAny]
     def post(self, request):
         serializer = LoginSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)

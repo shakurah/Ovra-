@@ -215,9 +215,9 @@ function ChatPageContent() {
     return (
       <ProtectedLayout title={t("chat.title")} credits={47}>
         <div className="flex items-center justify-center h-full">
-          <div className="text-center">
+            <div className="text-center">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-            <p className="text-muted-foreground">Loading chat session...</p>
+            <p className="text-muted-foreground">{t("chat.loading")}</p>
           </div>
         </div>
       </ProtectedLayout>
@@ -225,7 +225,7 @@ function ChatPageContent() {
   }
 
   return (
-    <ProtectedLayout title={t("")} credits={47}>
+    <ProtectedLayout title={t("chat.title")} credits={47}>
       <div className="flex flex-col h-full">
         {/* Clear Chat in Header Area */}
         <div className="px-4 py-2 border-b border-border bg-card/50">
@@ -239,7 +239,7 @@ function ChatPageContent() {
                   className="text-muted-foreground hover:text-foreground"
                 >
                   <Trash2 className="h-4 w-4 mr-2" />
-                  New Chat
+                  {t("chat.header.new_chat")}
                 </Button>
               )}
             </div>
@@ -330,7 +330,7 @@ function ChatPageContent() {
                             <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" style={{ animationDelay: "0.1s" }}></div>
                             <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" style={{ animationDelay: "0.2s" }}></div>
                           </div>
-                          <span className="text-sm text-muted-foreground italic">{loadingMessage || t("")}</span>
+                          <span className="text-sm text-muted-foreground italic">{loadingMessage || t("chat.loading")}</span>
                         </div>
                       </CardContent>
                     </Card>

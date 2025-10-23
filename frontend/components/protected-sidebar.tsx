@@ -28,13 +28,23 @@ export function ProtectedSidebar({ sidebarOpen, setSidebarOpen, credits = 47 }: 
       key: "chat"
     },
     {
+      href: "/pricing",
+      icon: Scale,
+      label: t("chat.sidebar.view_plans"),
+      key: "view_plans"
+    },
+    {
       href: "/history",
       icon: History,
       label: t("chat.sidebar.history"),
       key: "history"
+    },
+    {
+      href: "/credits?payment=success",
+      icon: Scale,
+      label: t("sidebar.settings"),
+      key: "settings"
     }
-    // Temporarily hidden: credits, account, settings, help, analytics, payment, status
-    // Will be added back later
   ]
 
   const isActive = (href: string) => pathname === href
@@ -46,7 +56,7 @@ export function ProtectedSidebar({ sidebarOpen, setSidebarOpen, credits = 47 }: 
       <div className="flex items-center justify-between p-4 border-b border-border">
         <Link href="/" className="flex items-center space-x-2">
           <Scale className="h-8 w-8 text-primary" />
-          <span className="text-xl font-bold text-foreground">ARTISTING</span>
+          <span className="text-xl font-bold text-foreground" style={{ fontFamily: 'Helvetica Neue, Helvetica, Arial, sans-serif' }}>ARTISTING</span>
         </Link>
         <Button variant="ghost" size="sm" className="lg:hidden" onClick={() => setSidebarOpen(false)}>
           ×

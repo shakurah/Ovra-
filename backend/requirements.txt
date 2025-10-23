@@ -39,9 +39,10 @@ pathspec==0.12.1
 pdfminer.six==20250506
 platformdirs==4.4.0
 pluggy==1.6.0
+pgvector==0.8.0
 prometheus_client==0.23.1
 prompt_toolkit==3.0.52
-psycopg2-binary==2.9.10
+psycopg-binary==3.1.0
 pycparser==2.23
 pydantic==2.11.7
 pydantic_core==2.33.2
@@ -53,7 +54,7 @@ pytest-django==4.11.1
 python-dateutil==2.9.0.post0
 python-dotenv==1.1.1
 redis==6.4.0
-requests==2.32.5
+requests>=2.28.0
 ruff==0.12.12
 setuptools==80.9.0
 six==1.17.0

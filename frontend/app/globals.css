@@ -376,3 +376,7 @@ button:focus-visible {
 .user-message-text div {
   color: white !important;
 }
+
+.font-artisting {
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+}

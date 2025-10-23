@@ -1,55 +1,86 @@
 # billing/views.py
-import stripe
 import json
 import logging
-from django.conf import settings
-from django.http import HttpResponse, JsonResponse
+import stripe
+from django.views.decorators.http import require_POST
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated, AllowAny
+from django.http import JsonResponse, HttpResponse
+from django.conf import settings
+
 from rest_framework.response import Response
 from .models import Subscription
 from django.utils import timezone
 
 logger = logging.getLogger(__name__)
-stripe.api_key = settings.STRIPE_SECRET_KEY
+stripe.api_key = getattr(settings, "STRIPE_SECRET_KEY", None)
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def create_checkout_session(request):
-    """
-    Frontend posts { price_id } or { tier } and success/cancel urls.
-    Returns Stripe Checkout session url.
-    """
-    data = request.data or {}
-    price_id = data.get('price_id')
-    success_url = data.get('success_url') or data.get('return_url') or settings.FRONTEND_SUCCESS_URL
-    cancel_url = data.get('cancel_url') or settings.FRONTEND_CANCEL_URL
-
-    # create/get customer
+    # DRF has already authenticated the request; use request.user
     user = request.user
-    sub, _ = Subscription.objects.get_or_create(user=user)
+
     try:
-        if not sub.stripe_customer_id:
-            customer = stripe.Customer.create(email=user.email, metadata={"user_id": user.id})
-            sub.stripe_customer_id = customer['id']
-            sub.save()
+        data = json.loads(request.body.decode("utf-8") or "{}")
+        price_id = data.get("price_id")
+        amount = data.get("amount")        # expected in cents (int)
+        currency = (data.get("currency") or "eur").lower()
+        description = data.get("description") or f"Purchase by user {user.id}"
+        success_url = data.get("success_url")
+        cancel_url = data.get("cancel_url")
+
+        if not success_url or not cancel_url:
+            return JsonResponse({"error": "success_url and cancel_url required"}, status=400)
+
+        # create or reuse a Stripe Customer
+        stripe_customer_id = None
+        if hasattr(user, "stripe_customer_id") and getattr(user, "stripe_customer_id"):
+            stripe_customer_id = user.stripe_customer_id
         else:
-            customer = stripe.Customer.retrieve(sub.stripe_customer_id)
+            try:
+                cust = stripe.Customer.create(email=getattr(user, "email", None), metadata={"user_id": user.id})
+                stripe_customer_id = cust.id
+                # try to persist on user model if field exists
+                try:
+                    setattr(user, "stripe_customer_id", stripe_customer_id)
+                    user.save(update_fields=["stripe_customer_id"])
+                except Exception:
+                    # ignore if user model doesn't have field or cannot be saved
+                    pass
+            except stripe.error.PermissionError as e:
+                logger.exception("Stripe permission error creating customer")
+                return JsonResponse({"error": "Stripe permission error: check API key permissions"}, status=403)
+
+        # build line_items: use price_id if valid, otherwise create a Stripe Price
+        line_items = None
+        if price_id and str(price_id).startswith("price_"):
+            line_items = [{"price": price_id, "quantity": 1}]
+        elif amount:
+            # create a product then a price for the requested amount
+            product = stripe.Product.create(name=description[:120])
+            price = stripe.Price.create(unit_amount=int(amount), currency=currency, product=product.id)
+            line_items = [{"price": price.id, "quantity": 1}]
+        else:
+            return JsonResponse({"error": "missing price_id or amount"}, status=400)
 
         session = stripe.checkout.Session.create(
-            payment_method_types=['card'],
-            mode='subscription',
-            customer=customer['id'],
-            line_items=[{'price': price_id, 'quantity': 1}],
-            success_url=success_url + '?session_id={CHECKOUT_SESSION_ID}',
+            payment_method_types=["card"],
+            mode="payment",
+            line_items=line_items,
+            success_url=success_url,
             cancel_url=cancel_url,
-            metadata={'user_id': str(user.id), 'tier_price': price_id},
+            customer=stripe_customer_id,
         )
-        return Response({'url': session.url, 'id': session.id})
+
+        return JsonResponse({"id": session.id, "url": getattr(session, "url", None) or session.get("url")})
+    except stripe._error.StripeError as e:
+        logger.exception("Stripe error creating checkout session")
+        return JsonResponse({"error": str(e)}, status=402)
     except Exception as e:
         logger.exception("create_checkout_session failed")
-        return Response({'error': str(e)}, status=500)
+        return JsonResponse({"error": str(e)}, status=500)
 
 
 @csrf_exempt
@@ -111,7 +142,7 @@ def stripe_webhook(request):
             except Exception:
                 logger.exception("Failed handling checkout.session.completed")
 
-        elif typ in ('invoice.paid',):
+        elif typ in ('invoice.paid'):
             # allocate credits for the subscription owner
             try:
                 customer_id = data.get('customer')
@@ -158,3 +189,33 @@ def stripe_webhook(request):
         logger.exception("Unhandled webhook processing error")
 
     return HttpResponse(status=200)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def verify_checkout_session(request):
+    """
+    GET ?session_id=...  -> returns whether session succeeded and subscription/payment info.
+    """
+    session_id = request.query_params.get('session_id')
+    if not session_id:
+        return Response({'error': 'missing session_id'}, status=400)
+    try:
+        sess = stripe.checkout.Session.retrieve(session_id, expand=['payment_intent', 'subscription'])
+        # Example payload you can return:
+        result = {
+            'id': sess.id,
+            'payment_status': sess.payment_status,
+            'status': sess.status,
+            'subscription': None,
+        }
+        if sess.get('subscription'):
+            sub = stripe.Subscription.retrieve(sess['subscription'])
+            result['subscription'] = {
+                'id': sub.id,
+                'status': sub.status,
+                'current_period_end': sub.current_period_end,
+            }
+        return Response(result)
+    except Exception as e:
+        logger.exception("verify_checkout_session failed")
+        return Response({'error': str(e)}, status=500)

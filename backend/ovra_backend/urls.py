@@ -1,5 +1,5 @@
-from django.urls import path, include, re_path
 from django.contrib import admin
+from django.urls import path, include, re_path
 from rest_framework_simplejwt.views import (
     TokenRefreshView,
     TokenVerifyView
@@ -29,4 +29,7 @@ urlpatterns = [
     path("api/v1/auth", include("users.urls")),  
     path("api/v1/", include("chat.urls")),
     path("metrics/", include("metrics.urls")),
+    path("api/v1/billing/", include("billing.urls")),
+    # single, correct include for agent endpoints (versioned)
+    path("api/v1/agent/", include("apps.agent.urls")),
 ]

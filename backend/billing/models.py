@@ -37,8 +37,7 @@ class PaymentRecord(models.Model):
 class Subscription(models.Model):
     TIER_CHOICES = [
         ('basic', 'Basic'),
-        ('plus', 'Plus'),
-        ('advanced', 'Advanced'),
+        ('professional', 'Professional'),
         ('enterprise', 'Enterprise'),
     ]
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='subscriptions')
