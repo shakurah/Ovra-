@@ -55,8 +55,8 @@ export function ProtectedSidebar({ sidebarOpen, setSidebarOpen, credits = 47 }: 
     >
       <div className="flex items-center justify-between p-4 border-b border-border">
         <Link href="/" className="flex items-center space-x-2">
-          <Scale className="h-8 w-8 text-primary" />
-          <span className="text-xl font-bold text-foreground" style={{ fontFamily: 'Helvetica Neue, Helvetica, Arial, sans-serif' }}>ARTISTING</span>
+          
+          <span className="text-2xl font-medium text-foreground" style={{ fontFamily: 'Helvetica Neue, Helvetica,' }}>ARTISTING</span>
         </Link>
         <Button variant="ghost" size="sm" className="lg:hidden" onClick={() => setSidebarOpen(false)}>
           ×

@@ -148,7 +148,24 @@ function ChatPageContent() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     const trimmedInput = input.trim()
-    if (!trimmedInput || isLoading || credits <= 0) return
+
+    if (!trimmedInput || isLoading) return
+
+    // If user has no credits, do not call backend — show a friendly assistant reply instead
+    if (credits <= 0) {
+      const assistantMessage: Message = {
+        id: generateUUID(),
+        role: "assistant",
+        content:
+          t("chat.input.nocredits") ||
+          "Has agotado tus créditos gratuitos. Por favor adquiere más créditos en la página de créditos: /credits",
+        timestamp: new Date().toISOString(),
+      }
+      setMessages((prev) => [...prev, assistantMessage])
+      setInput("")
+      setIsLoading(false)
+      return
+    }
 
     if (trimmedInput.length < 3) {
       toastService.error(t('chat.error.question_too_short'))
@@ -194,8 +211,54 @@ function ChatPageContent() {
           // leave clearing here optional — final block below always clears
           setIsLoading(false)
         },
-        (error: string) => {
-          toastService.error(t("chat.error.failed"))
+        (error: any) => {
+          // If backend indicates credit exhaustion, show that as assistant reply
+          const errMsg =
+            (typeof error === "string" && error) ||
+            (error && (error.message || JSON.stringify(error))) ||
+            t("chat.error.failed")
+
+          // Detect common credit keywords or HTTP 402 mention
+          const isCreditIssue =
+            errMsg.toLowerCase().includes("credit") ||
+            errMsg.toLowerCase().includes("crédit") ||
+            errMsg.includes("402") ||
+            errMsg.toLowerCase().includes("no credits") ||
+            errMsg.toLowerCase().includes("agotado")
+
+          if (isCreditIssue) {
+            setMessages((prev) => {
+              const newMessages = [...prev]
+              const lastIndex = newMessages.length - 1
+              // ensure last is assistant placeholder; otherwise push a new assistant message
+              if (lastIndex >= 0 && newMessages[lastIndex].role === "assistant") {
+                newMessages[lastIndex].content =
+                  t("chat.input.nocredits") ||
+                  "Has agotado tus créditos. Visita /credits para adquirir más."
+              } else {
+                newMessages.push({
+                  id: generateUUID(),
+                  role: "assistant",
+                  content:
+                    t("chat.input.nocredits") ||
+                    "Has agotado tus créditos. Visita /credits para adquirir más.",
+                  timestamp: new Date().toISOString(),
+                })
+              }
+              return newMessages
+            })
+          } else {
+            toastService.error(t("chat.error.failed"))
+            // replace last assistant placeholder with generic error text
+            setMessages((prev) => {
+              const newMessages = [...prev]
+              const lastIndex = newMessages.length - 1
+              if (lastIndex >= 0 && newMessages[lastIndex].role === "assistant") {
+                newMessages[lastIndex].content = t("chat.error.failed")
+              }
+              return newMessages
+            })
+          }
           setIsLoading(false)
         }
       )
@@ -217,8 +280,7 @@ function ChatPageContent() {
         <div className="flex items-center justify-center h-full">
             <div className="text-center">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-            <p className="text-muted-foreground">{t("chat.loading")}</p>
-          </div>
+            </div>
         </div>
       </ProtectedLayout>
     )
@@ -330,7 +392,7 @@ function ChatPageContent() {
                             <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" style={{ animationDelay: "0.1s" }}></div>
                             <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" style={{ animationDelay: "0.2s" }}></div>
                           </div>
-                          <span className="text-sm text-muted-foreground italic">{loadingMessage || t("chat.loading")}</span>
+                          <span className="text-sm text-muted-foreground italic">{loadingMessage}</span>
                         </div>
                       </CardContent>
                     </Card>

@@ -12,7 +12,8 @@ import { useLanguage } from "@/contexts/language-context"
 import { CreditCard, Zap, Clock, CheckCircle, Sparkles } from "lucide-react"
 
 function CreditsPageContent() {
-  const { t } = useLanguage()
+  const { t, language } = useLanguage()
+  const router = useRouter()
   const searchParams = useSearchParams()
   const sessionId = searchParams.get("session_id")
   const [currentCredits, setCurrentCredits] = useState(47)
