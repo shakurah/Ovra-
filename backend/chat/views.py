@@ -95,7 +95,7 @@ def chat_api(request):
             profile = user.profile
         except Exception:
             profile = None
-        if profile.credits == -1500:
+        if profile.credits == 0:
             return StreamingHttpResponse(
                 "data: {\"error\": \"You have 0 credits left. Please upgrade your plan.\"}\n\n",
                 content_type="text/event-stream",
