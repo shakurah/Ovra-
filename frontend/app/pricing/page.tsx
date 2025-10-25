@@ -20,17 +20,18 @@ import dynamic from 'next/dynamic'
 
 // load footer dynamically on the client to avoid SSR / prerender errors if the module is missing
 const SharedFooter = dynamic(
-  () => import('@/components/shared-footer'),
+  () =>
+    import('@/components/shared-footer').then((mod) => mod.SharedFooter),
   {
     ssr: false,
     loading: () => (
       <footer className="text-center text-sm text-muted-foreground py-8">
-        {/* lightweight fallback during SSR/build */}
         © {new Date().getFullYear()} OVRA
       </footer>
-    )
+    ),
   }
 )
+
 
 export default function PricingPage() {
   const { t } = useLanguage()
