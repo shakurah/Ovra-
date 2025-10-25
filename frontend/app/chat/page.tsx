@@ -43,29 +43,76 @@ function ChatPageContent() {
     }
     return null
   }
-
+  
+  // improved fetchCredits: uses access token, attempts refresh, falls back to cookie credentials
   const fetchCredits = async () => {
-    try {
-      const token = getStoredToken()
-      const headers: Record<string, string> = { 'Content-Type': 'application/json' }
-      if (token) headers['Authorization'] = `Bearer ${token}`
-
-      // normalize apiUrl to avoid double "/api/v1" when NEXT_PUBLIC_API_URL already contains it
-      const normalizeApiBase = (base: string) => {
-        if (!base) return ''
-        let b = base.trim().replace(/\/+$/, '') // remove trailing slashes
-        b = b.replace(/\/api\/v1$/i, '') // strip trailing /api/v1 if present
-        return b
-      }
-      const base = normalizeApiBase(apiUrl)
-      const endpoint = base ? `${base}/api/v1/chat/chat_health` : `/api/v1/chat/_chat_health`
-      const res = await fetch(endpoint, { method: 'GET', headers })
-      if (!res.ok) return
-      const j = await res.json()
-      if (typeof j.credits === 'number') setCredits(j.credits)
-    } catch (err) {
-      console.error('fetchCredits error', err)
+    const normalizeApiBase = (base: string) => {
+      if (!base) return ''
+      let b = base.trim().replace(/\/+$/, '') // remove trailing slashes
+      b = b.replace(/\/api\/v1$/i, '') // strip trailing /api/v1 if present
+      return b
     }
+    const base = normalizeApiBase(apiUrl)
+    const endpoint = base ? `${base}/api/v1/chat/chat_health/` : `/api/v1/chat/chat_health/`
+
+    // helper: attempt GET with given headers/credentials
+    const tryGet = async (opts: RequestInit) => {
+      try {
+        const res = await fetch(endpoint, opts)
+        if (!res.ok) return null
+        return await res.json()
+      } catch (e) {
+        return null
+      }
+    }
+
+    // 1) try Authorization header from localStorage
+    const access = getStoredToken()
+    if (access) {
+      const json = await tryGet({ method: 'GET', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${access}` } })
+      if (json && typeof json.credits === 'number') {
+        setCredits(json.credits)
+        return
+      }
+    }
+
+    // 2) try refresh token flow (if refresh token stored)
+    const refresh = localStorage.getItem('refresh') || localStorage.getItem('refresh_token')
+    if (refresh) {
+      try {
+        const refreshBase = base || ''
+        const refreshUrl = refreshBase ? `${refreshBase}/api/v1/auth/token/refresh/` : '/api/v1/auth/token/refresh/'
+        const r = await fetch(refreshUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ refresh })
+        })
+        if (r.ok) {
+          const body = await r.json()
+          if (body.access) {
+            localStorage.setItem('access', body.access)
+            // retry with new access token
+            const json = await tryGet({ method: 'GET', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${body.access}` } })
+            if (json && typeof json.credits === 'number') {
+              setCredits(json.credits)
+              return
+            }
+          }
+        }
+      } catch (e) {
+        // ignore and continue to cookie fallback
+      }
+    }
+
+    // 3) fallback: maybe backend uses cookie/session auth — try including credentials
+    const jsonCred = await tryGet({ method: 'GET', credentials: 'include' })
+    if (jsonCred && typeof jsonCred.credits === 'number') {
+      setCredits(jsonCred.credits)
+      return
+    }
+
+    // final: debug hint (no token or unauthorized)
+    console.debug('fetchCredits: no valid token or cookie session; endpoint:', endpoint)
   }
   useEffect(() => { fetchCredits() }, [])
 
