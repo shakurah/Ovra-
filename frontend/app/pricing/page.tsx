@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { SharedHeader } from "@/components/shared-header"
-import { SharedFooter } from "@/components/shared-footer"
+
 import { useLanguage } from "@/contexts/language-context"
 import {
   CheckCircle,
@@ -16,6 +16,21 @@ import {
   Shield,
 } from "lucide-react"
 import Link from "next/link"
+import dynamic from 'next/dynamic'
+
+// load footer dynamically on the client to avoid SSR / prerender errors if the module is missing
+const SharedFooter = dynamic(
+  () => import('@/components/shared-footer'),
+  {
+    ssr: false,
+    loading: () => (
+      <footer className="text-center text-sm text-muted-foreground py-8">
+        {/* lightweight fallback during SSR/build */}
+        © {new Date().getFullYear()} OVRA
+      </footer>
+    )
+  }
+)
 
 export default function PricingPage() {
   const { t } = useLanguage()
