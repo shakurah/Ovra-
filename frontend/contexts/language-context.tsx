@@ -55,6 +55,12 @@ export const translations = {
     "why.specialized.desc": "Conocimiento específico del sector",
     "why.instant.title": "Respuestas instantáneas con IA",
     "why.instant.desc": "Análisis rápido y preciso",
+    
+    //Chat Popup
+    "chat.credits.title": "Has agotado tus créditos de prueba.",
+    "chat.credits.message": "Activa tu suscripción para seguir recibiendo asistencia legal profesional para el sector cultural y creativo.",
+    "chat.credits.subscribe": "Suscribirse Ahora",
+    "chat.credits.dismiss": "Cerrar",
 
     // Frequent Questions
     "faq.title": "Preguntas Frecuentes",
@@ -1058,6 +1064,14 @@ export const translations = {
     "auth.tagline": "Intelligent Legal Assistant",
     "auth.verifying_access": "Verifying access...",
     "auth.please_wait_session": "Please wait while we verify your session",
+
+    //Chat Popup
+      "chat.credits.title": "You’ve used up your trial credits.",
+      "chat.credits.message": "Activate your subscription to continue receiving professional legal assistance for the cultural and creative sector.",
+      "chat.credits.subscribe": "Subscribe Now",
+      "chat.credits.dismiss": "Dismiss",
+
+
 
     // Privacy Policy
     "privacy.title": "Privacy Policy",

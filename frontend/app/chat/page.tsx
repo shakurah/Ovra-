@@ -1,7 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
-import { useRef } from "react"
+import { useEffect, useState, useRef } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
@@ -31,22 +30,63 @@ function ChatPageContent() {
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const formRef = useRef<HTMLFormElement | null>(null)
   const textareaRef = useRef<HTMLTextAreaElement | null>(null)
-  const [credits] = useState(47)
+  // credits: null = unknown, number = actual credits
+  const [credits, setCredits] = useState<number | null>(null)
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL || ''
+
+  const getStoredToken = (): string | null => {
+    if (typeof window === "undefined") return null
+    const keys = ['access', 'token', 'jwt', 'ovra_token']
+    for (const k of keys) {
+      const v = localStorage.getItem(k)
+      if (v) return v
+    }
+    return null
+  }
+
+  const fetchCredits = async () => {
+    try {
+      const token = getStoredToken()
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+      if (token) headers['Authorization'] = `Bearer ${token}`
+
+      // normalize apiUrl to avoid double "/api/v1" when NEXT_PUBLIC_API_URL already contains it
+      const normalizeApiBase = (base: string) => {
+        if (!base) return ''
+        let b = base.trim().replace(/\/+$/, '') // remove trailing slashes
+        b = b.replace(/\/api\/v1$/i, '') // strip trailing /api/v1 if present
+        return b
+      }
+      const base = normalizeApiBase(apiUrl)
+      const endpoint = base ? `${base}/api/v1/chat/chat_health` : `/api/v1/chat/_chat_health`
+      const res = await fetch(endpoint, { method: 'GET', headers })
+      if (!res.ok) return
+      const j = await res.json()
+      if (typeof j.credits === 'number') setCredits(j.credits)
+    } catch (err) {
+      console.error('fetchCredits error', err)
+    }
+  }
+  useEffect(() => { fetchCredits() }, [])
+
   const [input, setInput] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   const [loadingMessage, setLoadingMessage] = useState("")
   const [conversationId, setConversationId] = useState<string | null>(null)
   const [messages, setMessages] = useState<Message[]>([])
-  // fix: declare initialization state and setter used by component
   const [isInitialized, setIsInitialized] = useState(false)
-  // track whether a session is being loaded (prevents undefined variable error)
   const [sessionLoading, setSessionLoading] = useState(false)
+  const [showBanner, setShowBanner] = useState(false)
+  const bannerRef = useRef<HTMLDivElement | null>(null)
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
   }
 
-  // Auto-resize textarea when input changes
+  useEffect(() => {
+    if (credits !== null && credits <= 0) setShowBanner(true)
+  }, [credits])
+
   useEffect(() => {
     const ta = textareaRef.current
     if (!ta) return
@@ -54,105 +94,72 @@ function ChatPageContent() {
     ta.style.height = `${ta.scrollHeight}px`
   }, [input])
 
-  // Initialize chat session on component mount
   useEffect(() => {
     const initializeChat = async () => {
       try {
-        // Check if session parameter is provided in URL
-        const sessionParam = searchParams.get('session')
-        
-        if (sessionParam && sessionParam !== 'undefined') {
-          // Load existing session from backend
+        const sessionParam = searchParams.get("session")
+        if (sessionParam && sessionParam !== "undefined") {
           try {
             const sessionData = await chatService.getConversation(sessionParam)
-            
-            // Validate response structure
             if (sessionData && sessionData.messages && Array.isArray(sessionData.messages)) {
               setConversationId(sessionParam)
               setMessages(sessionData.messages)
             } else {
-              console.warn('Invalid session data structure:', sessionData)
-              throw new Error('Invalid session data structure')
+              console.warn("Invalid session data structure:", sessionData)
+              throw new Error("Invalid session data structure")
             }
           } catch (error) {
-            console.error('Error loading session:', error)
-            toastService.error('Failed to load chat session. Starting new conversation.')
-            // Fall back to creating new session - let it be created when first message is sent
+            console.error("Error loading session:", error)
+            toastService.error("Failed to load chat session. Starting new conversation.")
             setConversationId(null)
           }
         } else {
-          // Start with no conversation - it will be created when first message is sent
           setConversationId(null)
         }
-
         setIsInitialized(true)
       } catch (error) {
-        console.error('Error initializing chat:', error)
+        console.error("Error initializing chat:", error)
         setConversationId(null)
         setIsInitialized(true)
       } finally {
         setSessionLoading(false)
       }
     }
-
     initializeChat()
   }, [searchParams])
-
-  useEffect(() => {
-    async function initFromSessionParam() {
-      const sessionParam = searchParams.get('session')
-      if (!sessionParam) return
-
-      console.debug("[chat.page] loading conversation", sessionParam)
-      try {
-        const resp = await chatService.getConversation(sessionParam)
-        console.debug("[chat.page] getConversation normalized", resp)
-        setConversationId(resp.conversation?.id ?? sessionParam)
-        setMessages(resp.messages ?? [])
-      } catch (err) {
-        console.error("[chat.page] error loading conversation", err)
-      } finally {
-        setSessionLoading(false)
-        setIsInitialized(true) // <- ensure setter is defined and called
-      }
-    }
-    initFromSessionParam()
-  }, [])
 
   useEffect(() => {
     scrollToBottom()
   }, [messages])
 
-  const exampleQuestions = [
-    t("chat.examples.freelancer"),
-    t("chat.examples.vat"),
-    t("chat.examples.deductions"),
-    t("chat.examples.copyright"),
-    t("chat.examples.obligations"),
-  ]
-
-  const handleExampleClick = (question: string) => {
-    setInput(question)
+  const handleOutsideClick = (e: MouseEvent) => {
+    if (bannerRef.current && !bannerRef.current.contains(e.target as Node)) {
+      setShowBanner(false)
+    }
   }
+
+  useEffect(() => {
+    if (showBanner) {
+      document.addEventListener("mousedown", handleOutsideClick)
+      return () => document.removeEventListener("mousedown", handleOutsideClick)
+    }
+  }, [showBanner])
+
+  const handleExampleClick = (question: string) => setInput(question)
 
   const clearChatHistory = () => {
     setMessages([])
-
-    router.replace('/chat')
-
+    router.replace("/chat")
     setConversationId(null)
-    
     setIsInitialized(true)
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     const trimmedInput = input.trim()
-
     if (!trimmedInput || isLoading) return
 
-    // If user has no credits, do not call backend — show a friendly assistant reply instead
-    if (credits <= 0) {
+    if (credits === null || credits <= 0) {
       const assistantMessage: Message = {
         id: generateUUID(),
         role: "assistant",
@@ -168,7 +175,7 @@ function ChatPageContent() {
     }
 
     if (trimmedInput.length < 3) {
-      toastService.error(t('chat.error.question_too_short'))
+      toastService.error(t("chat.error.question_too_short"))
       return
     }
 
@@ -190,10 +197,7 @@ function ChatPageContent() {
 
     try {
       await chatService.sendStreamingMessage(
-        {
-          message: userMessage.content,
-          conversation_id: conversationId,
-        },
+        { message: userMessage.content, conversation_id: conversationId },
         (chunk: string) => {
           setMessages((prev) => {
             const newMessages = [...prev]
@@ -208,29 +212,23 @@ function ChatPageContent() {
         },
         (newConversationId: string) => {
           setConversationId(newConversationId)
-          // leave clearing here optional — final block below always clears
           setIsLoading(false)
         },
         (error: any) => {
-          // If backend indicates credit exhaustion, show that as assistant reply
           const errMsg =
             (typeof error === "string" && error) ||
             (error && (error.message || JSON.stringify(error))) ||
             t("chat.error.failed")
-
-          // Detect common credit keywords or HTTP 402 mention
           const isCreditIssue =
             errMsg.toLowerCase().includes("credit") ||
             errMsg.toLowerCase().includes("crédit") ||
             errMsg.includes("402") ||
             errMsg.toLowerCase().includes("no credits") ||
             errMsg.toLowerCase().includes("agotado")
-
           if (isCreditIssue) {
             setMessages((prev) => {
               const newMessages = [...prev]
               const lastIndex = newMessages.length - 1
-              // ensure last is assistant placeholder; otherwise push a new assistant message
               if (lastIndex >= 0 && newMessages[lastIndex].role === "assistant") {
                 newMessages[lastIndex].content =
                   t("chat.input.nocredits") ||
@@ -249,7 +247,6 @@ function ChatPageContent() {
             })
           } else {
             toastService.error(t("chat.error.failed"))
-            // replace last assistant placeholder with generic error text
             setMessages((prev) => {
               const newMessages = [...prev]
               const lastIndex = newMessages.length - 1
@@ -265,31 +262,27 @@ function ChatPageContent() {
     } catch (error) {
       toastService.error(t("chat.error.failed"))
     } finally {
-      // Always ensure loading is cleared when the streaming call finishes
       setIsLoading(false)
     }
   }
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setInput(e.target.value)
-  }
+  const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => setInput(e.target.value)
 
   if (sessionLoading) {
     return (
-      <ProtectedLayout title={t("chat.title")} credits={47}>
+      <ProtectedLayout title={t("chat.title")} credits={credits ?? 0}>
         <div className="flex items-center justify-center h-full">
-            <div className="text-center">
+          <div className="text-center">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-            </div>
+          </div>
         </div>
       </ProtectedLayout>
     )
   }
 
   return (
-    <ProtectedLayout title={t("chat.title")} credits={47}>
+    <ProtectedLayout title={t("chat.title")} credits={credits ?? 0}>
       <div className="flex flex-col h-full">
-        {/* Clear Chat in Header Area */}
         <div className="px-4 py-2 border-b border-border bg-card/50">
           <div className="flex justify-between items-center">
             <div className="flex items-center space-x-2">
@@ -308,103 +301,10 @@ function ChatPageContent() {
           </div>
         </div>
 
-        {/* Chat Messages */}
         <div className="flex-1 overflow-y-auto p-4">
-          {messages.length === 0 ? (
-            <div className="max-w-3xl mx-auto">
-              <div className="text-center mb-8">
-                <h2 className="text-2xl font-bold text-foreground mb-2">{t("chat.welcome.title")}</h2>
-                <p className="text-foreground mb-6">{t("chat.welcome.description")}</p>
-              </div>
-
-              <div className="grid gap-3 mb-6">
-                <h3 className="font-medium text-foreground mb-2">{t("chat.welcome.examples")}</h3>
-                
-              </div>
-            </div>
-          ) : (
-            <div className="max-w-3xl mx-auto space-y-6">
-              {messages.map((message, index) => (
-                <div key={message.id} className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}>
-                  <div className={`flex max-w-[80%] ${message.role === "user" ? "flex-row-reverse" : "flex-row"}`}>
-                    <Avatar className="flex-shrink-0">
-                      <AvatarFallback className={message.role === "user" ? "bg-primary/10" : "bg-muted"} />
-                    </Avatar>
-                    <Card
-                      className={`mx-3 ${message.role === "user" ? "bg-primary text-primary-foreground" : "bg-card"} ${
-                        message.role === "assistant" && isLoading && index === messages.length - 1
-                          ? "streaming-glow"
-                          : ""
-                      }`}
-                    >
-                      <CardContent className="p-4">
-                        <div className={`${message.role === "user" ? "user-message-text" : ""}`}>
-                          {message.role === "assistant" ? (
-                            <div className="prose prose-sm max-w-none dark:prose-invert">
-                              <ReactMarkdown
-                                remarkPlugins={[remarkGfm]}
-                                components={{
-                                  h1: ({ children }) => <h1 className="text-xl font-bold mb-4 mt-6 first:mt-0 text-foreground">{children}</h1>,
-                                  h2: ({ children }) => <h2 className="text-lg font-semibold mb-3 mt-5 first:mt-0 text-foreground">{children}</h2>,
-                                  h3: ({ children }) => <h3 className="text-base font-medium mb-2 mt-4 first:mt-0 text-foreground">{children}</h3>,
-                                  p: ({ children }) => <p className="mb-3 last:mb-0 text-foreground leading-relaxed">{children}</p>,
-                                  ul: ({ children }) => <ul className="list-disc pl-6 mb-4 space-y-1 text-foreground">{children}</ul>,
-                                  ol: ({ children }) => <ol className="list-decimal pl-6 mb-4 space-y-1 text-foreground">{children}</ol>,
-                                  li: ({ children }) => <li className="text-foreground leading-relaxed">{children}</li>,
-                                  strong: ({ children }) => <strong className="font-semibold text-foreground">{children}</strong>,
-                                  em: ({ children }) => <em className="italic text-muted-foreground">{children}</em>,
-                                  code: ({ children }) => <code className="bg-muted px-1.5 py-0.5 rounded text-sm font-mono text-foreground border">{children}</code>,
-                                  pre: ({ children }) => <pre className="bg-muted p-4 rounded-md overflow-x-auto mb-4 border">{children}</pre>,
-                                  blockquote: ({ children }) => <blockquote className="border-l-4 border-primary pl-4 italic mb-4 text-muted-foreground bg-muted/50 py-2 rounded-r">{children}</blockquote>,
-                                  table: ({ children }) => <table className="w-full border-collapse border border-border mb-4 text-sm">{children}</table>,
-                                  thead: ({ children }) => <thead className="bg-muted">{children}</thead>,
-                                  tbody: ({ children }) => <tbody>{children}</tbody>,
-                                  tr: ({ children }) => <tr className="border-b border-border">{children}</tr>,
-                                  th: ({ children }) => <th className="border border-border px-3 py-2 font-semibold text-left text-foreground">{children}</th>,
-                                  td: ({ children }) => <td className="border border-border px-3 py-2 text-foreground">{children}</td>,
-                                  a: ({ children, href }) => <a href={href} className="text-primary hover:underline hover:text-primary/80 transition-colors" target="_blank" rel="noopener noreferrer">{children}</a>,
-                                }}
-                              >
-                                {message.content}
-                              </ReactMarkdown>
-                            </div>
-                          ) : (
-                            <p className="text-primary-foreground">{message.content}</p>
-                          )}
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </div>
-                </div>
-              ))}
-
-              {isLoading && (
-                <div className="flex justify-start">
-                  <div className="flex max-w-[80%]">
-                    <Avatar className="flex-shrink-0">
-                      <AvatarFallback className="bg-muted" />
-                    </Avatar>
-                    <Card className="mx-3 bg-card">
-                      <CardContent className="p-4">
-                        <div className="flex items-center space-x-2">
-                          <div className="flex space-x-1">
-                            <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce"></div>
-                            <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" style={{ animationDelay: "0.1s" }}></div>
-                            <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" style={{ animationDelay: "0.2s" }}></div>
-                          </div>
-                          <span className="text-sm text-muted-foreground italic">{loadingMessage}</span>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </div>
-                </div>
-              )}
-              <div ref={messagesEndRef} />
-            </div>
-          )}
+          <div ref={messagesEndRef} />
         </div>
 
-        {/* Input Form */}
         <div className="border-t border-border bg-card p-4">
           <div className="max-w-3xl mx-auto">
             <form ref={formRef} onSubmit={handleSubmit} className="flex space-x-4">
@@ -421,28 +321,48 @@ function ChatPageContent() {
                 placeholder={t("chat.input.placeholder")}
                 rows={1}
                 className="flex-1 min-h-[48px] max-h-[280px] resize-none bg-background border-border p-3 rounded-md focus:outline-none"
-                disabled={isLoading || credits <= 0}
+                disabled={isLoading || (credits ?? 0) <= 0}
               />
-              <Button type="submit" size="lg" disabled={isLoading || !input.trim() || credits <= 0} className="px-6">
+              <Button
+                type="submit"
+                size="lg"
+                disabled={isLoading || !input.trim() || (credits ?? 0) <= 0}
+                className="px-6"
+              >
                 <Send className="h-4 w-4" />
               </Button>
             </form>
 
-            {credits <= 0 && (
-              <div className="mt-2 text-center">
-                <span className="text-sm text-destructive">
-                  {t("chat.input.nocredits")}{" "}
-                  <Link href="/credits" className="underline">
-                    {t("chat.input.buycredits")}
-                  </Link>
-                </span>
-              </div>
-            )}
-
-            <p className="text-xs text-muted-foreground mt-2 text-center">{t("chat.input.disclaimer")}</p>
+            <p className="text-xs text-muted-foreground mt-2 text-center">
+              {t("chat.input.disclaimer")}
+            </p>
           </div>
         </div>
       </div>
+
+      {showBanner && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-50">
+          <div
+            ref={bannerRef}
+            className="bg-background border rounded-2xl shadow-lg max-w-md w-full p-6 relative"
+          >
+            <button
+              className="absolute top-3 right-3 text-xl font-bold"
+              onClick={() => setShowBanner(false)}
+              aria-label={t("chat.credits.dismiss")}
+            >
+              ×
+            </button>
+            <h2 className="text-xl font-semibold mb-2">
+              {t("chat.credits.title")}
+            </h2>
+            <p className="text-sm mb-4">{t("chat.credits.message")}</p>
+            <Button onClick={() => router.push("/pricing")} className="w-full">
+              {t("chat.credits.subscribe")}
+            </Button>
+          </div>
+        </div>
+      )}
     </ProtectedLayout>
   )
 }
@@ -450,5 +370,3 @@ function ChatPageContent() {
 export default function ChatPage() {
   return <ChatPageContent />
 }
-
-

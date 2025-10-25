@@ -6,6 +6,7 @@ from rest_framework_simplejwt.views import (
 )
 from users.views import RegisterView, logout_view, me_view, forgot_password_view, reset_password_view
 
+
 urlpatterns = [
     path("admin/", admin.site.urls),
 

@@ -15,7 +15,7 @@ interface ProtectedSidebarProps {
   credits?: number
 }
 
-export function ProtectedSidebar({ sidebarOpen, setSidebarOpen, credits = 47 }: ProtectedSidebarProps) {
+export function ProtectedSidebar({ sidebarOpen, setSidebarOpen, credits = 5 }: ProtectedSidebarProps) {
   const { t } = useLanguage()
   const { logout } = useAuth()
   const pathname = usePathname()
@@ -40,7 +40,7 @@ export function ProtectedSidebar({ sidebarOpen, setSidebarOpen, credits = 47 }: 
       key: "history"
     },
     {
-      href: "/credits?payment=success",
+      href: "/settings",
       icon: Scale,
       label: t("sidebar.settings"),
       key: "settings"
