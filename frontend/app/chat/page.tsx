@@ -349,6 +349,27 @@ function ChatPageContent() {
         </div>
 
         <div className="flex-1 overflow-y-auto p-4">
+          {messages.map((msg) => (
+  <div
+    key={msg.id}
+    className={`mb-4 ${
+      msg.role === "user" ? "text-right" : "text-left"
+    }`}
+  >
+    <Card
+      className={`inline-block px-4 py-2 ${
+        msg.role === "user" ? "bg-primary text-primary-foreground" : "bg-muted"
+      }`}
+    >
+      <CardContent className="p-0">
+        <ReactMarkdown remarkPlugins={[remarkGfm]}>
+          {msg.content}
+        </ReactMarkdown>
+      </CardContent>
+    </Card>
+  </div>
+))}
+
           <div ref={messagesEndRef} />
         </div>
 
