@@ -1,5 +1,6 @@
 # settings.py (or load from .env)
 import os
+from datetime import timedelta
 from dotenv import load_dotenv
 load_dotenv()
 from celery.schedules import crontab
@@ -165,3 +166,9 @@ CSRF_TRUSTED_ORIGINS = [
 
 # add near other flags or at bottom
 AGENT_REASONING_ENABLED = True
+
+
+SIMPLE_JWT = {
+    "ACCESS_TOKEN_LIFETIME": timedelta(hours=12),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=7),
+}

@@ -17,6 +17,7 @@ logger = logging.getLogger(__name__)
 stripe.api_key = getattr(settings, "STRIPE_SECRET_KEY", None)
 
 @api_view(['POST'])
+@csrf_exempt
 @permission_classes([IsAuthenticated])
 def create_checkout_session(request):
     # DRF has already authenticated the request; use request.user

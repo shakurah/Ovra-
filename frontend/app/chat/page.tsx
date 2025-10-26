@@ -46,13 +46,8 @@ function ChatPageContent() {
   
   // improved fetchCredits: uses access token, attempts refresh, falls back to cookie credentials
   const fetchCredits = async () => {
-    const normalizeApiBase = (base: string) => {
-      if (!base) return ''
-      let b = base.trim().replace(/\/+$/, '') // remove trailing slashes
-      b = b.replace(/\/api\/v1$/i, '') // strip trailing /api/v1 if present
-      return b
-    }
-    const base = normalizeApiBase(apiUrl)
+
+    const base = apiUrl
     const endpoint = base ? `${base}/chat/chat_health/` : `chat.artisting.es/api/v1/chat/chat_health/`
 
     // helper: attempt GET with given headers/credentials
@@ -81,7 +76,7 @@ function ChatPageContent() {
     if (refresh) {
       try {
         const refreshBase = base || ''
-        const refreshUrl = refreshBase ? `${refreshBase}/api/v1/auth/token/refresh/` : '/api/v1/auth/token/refresh/'
+        const refreshUrl = refreshBase ? `${refreshBase}/auth/token/refresh/` : 'chat.artisting.es/api/v1/auth/token/refresh/'
         const r = await fetch(refreshUrl, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
