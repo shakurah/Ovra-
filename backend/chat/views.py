@@ -105,17 +105,18 @@ def chat_api(request):
         except Exception:
             profile = None
         # determine current credits
+        unlimited_user = str(user.email).lower().strip() == "ariverocarrillo1994@gmail.com" 
         try:
             current_credits = int(getattr(profile, "credits", 0) or 0)
         except Exception:
             current_credits = 0
-
-        if current_credits <= 0:
-            return StreamingHttpResponse(
-                "data: {\"error\": \"You have 0 credits left. Please upgrade your plan.\"}\n\n",
-                content_type="text/event-stream",
-                status=403
-            )
+        if not unlimited_user:
+            if current_credits <= 0:
+                return StreamingHttpResponse(
+                    "data: {\"error\": \"You have 0 credits left. Please upgrade your plan.\"}\n\n",
+                    content_type="text/event-stream",
+                    status=403
+                )
 
         # 💳 Deduct one credit for this consultation and persist
         try:
