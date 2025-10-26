@@ -53,7 +53,7 @@ function ChatPageContent() {
       return b
     }
     const base = normalizeApiBase(apiUrl)
-    const endpoint = base ? `${base}/api/v1/chat/chat_health/` : `/api/v1/chat/chat_health/`
+    const endpoint = base ? `${base}/chat/chat_health/` : `chat.artisting.es/api/v1/chat/chat_health/`
 
     // helper: attempt GET with given headers/credentials
     const tryGet = async (opts: RequestInit) => {
@@ -431,7 +431,7 @@ function ChatPageContent() {
                             <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" style={{ animationDelay: "0.1s" }}></div>
                             <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" style={{ animationDelay: "0.2s" }}></div>
                           </div>
-                          <span className="text-sm text-muted-foreground italic">{loadingMessage || t("chat.loading")}</span>
+                          <span className="text-sm text-muted-foreground italic">{loadingMessage}</span>
                         </div>
                       </CardContent>
                     </Card>
