@@ -119,12 +119,12 @@ def chat_api(request):
                 )
 
         # 💳 Deduct one credit for this consultation and persist
-        try:
-            profile.credits = current_credits - 1
-            profile.save(update_fields=["credits"])
-        except Exception:
-            # saving failed but continue; compute remaining for response if possible
-            logger.exception("Failed to deduct credit for user=%s", getattr(user, "id", None))
+            try:
+                profile.credits = current_credits - 1
+                profile.save(update_fields=["credits"])
+            except Exception:
+                # saving failed but continue; compute remaining for response if possible
+                logger.exception("Failed to deduct credit for user=%s", getattr(user, "id", None))
         remaining_credits = int(getattr(profile, "credits", current_credits - 1) or 0)
     else:
         remaining_credits = 0

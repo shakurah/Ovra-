@@ -13,6 +13,7 @@ import { CreditCard, Shield, Lock, CheckCircle } from "lucide-react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { useAuth } from "@/contexts/auth-context" // <-- add (adjust path if different)
+import { fetchWithAuth } from "@/lib/services/auth.service"
 
 // map plan slugs to real Stripe price IDs (set these in frontend/.env)
 const PRICE_ID_MAP: Record<string,string> = {
@@ -126,9 +127,9 @@ export default function PaymentPage() {
         headers["Authorization"] = `${scheme} ${token}`
       }
       const url = `${process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000/api/v1"}/billing/create-checkout-session/`
-       console.log("payment token (raw):", token, "resolvedPriceId:", resolvedPriceId, "backend url:", url)
+      console.log("payment token (raw):", token, "resolvedPriceId:", resolvedPriceId, "backend url:", url)
       console.log("sending Authorization:", headers["Authorization"])
-      const res = await fetch(url, {
+      const res = await fetchWithAuth(url, {
         method: "POST",
         headers,
         body: JSON.stringify(body),
