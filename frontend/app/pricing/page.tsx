@@ -237,7 +237,7 @@ export default function PricingPage() {
         </div>
       </section>
 
-      <SharedFooter />
+  
     </div>
   )
 }
