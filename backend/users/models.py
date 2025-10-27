@@ -5,7 +5,7 @@ from django.contrib.auth.models import User
 class UserProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="profile")
     plan = models.CharField(max_length=20, default="free")
-    credits = models.IntegerField(default=500)
+    credits = models.IntegerField(default=5)
     
     def __str__(self):
         return f"{self.user.username} ({self.credits} credits)"

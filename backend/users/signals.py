@@ -9,7 +9,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 User = get_user_model()
-DEFAULT_START_CREDITS = getattr(settings, "DEFAULT_START_CREDITS", 50)
+DEFAULT_START_CREDITS = getattr(settings, "DEFAULT_START_CREDITS", 5)
 
 @receiver(post_save, sender=User)
 def ensure_userprofile(sender, instance, created, **kwargs):
