@@ -20,7 +20,7 @@ from semantic_cache.services import upsert_entry_async
 
 logger = logging.getLogger(__name__)
 
-QUERY_LIMIT_FREE = 400
+QUERY_LIMIT_FREE = 5
 def prepare_with_boe_context(user_message, top_k=3):
     hits = []
     try:

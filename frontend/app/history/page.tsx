@@ -50,11 +50,85 @@ function HistoryPageContent() {
       setLoading(false)
     }
   }
-
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL || ''
+   const getStoredToken = (): string | null => {
+    if (typeof window === "undefined") return null
+    const keys = ['access', 'token', 'jwt', 'ovra_token']
+    for (const k of keys) {
+      const v = localStorage.getItem(k)
+      if (v) return v
+    }
+    return null
+  }  
   const handleContinueChat = (sessionId: string) => {
     router.push(`/chat?session=${sessionId}`)
   }
+  const [credits, setCredits] = useState<number | null>(null)
+  const fetchCredits = async () => {
 
+    const base = apiUrl
+    const endpoint = base ? `${base}/chat/chat_health/` : `chat.artisting.es/api/v1/chat/chat_health/`
+
+    // helper: attempt GET with given headers/credentials
+    const tryGet = async (opts: RequestInit) => {
+      try {
+        const res = await fetch(endpoint, opts)
+        if (!res.ok) return null
+        return await res.json()
+      } catch (e) {
+        return null
+      }
+    }
+
+    // 1) try Authorization header from localStorage
+    const access = getStoredToken()
+    if (access) {
+      const json = await tryGet({ method: 'GET', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${access}` } })
+      if (json && typeof json.credits === 'number') {
+        setCredits(json.credits)
+        return
+      }
+    }
+
+    // 2) try refresh token flow (if refresh token stored)
+    const refresh = localStorage.getItem('refresh') || localStorage.getItem('refresh_token')
+    if (refresh) {
+      try {
+        const refreshBase = base || ''
+        const refreshUrl = refreshBase ? `${refreshBase}/auth/token/refresh/` : 'chat.artisting.es/api/v1/auth/token/refresh/'
+        const r = await fetch(refreshUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ refresh })
+        })
+        if (r.ok) {
+          const body = await r.json()
+          if (body.access) {
+            localStorage.setItem('access', body.access)
+            // retry with new access token
+            const json = await tryGet({ method: 'GET', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${body.access}` } })
+            if (json && typeof json.credits === 'number') {
+              setCredits(json.credits)
+              return
+            }
+          }
+        }
+      } catch (e) {
+        // ignore and continue to cookie fallback
+      }
+    }
+
+    // 3) fallback: maybe backend uses cookie/session auth — try including credentials
+    const jsonCred = await tryGet({ method: 'GET', credentials: 'include' })
+    if (jsonCred && typeof jsonCred.credits === 'number') {
+      setCredits(jsonCred.credits)
+      return
+    }
+
+    // final: debug hint (no token or unauthorized)
+    console.debug('fetchCredits: no valid token or cookie session; endpoint:', endpoint)
+  }
+  useEffect(() => { fetchCredits() }, [])
   const getTopicFromTitle = (title: string): string => {
     const lowercaseTitle = title.toLowerCase()
     if (lowercaseTitle.includes("iva") || lowercaseTitle.includes("vat")) return "IVA"
@@ -109,7 +183,8 @@ function HistoryPageContent() {
 
   if (loading) {
     return (
-      <ProtectedLayout title={t("history.title")} credits={47}>
+      <ProtectedLayout title={t("history.title")} credits={credits ?? 0}>
+
         <div className="p-6 flex justify-center items-center h-64">
           <p className="text-muted-foreground">Loading chat history...</p>
         </div>
@@ -119,7 +194,7 @@ function HistoryPageContent() {
 
   if (error) {
     return (
-      <ProtectedLayout title={t("history.title")} credits={47}>
+      <ProtectedLayout title={t("history.title")} credits={0}>
         <div className="p-6 flex flex-col items-center justify-center h-64 text-center">
           <p className="text-red-500 mb-4">{error}</p>
           <Button onClick={fetchChatHistory}>Try Again</Button>
@@ -129,7 +204,8 @@ function HistoryPageContent() {
   }
 
   return (
-    <ProtectedLayout title={t("history.title")} credits={47}>
+    <ProtectedLayout title={t("history.title")} credits={credits ?? 0}>
+
       <div className="p-4 sm:p-6 max-w-6xl mx-auto">
         {/* Header */}
         <div className="mb-6">
