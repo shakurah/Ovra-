@@ -35,7 +35,6 @@ def create_checkout_session(request):
         if not success_url or not cancel_url:
             return JsonResponse({"error": "success_url and cancel_url required"}, status=400)
 
-        # create or reuse a Stripe Customer
         stripe_customer_id = None
         if hasattr(user, "stripe_customer_id") and getattr(user, "stripe_customer_id"):
             stripe_customer_id = user.stripe_customer_id

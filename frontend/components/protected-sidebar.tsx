@@ -56,7 +56,7 @@ export function ProtectedSidebar({ sidebarOpen, setSidebarOpen, credits = 5 }: P
       <div className="flex items-center justify-between p-4 border-b border-border">
         <Link href="/" className="flex items-center space-x-2">
           
-          <span className="text-2xl font-medium text-foreground" style={{ fontFamily: 'Helvetica Neue, Helvetica,' }}>ARTISTING</span>
+          <span className="text-2xl font-medium text-foreground artisting-logo">ARTISTING</span>
         </Link>
         <Button variant="ghost" size="sm" className="lg:hidden" onClick={() => setSidebarOpen(false)}>
           ×
@@ -66,7 +66,7 @@ export function ProtectedSidebar({ sidebarOpen, setSidebarOpen, credits = 5 }: P
       <div className="p-4">
         <div className="mb-6">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-medium text-muted-foreground">{t("chat.credits.remaining")}</span>
+            <span className="text-sm font-medium text-foreground">{t("chat.credits.remaining")}</span>
             <Badge variant="secondary" className="bg-primary/10 text-primary">
               {credits}
             </Badge>
@@ -90,8 +90,8 @@ export function ProtectedSidebar({ sidebarOpen, setSidebarOpen, credits = 5 }: P
                 href={item.href}
                 className={`flex items-center space-x-3 px-3 py-2 rounded-lg transition-colors ${
                   active
-                    ? "bg-primary/10 text-primary"
-                    : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                    ? "bg-primary/10 text-foreground"
+                    : "text-foreground hover:bg-muted hover:text-foreground"
                 }`}
               >
                 <Icon className="h-5 w-5" />
@@ -105,7 +105,7 @@ export function ProtectedSidebar({ sidebarOpen, setSidebarOpen, credits = 5 }: P
       <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-border">
         <Button
           variant="ghost"
-          className="w-full justify-start text-muted-foreground hover:text-foreground"
+          className="w-full justify-start text-foreground hover:text-foreground"
           onClick={logout}
         >
           <LogOut className="h-5 w-5 mr-3" />

@@ -120,7 +120,7 @@ export default function TermsPage() {
             <CardContent className="prose prose-sm max-w-none text-muted-foreground">
               <p>{t("terms.contact.content")}</p>
               <div className="mt-4 p-4 bg-muted rounded-lg">
-                <p className="font-medium">ARTISTING</p>
+                <p className="font-medium artisting-logo">ARTISTING</p>
                 <p>Email: legal@ovra-ai.com</p>
                 <p>Address: Madrid, Spain</p>
               </div>
