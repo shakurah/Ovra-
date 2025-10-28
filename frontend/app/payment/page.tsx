@@ -12,10 +12,9 @@ import { useLanguage } from "@/contexts/language-context"
 import { CreditCard, Shield, Lock, CheckCircle } from "lucide-react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
-import { useAuth } from "@/contexts/auth-context" // <-- add (adjust path if different)
+import { useAuth } from "@/contexts/auth-context" 
 import { fetchWithAuth } from "@/lib/services/auth.service"
 
-// map plan slugs to real Stripe price IDs (set these in frontend/.env)
 const PRICE_ID_MAP: Record<string,string> = {
   basic: process.env.NEXT_PUBLIC_STRIPE_PRICE_BASIC_ID ?? "",
   professional: process.env.NEXT_PUBLIC_STRIPE_PRICE_PROFESSIONAL_ID ?? "",
@@ -24,8 +23,7 @@ const PRICE_ID_MAP: Record<string,string> = {
 
 export default function PaymentPage() {
   const { t, language } = useLanguage()
-  const auth = useAuth?.() // adjust if your hook is named differently (useAuth / useAuthContext)
-  // prefer token from AuthContext, fallback to common localStorage keys
+  const auth = useAuth?.() 
   const ctxToken = auth?.token || auth?.accessToken || null
   const token = typeof window !== "undefined"
     ? (ctxToken || localStorage.getItem("token") || localStorage.getItem("authToken") || localStorage.getItem("access") || localStorage.getItem("access_token"))
@@ -35,7 +33,6 @@ export default function PaymentPage() {
   const priceParam = searchParams.get("price")
   const durationParam = searchParams.get("duration")
 
-  // default to Enterprise when landing directly on /payment
   const [selectedPlan, setSelectedPlan] = useState(() => ({
     id: "enterprise",
     name: t("pricing.enterprise.name"),
@@ -43,8 +40,85 @@ export default function PaymentPage() {
     price: Number(process.env.NEXT_PUBLIC_DEFAULT_ENTERPRISE_PRICE ?? 69),
   }))
 
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || ''
+   const getStoredToken = (): string | null => {
+    if (typeof window === "undefined") return null
+    const keys = ['access', 'token', 'jwt', 'ovra_token']
+    for (const k of keys) {
+      const v = localStorage.getItem(k)
+      if (v) return v
+    }
+    return null
+  }
+
+  const [credits, setCredits] = useState<number | null>(null)
+    const fetchCredits = async () => {
+  
+      const base = apiUrl
+      const endpoint = base ? `${base}/chat/chat_health/` : `chat.artisting.es/api/v1/chat/chat_health/`
+  
+      // helper: attempt GET with given headers/credentials
+      const tryGet = async (opts: RequestInit) => {
+        try {
+          const res = await fetch(endpoint, opts)
+          if (!res.ok) return null
+          return await res.json()
+        } catch (e) {
+          return null
+        }
+      }
+  
+      // 1) try Authorization header from localStorage
+      const access = getStoredToken()
+      if (access) {
+        const json = await tryGet({ method: 'GET', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${access}` } })
+        if (json && typeof json.credits === 'number') {
+          setCredits(json.credits)
+          return
+        }
+      }
+  
+      // 2) try refresh token flow (if refresh token stored)
+      const refresh = localStorage.getItem('refresh') || localStorage.getItem('refresh_token')
+      if (refresh) {
+        try {
+          const refreshBase = base || ''
+          const refreshUrl = refreshBase ? `${refreshBase}/auth/token/refresh/` : 'chat.artisting.es/api/v1/auth/token/refresh/'
+          const r = await fetch(refreshUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ refresh })
+          })
+          if (r.ok) {
+            const body = await r.json()
+            if (body.access) {
+              localStorage.setItem('access', body.access)
+              // retry with new access token
+              const json = await tryGet({ method: 'GET', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${body.access}` } })
+              if (json && typeof json.credits === 'number') {
+                setCredits(json.credits)
+                return
+              }
+            }
+          }
+        } catch (e) {
+          // ignore and continue to cookie fallback
+        }
+      }
+  
+      // 3) fallback: maybe backend uses cookie/session auth — try including credentials
+      const jsonCred = await tryGet({ method: 'GET', credentials: 'include' })
+      if (jsonCred && typeof jsonCred.credits === 'number') {
+        setCredits(jsonCred.credits)
+        return
+      }
+  
+      // final: debug hint (no token or unauthorized)
+      console.debug('fetchCredits: no valid token or cookie session; endpoint:', endpoint)
+    }
+    useEffect(() => { fetchCredits() }, [])
+
   useEffect(() => {
-    // Get plan details based on planId
     const plans = {
       basic: {
         id: "basic",
@@ -72,11 +146,9 @@ export default function PaymentPage() {
       if (priceParam) p.price = Number(priceParam)
       setSelectedPlan(p)
     } else if (priceParam) {
-      // fallback: create a generic plan when only price provided
       setSelectedPlan({ id: "custom", name: t("pricing.title"), credits: 0, price: Number(priceParam) })
     }
-    // else: leave the default enterprise already set in initial state
-  }, [planId, t])
+    }, [planId, t])
 
   const router = useRouter()
   const [isProcessing, setIsProcessing] = useState(false)
@@ -250,6 +322,7 @@ export default function PaymentPage() {
                   </CardTitle>
                   <CardDescription>Enter your payment details securely</CardDescription>
                 </CardHeader>
+                {/*
                 <CardContent className="space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="cardNumber">{t("payment.card.number")}</Label>
@@ -317,7 +390,7 @@ export default function PaymentPage() {
                       required
                     />
                   </div>
-                </CardContent>
+                </CardContent>*/}
               </Card>
 
               <Card className="border-border bg-card">

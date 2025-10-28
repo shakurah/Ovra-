@@ -86,7 +86,6 @@ function ChatPageContent() {
           const body = await r.json()
           if (body.access) {
             localStorage.setItem('access', body.access)
-            // retry with new access token
             const json = await tryGet({ method: 'GET', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${body.access}` } })
             if (json && typeof json.credits === 'number') {
               setCredits(json.credits)
@@ -99,14 +98,12 @@ function ChatPageContent() {
       }
     }
 
-    // 3) fallback: maybe backend uses cookie/session auth — try including credentials
     const jsonCred = await tryGet({ method: 'GET', credentials: 'include' })
     if (jsonCred && typeof jsonCred.credits === 'number') {
       setCredits(jsonCred.credits)
       return
     }
 
-    // final: debug hint (no token or unauthorized)
     console.debug('fetchCredits: no valid token or cookie session; endpoint:', endpoint)
   }
   useEffect(() => { fetchCredits() }, [])
@@ -465,7 +462,7 @@ function ChatPageContent() {
               </Button>
             </form>
 
-            <p className="text-xs text-muted-foreground mt-2 text-center">
+            <p className="text-xs text-foreground mt-2 text-center">
               {t("chat.input.disclaimer")}
             </p>
           </div>

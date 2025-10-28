@@ -143,7 +143,7 @@ export default function PrivacyPage() {
             <CardContent className="prose prose-sm max-w-none text-muted-foreground">
               <p>{t("privacy.contact.content")}</p>
               <div className="mt-4 p-4 bg-muted rounded-lg">
-                <p className="font-medium">ARTISTING - Data Protection Officer</p>
+                <p className="font-medium artisting-logo">ARTISTING - Data Protection Officer</p>
                 <p>Email: privacy@ovra-ai.com</p>
                 <p>Address: Madrid, Spain</p>
               </div>
