@@ -53,10 +53,9 @@ export function ProtectedSidebar({ sidebarOpen, setSidebarOpen, credits = 5 }: P
     <div
       className={`${sidebarOpen ? "translate-x-0" : "-translate-x-full"} fixed inset-y-0 left-0 z-50 w-64 bg-card shadow-lg transform transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0 border-r border-border`}
     >
-      <div className="flex items-center justify-between p-4 border-b border-border">
+        <div className="flex items-center justify-between p-4 border-b border-border">
         <Link href="/" className="flex items-center space-x-2">
-          
-          <span className="text-2xl font-medium text-foreground artisting-logo">ARTISTING</span>
+          <img src="/ARTISTING.png" alt="ARTISTING" className="h-6 w-auto artisting-logo" />
         </Link>
         <Button variant="ghost" size="sm" className="lg:hidden" onClick={() => setSidebarOpen(false)}>
           ×

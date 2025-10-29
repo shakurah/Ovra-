@@ -40,6 +40,11 @@ class BOEArticle(models.Model):
     end_offset = models.IntegerField(default=0)
     indexed = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
+    verified = models.BooleanField(default=False)
+    source_url = models.URLField(blank=True, null=True)
+
+    normative_version = models.CharField(max_length=100, blank=True, null=True)
+
 
     class Meta:
         indexes = [
