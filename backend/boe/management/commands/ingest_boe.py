@@ -77,14 +77,23 @@ class Command(BaseCommand):
 
                     articles = self._split_into_articles(text)
                     for idx, (heading, content, offsets) in enumerate(articles):
-                        BOEArticle.objects.create(
+                        article_number = None
+                        match = re.search(r'Artículo\s+([A-Za-z0-9\.\-\/]+)', heading or "", re.IGNORECASE)
+                        if match:
+                            article_number = match.group(1).strip()
+                            if not self._verify_article_exists(article_number):
+                                article_number = None  # invalidate if not found
+
+                        boe_article = BOEArticle.objects.create(
                             document=doc,
-                            article_number=heading or f"sec-{idx}",
+                            article_number=article_number,
                             heading=heading or "",
                             content=content,
                             start_offset=offsets[0],
                             end_offset=offsets[1],
-                            indexed=False
+                            source_url=link,
+                            indexed=False,
+                            normative_version=doc.published_at.strftime("%Y-%m-%d") if doc.published_at else None
                         )
                     self.stdout.write(f"Extracted {len(articles)} articles from {doc.boe_id}")
 
@@ -137,6 +146,18 @@ class Command(BaseCommand):
             except Exception:
                 return None
 
+    def _validate_boe_document(self, link, title, html, text):
+        if not link or not title or not text:
+            raise ValueError("Missing essential BOE fields (link/title/text)")
+
+        # Opstionally check if document exists in BOE API
+        if "boe.es" not in link:
+            raise ValueError(f"Invalid BOE link: {link}")
+
+        # Check minimal content threshold
+        if len(text.strip()) < 200:
+            raise ValueError("Document content too short or incomplete")
+
     def _extract_text_from_html_or_pdf(self, link, html_text, response_obj):
         # Simple heuristic: if content-type PDF or URL ends with .pdf -> use PDF extraction
         content_type = response_obj.headers.get("content-type", "")
@@ -165,6 +186,16 @@ class Command(BaseCommand):
         text = soup.get_text(separator="\n")
         lines = [line.strip() for line in text.splitlines() if line.strip()]
         return "\n".join(lines)
+
+    def _verify_article_exists(self, article_number):
+        boe_api_url = f"https://www.boe.es/eli/es/{article_number}.json"
+        try:
+            r = requests.get(boe_api_url, timeout=10)
+            if r.status_code == 200:
+                return True
+        except requests.RequestException:
+            pass
+        return False
 
     def _split_into_articles(self, text):
         # Naive splitter: split on lines starting with "Artículo" or "ARTÍCULO" or "Artículo X"

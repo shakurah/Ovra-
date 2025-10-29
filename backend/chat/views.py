@@ -6,6 +6,7 @@ import requests
 from django.http import StreamingHttpResponse, HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.timezone import now
+from django.core.cache import cache
 from ovra_backend.settings import AGENT_URL, API_KEY
 from boe.retrieval import search_boe
 from .models import ChatLog
@@ -98,7 +99,7 @@ def chat_api(request):
     # log important headers for debugging CSRF/auth issues
     logger.debug("Headers: Authorization=%s Origin=%s Referer=%s Content-Type=%s",
                  bool(request.META.get("HTTP_AUTHORIZATION")), request.META.get("HTTP_ORIGIN"), request.META.get("HTTP_REFERER"), request.META.get("CONTENT_TYPE"))
-
+    
     try:
         body = request.data
         user_message = body.get("message", "")

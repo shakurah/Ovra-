@@ -3,7 +3,6 @@
 import type React from "react"
 
 import { useState } from "react"
-import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -50,7 +49,7 @@ export default function LoginPage() {
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <Link href="/" className="inline-flex items-center space-x-2">
-            <span className="text-5xl font-medium text-gray-900 dark:text-white artisting-logo">ARTISTING</span>
+            <img src="/ARTISTING.png" alt="ARTISTING" className="h-12 w-auto artisting-logo" />
           </Link>
           <p className="text-gray-600 dark:text-white mt-2">{t("auth.tagline")}</p>
         </div>
