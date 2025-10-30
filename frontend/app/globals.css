@@ -377,15 +377,12 @@ button:focus-visible {
   color: white !important;
 }
 
-.font-artisting {
-  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
-}
-
-/* ARTISTING logo styling matching the design */
-.artisting-logo {
+.focus-ring {
   font-family: "Helvetica Neue";
   font-weight: 500;
   letter-spacing: -0.02em;
   text-transform: uppercase;
   -webkit-font-smoothing: antialiased;
+  aspect-ratio: 1;
+  object-fit: contain;
 }
