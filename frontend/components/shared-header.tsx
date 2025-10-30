@@ -19,7 +19,7 @@ export function SharedHeader() {
         <div className="flex items-center justify-between h-16">
           <div className="flex items-center space-x-2">
             <Link href="/">
-              <img src="/ARTISTING.png" alt="ARTISTING" className="h-5 w-auto" />
+              <img src="/artisting-logo.png" alt="ARTISTING" className="h-5 w-auto" />
             </Link>
           </div>
 

@@ -76,7 +76,7 @@ export default function SignupPage() {
         {/* Logo */}
         <div className="text-center mb-8">
           <Link href="/" className="inline-flex items-center space-x-2">
-            <img src="/ARTISTING.png" alt="ARTISTING" className="h-12 w-auto artisting-logo" />
+            <img src="/artisting-logo.png" alt="ARTISTING" className="h-12 w-auto artisting-logo" />
           </Link>
           <p className="text-gray-600 dark:text-white mt-2">{t("auth.signup.subtitle")}</p>
         </div>
