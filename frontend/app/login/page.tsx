@@ -49,7 +49,7 @@ export default function LoginPage() {
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <Link href="/" className="inline-flex items-center space-x-2">
-            <img src="/artisting-logo.png" alt="ARTISTING" className="h-12 w-auto artisting-logo" />
+            <img src="/artisting-logo.png" alt="ARTISTING" className="h-25 w-55 artisting-logo" />
           </Link>
           <p className="text-gray-600 dark:text-white mt-2">{t("auth.tagline")}</p>
         </div>

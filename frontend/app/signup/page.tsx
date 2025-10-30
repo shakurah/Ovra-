@@ -73,10 +73,10 @@ export default function SignupPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 dark:from-slate-900 to-blue-50 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
-        {/* Logo */}
+        
         <div className="text-center mb-8">
           <Link href="/" className="inline-flex items-center space-x-2">
-            <img src="/artisting-logo.png" alt="ARTISTING" className="h-12 w-auto artisting-logo" />
+            <img src="/artisting-logo.png" alt="ARTISTING" className="h-25 w-55 artisting-logo" />
           </Link>
           <p className="text-gray-600 dark:text-white mt-2">{t("auth.signup.subtitle")}</p>
         </div>
