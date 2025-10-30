@@ -115,7 +115,6 @@ export function ProtectedSidebar({ sidebarOpen, setSidebarOpen, credits = 5 }: P
   )
 }
 
-// Mobile sidebar toggle button component
 export function SidebarToggle({ onClick }: { onClick: () => void }) {
   return (
     <Button variant="ghost" size="sm" className="lg:hidden" onClick={onClick}>
