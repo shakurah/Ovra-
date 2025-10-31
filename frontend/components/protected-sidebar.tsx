@@ -55,7 +55,7 @@ export function ProtectedSidebar({ sidebarOpen, setSidebarOpen, credits = 5 }: P
     >
         <div className="flex items-center justify-between p-4 border-b border-border">
         <Link href="/" className="flex items-center space-x-2">
-          <img src="/artisting-logo.png" alt="ARTISTING" className="h-2 w-50 artisting-logo" />
+          <img src="/artisting-logo.png" alt="ARTISTING" className="h-25 w-50 artisting-logo" />
         </Link>
         <Button variant="ghost" size="sm" className="lg:hidden" onClick={() => setSidebarOpen(false)}>
           ×
