@@ -120,13 +120,27 @@ class RegressionTestingService:
         return results
 
     def _calculate_similarity(self, expected: str, actual: str) -> float:
-        """Calculate semantic similarity between expected and actual responses"""
-        # TODO: Implement semantic similarity calculation
-        # This could use:
-        # 1. Cosine similarity with embeddings
-        # 2. BERT-based similarity
-        # 3. Custom domain-specific metrics
-        return 0.0  # Placeholder
+        """Calculate semantic similarity between expected and actual responses using BERT embeddings"""
+        try:
+            from sentence_transformers import SentenceTransformer
+            import numpy as np
+
+            # Load pre-trained BERT model (first time only)
+            if not hasattr(self, '_bert_model'):
+                self._bert_model = SentenceTransformer('paraphrase-multilingual-MiniLM-L12-v2')
+
+            # Generate embeddings
+            expected_embedding = self._bert_model.encode([expected])[0]
+            actual_embedding = self._bert_model.encode([actual])[0]
+
+            # Calculate cosine similarity
+            similarity = np.dot(expected_embedding, actual_embedding) / (
+                np.linalg.norm(expected_embedding) * np.linalg.norm(actual_embedding)
+            )
+            return float(similarity)
+        except Exception as e:
+            logger.error(f"Error calculating similarity: {e}")
+            return 0.0
 
     def _generate_test_id(self) -> str:
         """Generate a unique test case ID"""
@@ -134,14 +148,53 @@ class RegressionTestingService:
         return str(uuid.uuid4())
 
     def _persist_test_case(self, test_case: TestCase) -> None:
-        """Persist test case to storage"""
-        # TODO: Implement persistence layer
-        pass
+        """Persist test case to Django model storage"""
+        try:
+            from django.core.cache import cache
+            from django.utils import timezone
+            
+            # Cache for quick access
+            cache_key = f"test_case_{test_case.id}"
+            cache.set(cache_key, test_case)
+            
+            # Persist to database
+            from apps.agent.models import TestCaseModel
+            TestCaseModel.objects.create(
+                test_id=test_case.id,
+                query=test_case.query,
+                expected_response=test_case.expected_response,
+                tags=test_case.tags,
+                metadata=test_case.metadata,
+                created_at=test_case.created_at,
+                last_run=test_case.last_run
+            )
+        except Exception as e:
+            logger.error(f"Error persisting test case: {e}")
 
     def _log_test_result(self, result: TestResult) -> None:
         """Log test result for tracking and analysis"""
-        # TODO: Implement result logging
-        pass
+        try:
+            from apps.agent.models import TestResultModel
+            from django.utils import timezone
+            
+            # Create database record
+            TestResultModel.objects.create(
+                test_case_id=result.test_case_id,
+                actual_response=result.actual_response,
+                similarity_score=result.similarity_score,
+                passed=result.passed,
+                execution_time=result.execution_time,
+                timestamp=result.timestamp,
+                error_message=result.error_message
+            )
+            
+            # Update last run timestamp
+            from apps.agent.models import TestCaseModel
+            TestCaseModel.objects.filter(test_id=result.test_case_id).update(
+                last_run=timezone.now()
+            )
+        except Exception as e:
+            logger.error(f"Error logging test result: {e}")
 
     def _get_ai_response(self, query: str) -> str:
         """Get response from AI system"""
