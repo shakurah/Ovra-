@@ -96,7 +96,7 @@ export const getEnvironmentConfig = () => {
   const configs = {
     development: {
       ...API_CONFIG,
-      BASE_URL: 'http://localhost:8000/api',
+      BASE_URL: 'http://localhost:8000/api/v1',
       WEBSOCKET_URL: 'ws://localhost:8000/ws',
       REQUEST_TIMEOUT: 10000, // Shorter timeout for dev
       FEATURES: {

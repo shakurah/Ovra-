@@ -2,6 +2,9 @@
 Test Case and Result Models for Regression Testing
 """
 
+# prevent pytest test collection of model classes in this module
+__test__ = False
+
 from django.db import models
 from django.utils import timezone
 
@@ -21,6 +24,7 @@ class TestCaseModel(models.Model):
             models.Index(fields=['test_id']),
             models.Index(fields=['created_at'])
         ]
+        app_label = "agent"
 
 class TestResultModel(models.Model):
     """Persistent storage for test execution results"""
@@ -39,3 +43,4 @@ class TestResultModel(models.Model):
             models.Index(fields=['timestamp']),
             models.Index(fields=['passed'])
         ]
+        app_label = "agent"
