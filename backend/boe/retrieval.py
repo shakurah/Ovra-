@@ -61,7 +61,9 @@ def search_boe(query: str, top_k: int = 5):
             "count": len(hits)
         }, timeout=3600)
 
-        return hits
+        # normalize hits to consistent schema for downstream consumers
+        normalized = [_normalize_hit(h) for h in hits]
+        return normalized
 
     except Exception as e:
         logger.exception(f"BOE search failed: {e}")
@@ -73,6 +75,53 @@ def search_boe(query: str, top_k: int = 5):
         return []
     
 
+
+def _normalize_hit(hit: dict) -> dict:
+    src = hit.get("_source", hit) if isinstance(hit, dict) else {}
+    out = {}
+
+    # prefer human-friendly BOE id (BOE-A-/BOE-B-) for provenance; fall back to numeric document_id
+    boe_id = src.get("boe_id") or hit.get("boe_id")
+    doc_id_fallback = src.get("document_id") or hit.get("document_id")
+    out["doc_id"] = boe_id or doc_id_fallback or src.get("id") or src.get("url")
+
+    out["url"] = src.get("url") or hit.get("url")
+    out["score"] = float(hit.get("score", src.get("score", 0.0) or 0.0))
+
+    content = (src.get("content") or src.get("text") or "") or ""
+    snippet = src.get("snippet") or content[:1600]
+    out["content"] = content
+    out["snippet"] = snippet
+
+    # derive offsets if missing (best-effort): find snippet start in content
+    offset_start = src.get("offset_start") or src.get("start_offset") or None
+    offset_end = src.get("offset_end") or src.get("end_offset") or None
+    if offset_start is None and content and snippet:
+        try:
+            # use a short prefix to avoid false matches on long repeated text
+            prefix = snippet[:200]
+            idx = content.find(prefix)
+            if idx != -1:
+                # expand to full snippet length if possible
+                offset_start = idx
+                offset_end = idx + len(snippet)
+        except Exception:
+            offset_start = None
+            offset_end = None
+
+    out["offset_start"] = offset_start
+    out["offset_end"] = offset_end
+
+    # preserve other useful fields
+    for k in ("title", "article_number", "heading", "boe_id", "document_id"):
+        if src.get(k) is not None:
+            out[k] = src.get(k)
+
+    # merge original hit fields without overwriting normalized keys
+    for k, v in (hit.items() if isinstance(hit, dict) else []):
+        if k not in out:
+            out[k] = v
+    return out
 
 logger = logging.getLogger(__name__)
 

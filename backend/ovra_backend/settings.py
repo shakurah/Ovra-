@@ -31,6 +31,19 @@ AGENT_URL = os.getenv("DEEPSEEK_AGENT_URL", None) + "/api/v1/chat/completions"
 API_KEY = os.getenv("DEEPSEEK_API_KEY", None)
 DEEPSEEK_MAX_TOKENS = 800
 
+# DeepSeek / agent endpoint (accept base host or full path)
+_DEEPSEEK_BASE = os.environ.get("AGENT_URL") or os.environ.get("DEEPSEEK_URL") or ""
+if _DEEPSEEK_BASE:
+    # ensure we point to the chat completions path the agent docs require
+    if not _DEEPSEEK_BASE.endswith("/api/v1/chat/completions"):
+        DEEPSEEK_URL = _DEEPSEEK_BASE.rstrip("/") + "/api/v1/chat/completions"
+    else:
+        DEEPSEEK_URL = _DEEPSEEK_BASE
+else:
+    DEEPSEEK_URL = ""
+DEEPSEEK_KEY = os.environ.get("AGENT_KEY") or os.environ.get("DEEPSEEK_KEY")
+USE_LLM = os.environ.get("USE_LLM", "1")
+
 
 SECRET_KEY = '^!uf9qps&v7!b+7jgxj$^!91#48gb+@by=bl35pe#8ps8p71h@'
 

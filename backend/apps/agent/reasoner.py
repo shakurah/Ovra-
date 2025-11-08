@@ -13,8 +13,57 @@ import logging
 import time
 import inspect
 import asyncio
+import re
+from apps.agent.services.validation import validate_claims
+import threading
+from django.core.cache import cache
 
 logger = logging.getLogger(__name__)
+
+_BOE_ID_RE = re.compile(r"\b(BOE-[A-Z]-\d+|BOE-[A-Z]+-\d+|BOE-A-\d+|BOE-B-\d+)\b", re.IGNORECASE)
+
+def _ensure_hit_metadata(h: dict) -> dict:
+    """
+    Ensure consistent fields: 'doc_id', 'snippet', 'offset_start', 'offset_end', 'score'.
+    Non-destructive: preserves existing fields.
+    """
+    # doc_id from common keys
+    if not h.get("doc_id"):
+        for k in ("id", "boe_id", "xml_id", "url", "source"):
+            if h.get(k):
+                h["doc_id"] = h[k]
+                break
+
+    # try extract BOE id from snippet/content
+    if not h.get("doc_id"):
+        sn = (h.get("snippet") or h.get("content") or "")
+        m = _BOE_ID_RE.search(sn)
+        if m:
+            h["doc_id"] = m.group(0)
+
+    # ensure snippet exists
+    if not h.get("snippet"):
+        h["snippet"] = (h.get("content") or h.get("text") or "")[:1200]
+
+    # normalize offsets if present under alternate keys
+    if h.get("offset_start") is None:
+        for k in ("start_offset", "begin", "offset"):
+            if h.get(k) is not None:
+                h["offset_start"] = h.get(k)
+                break
+    if h.get("offset_end") is None:
+        for k in ("end_offset", "finish"):
+            if h.get(k) is not None:
+                h["offset_end"] = h.get(k)
+                break
+
+    # ensure numeric score
+    try:
+        h["score"] = float(h.get("score", 0.0))
+    except Exception:
+        h["score"] = 0.0
+
+    return h
 
 class Reasoner:
     """
@@ -101,6 +150,9 @@ class Reasoner:
         except Exception as e:
             raw_hits = []
             trace["stages"]["retrieve_error"] = str(e)
+
+        # normalize hit metadata so every hit has doc_id, snippet, score, offsets (if available)
+        raw_hits = [_ensure_hit_metadata(h.copy() if isinstance(h, dict) else dict(h)) for h in (raw_hits or [])]
         trace["timestamps"]["retrieve_end"] = time.time()
         trace["stages"]["raw_hits_count"] = len(raw_hits)
 
@@ -109,6 +161,8 @@ class Reasoner:
         try:
             from apps.agent.services.reranker import rerank_hits
             ranked = rerank_hits(query, raw_hits, top_k=self.top_k)
+            # ensure ranked hits normalized too
+            ranked = [_ensure_hit_metadata(h.copy() if isinstance(h, dict) else dict(h)) for h in (ranked or [])]
             trace["stages"]["ranked_ids"] = [h.get("doc_id") or h.get("id") for h in ranked]
         except Exception as e:
             ranked = raw_hits
@@ -188,7 +242,8 @@ class Reasoner:
                 "provenance": provenance,
                 "confidence": confident_score,
                 "validations": validations,
-                "synthesis_source": synthesis_source
+                "synthesis_source": synthesis_source,
+                "claims": mlr_out.get("claims", [])
             }
             trace["stages"]["synthesis"] = {"provenance_count": len(provenance), "source": synthesis_source}
         except Exception as e:
@@ -199,10 +254,30 @@ class Reasoner:
         # log internal full trace for debugging only
         logger.debug({"reasoner_internal_trace": trace})
 
-        return {
-            "answer": synth["answer"],
-            "provenance": synth["provenance"],
-            "confidence": synth["confidence"],
-            "validations": synth["validations"],
-            "synthesis_source": synth.get("synthesis_source")
+        # attach basic synthesis to response immediately
+        response = {
+            "answer": synth.get("answer"),
+            "provenance": synth.get("provenance"),
+            "confidence": synth.get("confidence"),
+            "synthesis_source": synth.get("synthesis_source"),
+            "validations": synth.get("validations", []),
+            "claims": synth.get("claims", [])
         }
+
+        # async validation (non-blocking)
+        def _run_validation(claims, resp_id=None):
+            validated = validate_claims(claims)
+            # persist to DB or cache so UI can read later (example: update ChatLog or cache)
+            # ChatLog.objects.filter(id=resp_id).update(validations=validated)  # pseudo
+            cache.set(f"validation:{resp_id}", validated, timeout=3600)
+
+        try:
+            # prefer synthesized claims, fall back to mlr output if missing
+            claims = synth.get("claims", []) or mlr_out.get("claims", [])
+            # launch validation in background
+            threading.Thread(target=_run_validation, args=(claims, trace.get("response_id")) , daemon=True).start()
+        except Exception:
+            pass
+
+        # return immediate response; UI will fetch validation from cache/endpoint or receive SSE update
+        return response

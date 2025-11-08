@@ -3,7 +3,8 @@ import logging
 import uuid
 import json
 import requests
-from django.http import StreamingHttpResponse, HttpResponse
+import re
+from django.http import StreamingHttpResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.timezone import now
 from django.core.cache import cache
@@ -282,6 +283,42 @@ def chat_api(request):
     duration = time.time() - start_ts
     logger.debug("chat_api finished user=%s duration=%.3fs", getattr(request.user, "id", None), duration)
     return response
+
+_think_re = re.compile(r"<think>.*?</think>", re.IGNORECASE | re.DOTALL)
+_bracket_re = re.compile(r"\[think\].*?\[\/think\]", re.IGNORECASE | re.DOTALL)
+
+def _sanitize_stream_generator(gen):
+    for chunk in gen:
+        try:
+            s = chunk.decode('utf-8') if isinstance(chunk, (bytes, bytearray)) else str(chunk)
+            s = _think_re.sub("", s)
+            s = _bracket_re.sub("", s)
+            yield s.encode('utf-8') if isinstance(chunk, (bytes, bytearray)) else s
+        except Exception:
+            yield chunk
+
+# Example usage in your view:
+# original_gen = agent_stream_generator(...)  # existing streaming generator
+# return StreamingHttpResponse(_sanitize_stream_generator(original_gen), content_type="text/event-stream")
+
+def _sanitize_stream_generator(gen):
+    think_re = re.compile(r"<think>.*?</think>", re.IGNORECASE | re.DOTALL)
+    bracket_re = re.compile(r"\[think\].*?\[\/think\]", re.IGNORECASE | re.DOTALL)
+    for chunk in gen:
+        try:
+            if isinstance(chunk, bytes):
+                s = chunk.decode('utf-8', errors='ignore')
+                s = think_re.sub("", s)
+                s = bracket_re.sub("", s)
+                yield s.encode('utf-8')
+            else:
+                s = str(chunk)
+                s = think_re.sub("", s)
+                s = bracket_re.sub("", s)
+                yield s
+        except Exception:
+            # on error, yield the original chunk
+            yield chunk
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
