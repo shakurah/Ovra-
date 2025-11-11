@@ -7,6 +7,8 @@ class ChatLog(models.Model):
     user_message = models.TextField()
     user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True) 
     response_text = models.TextField(blank=True, null=True)
+    response_id = models.CharField(max_length=64, blank=True, null=True, db_index=True)
+    validations = models.JSONField(blank=True, null=True, default=list)
     created_at = models.DateTimeField(default=timezone.now)
 
     def __str__(self):

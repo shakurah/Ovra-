@@ -15,55 +15,12 @@ import inspect
 import asyncio
 import re
 from apps.agent.services.validation import validate_claims
+import uuid
 import threading
 from django.core.cache import cache
+from django.db.models import Q
 
 logger = logging.getLogger(__name__)
-
-_BOE_ID_RE = re.compile(r"\b(BOE-[A-Z]-\d+|BOE-[A-Z]+-\d+|BOE-A-\d+|BOE-B-\d+)\b", re.IGNORECASE)
-
-def _ensure_hit_metadata(h: dict) -> dict:
-    """
-    Ensure consistent fields: 'doc_id', 'snippet', 'offset_start', 'offset_end', 'score'.
-    Non-destructive: preserves existing fields.
-    """
-    # doc_id from common keys
-    if not h.get("doc_id"):
-        for k in ("id", "boe_id", "xml_id", "url", "source"):
-            if h.get(k):
-                h["doc_id"] = h[k]
-                break
-
-    # try extract BOE id from snippet/content
-    if not h.get("doc_id"):
-        sn = (h.get("snippet") or h.get("content") or "")
-        m = _BOE_ID_RE.search(sn)
-        if m:
-            h["doc_id"] = m.group(0)
-
-    # ensure snippet exists
-    if not h.get("snippet"):
-        h["snippet"] = (h.get("content") or h.get("text") or "")[:1200]
-
-    # normalize offsets if present under alternate keys
-    if h.get("offset_start") is None:
-        for k in ("start_offset", "begin", "offset"):
-            if h.get(k) is not None:
-                h["offset_start"] = h.get(k)
-                break
-    if h.get("offset_end") is None:
-        for k in ("end_offset", "finish"):
-            if h.get(k) is not None:
-                h["offset_end"] = h.get(k)
-                break
-
-    # ensure numeric score
-    try:
-        h["score"] = float(h.get("score", 0.0))
-    except Exception:
-        h["score"] = 0.0
-
-    return h
 
 class Reasoner:
     """
@@ -118,9 +75,11 @@ class Reasoner:
                 self._validator = None
         return self._validator
 
-    def run_cycle(self, query: str, context: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    def run_cycle(self, query: str, *args, **kwargs):
+        print(f"[Reasoner] run_cycle start query={query!r}")
+        logger.debug("Reasoner.run_cycle start query=%s", query)
         trace = {"query": query, "stages": {}, "timestamps": {}}
-        context = context or {}
+        context = kwargs.get("context") or {}
 
         t0 = time.time()
         # 1) analyze (lightweight)
@@ -171,13 +130,28 @@ class Reasoner:
 
         # 4) multi-layer reasoning / hypothesize
         trace["timestamps"]["reason_start"] = time.time()
+        mlr_out = {}
         try:
+            # before calling mlr.reason create a normalized ctx dict
+            ctx = payload.get("context") if isinstance(payload, dict) else kwargs.get("context") or {}
+
             mlr = self._get_mlr()
-            mlr_out = mlr.reason(query, context=context, law_data={"hits": ranked})
-            trace["stages"]["mlr_claim_count"] = len(mlr_out.get("claims", []))
+            # call with safe signature handling (support ctx or context)
+            sig = inspect.signature(mlr.reason)
+            params = sig.parameters
+            if "ctx" in params:
+                mlr_out = mlr.reason(query, ctx=ctx, law_data={"hits": ranked})
+            elif "context" in params:
+                mlr_out = mlr.reason(query, context=ctx, law_data={"hits": ranked})
+            else:
+                # fallback: try positional second arg
+                try:
+                    mlr_out = mlr.reason(query, ctx)
+                except TypeError:
+                    mlr_out = mlr.reason(query)
         except Exception as e:
-            mlr_out = {"legal_reasoning": "", "contextual_reasoning": "", "temporal_reasoning": "", "claims": []}
-            trace["stages"]["mlr_error"] = str(e)
+             mlr_out = {"legal_reasoning": "", "contextual_reasoning": "", "temporal_reasoning": "", "claims": []}
+             trace["stages"]["mlr_error"] = str(e)
         trace["timestamps"]["reason_end"] = time.time()
 
         # 5) validate each claim
@@ -254,8 +228,15 @@ class Reasoner:
         # log internal full trace for debugging only
         logger.debug({"reasoner_internal_trace": trace})
 
-        # attach basic synthesis to response immediately
+        # ensure a stable response id for validation & UI
+        resp_id = str(uuid.uuid4())
+        trace["response_id"] = resp_id
+        print(f"[Reasoner] generated response_id={resp_id}")
+        logger.debug("Reasoner response_id=%s", resp_id)
+
+        # attach basic synthesis to response immediately and include response_id
         response = {
+            "response_id": trace.get("response_id"),
             "answer": synth.get("answer"),
             "provenance": synth.get("provenance"),
             "confidence": synth.get("confidence"),
@@ -264,20 +245,50 @@ class Reasoner:
             "claims": synth.get("claims", [])
         }
 
-        # async validation (non-blocking)
-        def _run_validation(claims, resp_id=None):
-            validated = validate_claims(claims)
-            # persist to DB or cache so UI can read later (example: update ChatLog or cache)
-            # ChatLog.objects.filter(id=resp_id).update(validations=validated)  # pseudo
-            cache.set(f"validation:{resp_id}", validated, timeout=3600)
-
+        # call mlr (existing code)
         try:
-            # prefer synthesized claims, fall back to mlr output if missing
+            print("[Reasoner] calling MLR.reason(...)")
+            mlr_out = mlr.reason(...)  # ...existing call logic...
+            print("[Reasoner] mlr_out keys:", list(mlr_out.keys()) if isinstance(mlr_out, dict) else type(mlr_out))
+            logger.debug("Reasoner mlr_out keys=%s", list(mlr_out.keys()) if isinstance(mlr_out, dict) else type(mlr_out))
+        except Exception as e:
+            print(f"[Reasoner] mlr.reason raised: {e!r}")
+            logger.exception("MLR reason failed")
+
+        # after building synth and before starting validation thread
+        print(f"[Reasoner] starting validation thread for response_id={resp_id}, claims_count={len(synth.get('claims', []))}")
+        logger.debug("starting validation thread resp_id=%s claims_count=%d", resp_id, len(synth.get("claims", [])))
+        def _run_validation(claims, resp_id_local=None):
+            try:
+                print(f"[Reasoner][validation] running validate_claims for resp_id={resp_id_local}")
+                validated = validate_claims(claims)
+                cache_key = f"validation:{resp_id_local}"
+                cache.set(cache_key, validated, timeout=3600)
+                print(f"[Reasoner][validation] cached validation under {cache_key} (len={len(validated)})")
+                logger.debug("cached validation %s len=%d", cache_key, len(validated))
+            except Exception as e:
+                print(f"[Reasoner][validation] validation failed: {e!r}")
+                logger.exception("Validation thread failed for resp_id=%s", resp_id_local)
+
+            # persist to ChatLog (best-effort)
+            try:
+                from chat.models import ChatLog
+                obj = ChatLog.objects.filter(response_id=resp_id_local).first()
+                if obj:
+                    obj.validations = validated
+                    obj.save(update_fields=["validations"])
+                    print(f"[Reasoner][validation] persisted validations to ChatLog id={obj.id}")
+                    logger.debug("persisted validations to ChatLog id=%s", obj.id)
+                else:
+                    print(f"[Reasoner][validation] no ChatLog found for response_id={resp_id_local}")
+            except Exception as e:
+                print(f"[Reasoner][validation] error persisting to ChatLog: {e!r}")
+                logger.exception("Persisting validation into ChatLog failed")
+        try:
             claims = synth.get("claims", []) or mlr_out.get("claims", [])
-            # launch validation in background
-            threading.Thread(target=_run_validation, args=(claims, trace.get("response_id")) , daemon=True).start()
+            threading.Thread(target=_run_validation, args=(claims, trace.get("response_id")), daemon=True).start()
         except Exception:
-            pass
+            logger.exception("Failed to start validation thread")
 
         # return immediate response; UI will fetch validation from cache/endpoint or receive SSE update
         return response

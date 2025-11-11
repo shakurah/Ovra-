@@ -67,3 +67,22 @@ class IngestLog(models.Model):
         self.status = status
         self.message = message
         self.save()
+
+class CendojDecision(models.Model):
+    """
+    Minimal model to store parsed CENDOJ decisions metadata and content.
+    """
+    unique_id = models.CharField(max_length=200, unique=True, db_index=True)  # provider id
+    court = models.CharField(max_length=255, blank=True, null=True)
+    decision_date = models.DateField(blank=True, null=True)
+    decision_number = models.CharField(max_length=200, blank=True, null=True)
+    subject = models.CharField(max_length=400, blank=True, null=True)
+    parties = models.TextField(blank=True, null=True)
+    content = models.TextField(blank=True, null=True)
+    raw_xml = models.TextField(blank=True, null=True)
+    source_url = models.TextField(blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.unique_id} - {self.court or 'unknown'}"

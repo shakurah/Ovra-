@@ -4,6 +4,7 @@ import uuid
 import json
 import requests
 import re
+import threading
 from django.http import StreamingHttpResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.timezone import now
@@ -19,6 +20,14 @@ from rest_framework.response import Response
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from collections import defaultdict
 from semantic_cache.services import upsert_entry_async
+
+# try to import the validator (adjust path if different)
+try:
+    from apps.agent.services.validation import validate_claims
+except Exception:
+    # fallback: no-op validator
+    def validate_claims(claims):
+        return []
 
 logger = logging.getLogger(__name__)
 
@@ -165,6 +174,52 @@ def chat_api(request):
         "stream": True
     }
 
+    # build top_snippets (you already do this)
+    hits_for_snippets = search_boe(user_message, top_k=6)
+    top_snippets = [
+        {"doc_id": h.get("boe_id"), "text": (h.get("content") or "")[:1200], "url": h.get("url")}
+        for h in hits_for_snippets
+    ]
+
+    # build conversation context (last N messages) - adjust as needed
+    try:
+        convo_history = []
+        # if you have a ChatLog model or request includes history, map it to a simple list:
+        for msg in chatLog.get_last_messages(limit=6):  # replace with your API
+            convo_history.append({"role": msg.role, "text": msg.text, "ts": msg.created_at.isoformat()})
+    except Exception:
+        convo_history = []
+
+    # user profile context (optional)
+    user_context = {"id": request.user.id, "email": request.user.email}
+
+    payload["context"] = {
+        "query": user_message,
+        "conversation": convo_history,
+        "top_snippets": top_snippets,
+        "user": user_context,
+    }
+
+    # add top_snippets (grounding material) built from BOE retrieval
+    try:
+        hits_for_snippets = search_boe(user_message, top_k=6)
+        top_snippets = [
+            {
+                "doc_id": h.get("boe_id"),
+                "text": (h.get("content") or "")[:1200],
+                "url": h.get("url"),
+                "article": h.get("article_number")
+            }
+            for h in hits_for_snippets
+        ]
+        payload["top_snippets"] = top_snippets
+        logger.debug("Added top_snippets to payload (count=%d)", len(top_snippets))
+    except Exception:
+        logger.exception("Failed to build top_snippets; continuing without them")
+
+    print("[chat_api] payload keys:", list(payload.keys()))
+    print("[chat_api] top_snippets count:", len(payload.get("top_snippets") or []))
+
     try:
         agent_resp = requests.post(
             AGENT_URL,
@@ -187,7 +242,18 @@ def chat_api(request):
             in_think_block = False
             # send immediate credits info to the frontend so UI can update
             try:
-                yield f"data: {json.dumps({'credits': remaining_credits})}\n\n"
+                # generate a stable response id for this agent response so frontend can request validations
+                response_id = str(uuid.uuid4())
+
+                # Save response_id into ChatLog if model supports it (best-effort)
+                try:
+                    if hasattr(log_entry, "response_id"):
+                        log_entry.response_id = response_id
+                        log_entry.save(update_fields=["response_id"])
+                except Exception:
+                    logger.debug("ChatLog has no response_id field or save failed", exc_info=True)
+
+                yield f"data: {json.dumps({'credits': remaining_credits, 'response_id': response_id})}\n\n"
             except Exception:
                 pass
             try:
@@ -267,6 +333,33 @@ def chat_api(request):
                 upsert_entry_async(request.user, conversation_id, user_message or "", "".join(collected_response) or "", source="chat")
             except Exception:
                 logger.exception("semantic cache upsert failed (non-fatal)")
+
+            # start background validation (best-effort)
+            try:
+                final_text = "".join(collected_response)
+                def _run_validation(resp_id, text, log_id):
+                    try:
+                        # attempt to extract claims (validator expects a list or text depending on implementation)
+                        validated = validate_claims(text)
+                        cache_key = f"validation:{resp_id}"
+                        cache.set(cache_key, validated, timeout=60 * 60)  # 1 hour
+                        logger.debug("Validation cached %s (len=%d)", cache_key, len(validated) if validated else 0)
+                        # persist validations to ChatLog if field exists
+                        try:
+                            from .models import ChatLog as _CL
+                            obj = _CL.objects.filter(id=log_id).first()
+                            if obj and hasattr(obj, "validations"):
+                                obj.validations = validated
+                                obj.save(update_fields=["validations"])
+                                logger.debug("Persisted validations to ChatLog id=%s", obj.id)
+                        except Exception:
+                            logger.debug("Failed to persist validations to ChatLog (nonfatal)", exc_info=True)
+                    except Exception:
+                        logger.exception("Validation thread failed for resp_id=%s", resp_id)
+                t = threading.Thread(target=_run_validation, args=(response_id, final_text, log_entry.id), daemon=True)
+                t.start()
+            except Exception:
+                logger.exception("Failed to start validation thread (nonfatal)")
 
             yield "[DONE]\n\n"
 
