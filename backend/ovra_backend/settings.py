@@ -26,7 +26,9 @@ EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD")
 EMAIL_USE_TLS = os.getenv("EMAIL_USE_TLS", "True") == "True"
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
 # Deepseek config
+
 AGENT_URL = os.getenv("DEEPSEEK_AGENT_URL", None) + "/api/v1/chat/completions"
 API_KEY = os.getenv("DEEPSEEK_API_KEY", None)
 DEEPSEEK_MAX_TOKENS = 800

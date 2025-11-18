@@ -6,43 +6,81 @@ from lxml import etree
 from django.core.management.base import BaseCommand
 from django.utils import timezone
 from django.conf import settings
-
+from boe.opensearch_client import get_opensearch_client, OPENSEARCH_AVAILABLE
 from boe.models import BOEDocument, BOEArticle, IngestLog, BOEUpdateLog
-from boe.opensearch_client import get_opensearch_client
+import logging
+import traceback
+from semantic_cache.services import upsert_entry, upsert_entry_async
+import json
 
-# API endpoint pattern (BOE open data API)
+# --- ADD: local embedder (sentence-transformers) ---
+try:
+    from sentence_transformers import SentenceTransformer
+except Exception:
+    SentenceTransformer = None
+
+_local_embedder = None
+def get_local_embedding(text: str):
+    global _local_embedder
+    if SentenceTransformer is None:
+        raise RuntimeError("sentence-transformers not installed; run: pip install sentence-transformers")
+    if _local_embedder is None:
+        _local_embedder = SentenceTransformer("all-MiniLM-L6-v2")
+    return _local_embedder.encode(text or "").tolist()
+
+# Helper: call OpenAI-compatible embeddings endpoint directly using requests
+def request_openai_embedding(text: str):
+    api_key = getattr(settings, "OPENAI_API_KEY", None)
+    if not api_key:
+        logger.debug("OPENAI_API_KEY not set; skipping remote embedding")
+        return None
+    base = getattr(settings, "OPENAI_API_BASE", "https://api.openai.com/v1").rstrip("/")
+    url = f"{base}/embeddings"
+    headers = {
+        "Authorization": f"Bearer {api_key}",
+        "Content-Type": "application/json",
+    }
+    payload = {"model": "text-embedding-3-small", "input": text or ""}
+    try:
+        resp = requests.post(url, headers=headers, json=payload, timeout=30)
+        if resp.status_code != 200:
+            logger.warning("Embedding HTTP %s: %s", resp.status_code, resp.text[:1000])
+            return None
+        j = resp.json()
+        return j.get("data", [])[0].get("embedding")
+    except Exception:
+        logger.exception("OpenAI embedding request failed")
+        return None
+
+logger = logging.getLogger(__name__)
+
+# BOE API endpoint
 BOE_SUMARIO_API = "https://www.boe.es/datosabiertos/api/boe/sumario/{fecha}"
 
 # Default OpenSearch index
 DEFAULT_INDEX = getattr(settings, "OPENSEARCH_INDEX", "boe-articles")
 
-# Headers the BOE API expects
+# Headers
 XML_ACCEPT_HEADER = {"Accept": "application/xml"}
 JSON_ACCEPT_HEADER = {"Accept": "application/json"}
 
-
 def safe_parse_xml(content):
-    """Return an lxml root element or raise."""
-    # lxml.etree.fromstring handles bytes/str
-    parser = etree.XMLParser(recover=False, remove_blank_text=True, huge_tree=True)
+    # allow parse recovery for slightly malformed XML pages
+    parser = etree.XMLParser(recover=True, remove_blank_text=True, huge_tree=True)
     return etree.fromstring(content, parser=parser)
 
-
 class Command(BaseCommand):
-    help = "Backfill BOE historic summaries and index articles into OpenSearch"
+    help = "Backfill BOE historic summaries with consolidated laws and index articles into OpenSearch with embeddings"
 
     def add_arguments(self, parser):
-        parser.add_argument("--start-date", type=str, default="1960-09-01",
-                            help="Start date (YYYY-MM-DD). Default 1960-09-01 (first BOE).")
-        parser.add_argument("--end-date", type=str, default=datetime.date.today().isoformat(),
-                            help="End date (YYYY-MM-DD). Default today.")
-        parser.add_argument("--sleep", type=float, default=0.35,
-                            help="Seconds to sleep between requests (politeness).")
-        parser.add_argument("--format", type=str, choices=["xml", "json"], default="xml",
-                            help="Fetch API as xml or json. Default xml.")
-        parser.add_argument("--retries", type=int, default=3, help="Retries per request on failure.")
-        parser.add_argument("--index", type=str, default=DEFAULT_INDEX, help="OpenSearch index name.")
-
+        parser.add_argument("--start-date", type=str, default="1960-09-01")
+        parser.add_argument("--end-date", type=str, default=datetime.date.today().isoformat())
+        parser.add_argument("--sleep", type=float, default=0.35)
+        parser.add_argument("--format", type=str, choices=["xml", "json"], default="xml")
+        parser.add_argument("--retries", type=int, default=3)
+        parser.add_argument("--index", type=str, default=DEFAULT_INDEX)
+        parser.add_argument("--force", action="store_true", default=False, help="Reindex existing BOEDocuments (force).")
+ 
     def handle(self, *args, **opts):
         start_date = datetime.date.fromisoformat(opts["start_date"])
         end_date = datetime.date.fromisoformat(opts["end_date"])
@@ -50,39 +88,37 @@ class Command(BaseCommand):
         fmt = opts["format"]
         retries = int(opts["retries"])
         index_name = opts["index"]
+        force_reindex = bool(opts.get("force"))
 
         client, _ = get_opensearch_client()
+        if client is None:
+            logger.error("OpenSearch client not available — aborting backfill")
+            self.stdout.write(self.style.ERROR("OpenSearch client not available"))
+            return
+        logger.info("OpenSearch client acquired, index=%s", index_name)
 
-        # create a top-level ingest record
         ingest_log = IngestLog.objects.create(
             status="running",
-            message=f"Starting BOE backfill {start_date.isoformat()} -> {end_date.isoformat()}"
+            message=f"Starting BOE backfill {start_date} -> {end_date}"
         )
 
         current = start_date
         days_processed = 0
         days_indexed = 0
 
-        self.stdout.write(self.style.SUCCESS(f"Starting BOE backfill {start_date} -> {end_date} (format={fmt})"))
-
         while current <= end_date:
-            # BOE first issue is 1960-09-01; skip earlier
             if current < datetime.date(1960, 9, 1):
                 current += datetime.timedelta(days=1)
                 continue
 
-            # skip Sundays: BOE normally not published on Sunday (but API may still have entries)
-            # We will not skip automatically: we rely on API response.
             date_str = current.strftime("%Y%m%d")
-            self.stdout.write(f"📄 Processing {date_str}")
 
-            # If a BOEDocument with same published_at date exists, skip
-            if BOEDocument.objects.filter(published_at__date=current).exists():
-                self.stdout.write(self.style.HTTP_NOT_MODIFIED(f"⤼ Skipping {date_str} (already in DB)"))
+            # skip pre-existing docs unless --force was provided
+            if BOEDocument.objects.filter(published_at__date=current).exists() and not force_reindex:
+                logger.info("Skipping %s: BOEDocument already exists (use --force to reindex)", date_str)
                 current += datetime.timedelta(days=1)
                 continue
 
-            # build request
             url = BOE_SUMARIO_API.format(fecha=date_str)
             headers = JSON_ACCEPT_HEADER if fmt == "json" else XML_ACCEPT_HEADER
 
@@ -90,65 +126,36 @@ class Command(BaseCommand):
             exc = None
             for attempt in range(1, retries + 1):
                 try:
+                    logger.debug("GET %s (attempt %d)", url, attempt)
                     resp = requests.get(url, headers=headers, timeout=15)
-                    self.stdout.write(resp.text[:2000])  #
-                    # handle 4xx/5xx
+                    logger.debug("Response status: %s", resp.status_code)
                     if resp.status_code == 200:
-
                         break
-                    # If 400/404 likely no summary for that date; break and treat as no-data (do not retry infinitely)
                     if resp.status_code in (400, 404):
-                        exc = None
+                        logger.info("No BOE summary for %s (status=%s)", date_str, resp.status_code)
                         resp = None
                         break
-                    # If rate-limited or server error, retry with backoff
-                    exc = RuntimeError(f"HTTP {resp.status_code}: {resp.text[:200]}")
+                    exc = RuntimeError(f"HTTP {resp.status_code}")
                 except Exception as e:
                     exc = e
-                # backoff
-                backoff = 0.5 * attempt
-                time.sleep(backoff)
-
+                    logger.warning("Request exception for %s attempt %d: %s", url, attempt, e)
+                    logger.debug(traceback.format_exc())
+                time.sleep(0.5 * attempt)
+ 
             if resp is None:
-                # No successful response
-                if exc:
-                    IngestLog.objects.create(
-                        status="failed",
-                        message=f"Failed fetch {date_str}: {str(exc)}",
-                        processed=0
-                    )
-                    self.stdout.write(self.style.ERROR(f"❌ Fetch error for {date_str}: {exc}"))
-                else:
-                    # no content for date (e.g., BOE not published), log and continue
-                    IngestLog.objects.create(
-                        status="success",
-                        message=f"No BOE summary for {date_str} (empty or 4xx).",
-                        processed=0
-                    )
-                    self.stdout.write(self.style.WARNING(f"⚠️ No summary for {date_str} (HTTP 4xx / empty)"))
+                logger.debug("Skipping date %s: no response", date_str)
                 current += datetime.timedelta(days=1)
                 time.sleep(sleep_time)
                 continue
-            
-            # Now parse the content (XML expected by BOE). If user asked JSON, we can parse JSON structure.
-            articles_count = 0
-            doc_created = False
+
+            # Parse articles
+            articles = []
             try:
                 if fmt == "json":
                     j = resp.json()
-                    # Convert the typical JSON structure into items list
-                    # The BOE API JSON shape uses result.data.sumario etc. handle defensively
-                    items = []
-                    # try different paths
-                    data = j.get("data") or j.get("result") or j
-                    # expected: data -> sumario -> diario -> seccion -> departamento -> epigrafe -> item
-                    # Walk defensively to collect items
-                    def collect_json_items(node):
+                    def collect_items(node):
                         found = []
-                        if not node:
-                            return found
                         if isinstance(node, dict):
-                            # if node has 'item' key
                             if "item" in node:
                                 it = node.get("item")
                                 if isinstance(it, list):
@@ -157,172 +164,161 @@ class Command(BaseCommand):
                                     found.append(it)
                             for v in node.values():
                                 if isinstance(v, (dict, list)):
-                                    found.extend(collect_json_items(v))
+                                    found.extend(collect_items(v))
                         elif isinstance(node, list):
                             for e in node:
-                                found.extend(collect_json_items(e))
+                                found.extend(collect_items(e))
                         return found
-
-                    items = collect_json_items(data)
-                    articles = []
+                    data = j.get("data") or j.get("result") or j
+                    items = collect_items(data)
                     for it in items:
-                        # typical fields in JSON: identificador, titulo, url_xml, url_html, url_pdf
-                        ident = it.get("identificador") or it.get("identifier") or ""
-                        title = it.get("titulo") or it.get("title") or ""
-                        url_xml = it.get("url_xml") or it.get("url_xml") or ""
-                        url_html = it.get("url_html") or it.get("url_html") or ""
-                        url_pdf = it.get("url_pdf") or it.get("url_pdf") or ""
-                        # join body if present
-                        content = it.get("resumen") or it.get("summary") or ""
+                        title = it.get("titulo", "").strip()
+                        if "consolidada" not in title.lower():
+                            continue
+                        content = it.get("resumen") or ""
                         articles.append({
-                            "identificador": ident,
+                            "identificador": it.get("identificador") or "",
                             "titulo": title,
-                            "url_xml": url_xml,
-                            "url_html": url_html,
-                            "url_pdf": url_pdf,
+                            "url_html": it.get("url_html") or it.get("url_xml") or "",
                             "content": content
                         })
                 else:
-                    # XML parsing using lxml
-                    root = safe_parse_xml(resp.content)
-
-                    # find diario node
-                    # items are <item> under epigrafe -> item; or in older schema <item> etc.
-                    items = root.findall(".//item")
-                    # If <item> not present, try <seccion>/<departamento> traversal to find <item>
-                    if not items:
-                        items = root.findall(".//epigrafe//item") or root.findall(".//departamento//item") or []
-
-                    articles = []
+                    try:
+                        root = safe_parse_xml(resp.content)
+                    except Exception as e:
+                        logger.exception("XML parse failed for %s: %s", url, e)
+                        # save sample to disk for inspection
+                        try:
+                            sample_path = f"/tmp/boe_parse_fail_{date_str}.xml"
+                            with open(sample_path, "wb") as fh:
+                                fh.write(resp.content)
+                            logger.info("Wrote sample to %s", sample_path)
+                        except Exception:
+                            logger.debug("Could not write sample file", exc_info=True)
+                        raise
+                    items = root.findall(".//item") or root.findall(".//epigrafe//item") or []
                     for item in items:
-                        ident = (item.findtext("identificador") or item.findtext("identifier") or "").strip()
-                        title = (item.findtext("titulo") or item.findtext("title") or "").strip()
-                        url_xml = (item.findtext("url_xml") or item.findtext("url_xml") or "").strip()
-                        url_html = (item.findtext("url_html") or item.findtext("url_html") or "").strip()
-                        url_pdf = (item.findtext("url_pdf") or "").strip()
-                        # content: join text of children but avoid repeating title
-                        # Prefer any <texto> subnode if exists; otherwise item.itertext()
+                        title = (item.findtext("titulo") or "").strip()
                         texto = item.find(".//texto")
-                        if texto is not None:
-                            content = "".join(texto.itertext()).strip()
-                        else:
-                            # fallback to itertext of item minus identifiers/urls
-                            content = " ".join([t.strip() for t in item.itertext() if t.strip()])
-                            # remove title occurrence at start to avoid duplication
-                            if title and content.startswith(title):
-                                content = content[len(title):].strip()
+                        content = "".join(texto.itertext()).strip() if texto is not None else ""
+                        # Exclude clearly derogated/derogado items by keyword (safer than only "consolidada")
+                        low = (title + " " + (content or "")).lower()
+                        derogated_keywords = ("derogado", "derogada", "derogación", "derogadas", "derogados", "derogado por", "derogada por")
+                        if any(k in low for k in derogated_keywords):
+                            logger.debug("Skipping derogated law item: %s", title)
+                            continue
+                        # include all other items (no "consolidada" hard filter)
                         articles.append({
-                            "identificador": ident,
+                            "identificador": (item.findtext("identificador") or "").strip(),
                             "titulo": title,
-                            "url_xml": url_xml,
-                            "url_html": url_html,
-                            "url_pdf": url_pdf,
+                            "url_html": (item.findtext("url_html") or "").strip(),
                             "content": content
                         })
+            except Exception as e:
+                logger.exception("Failed processing BOE summary for %s: %s", date_str, e)
+                current += datetime.timedelta(days=1)
+                continue
 
-                # Print the per-date summary line the user asked for
-                print(f"📄 {date_str}: {len(articles)} articles found")
+            if not articles:
+                current += datetime.timedelta(days=1)
+                continue
 
-                if not articles:
-                    IngestLog.objects.create(
-                        status="success",
-                        message=f"No articles found for {date_str}",
-                        processed=0
-                    )
-                    current += datetime.timedelta(days=1)
-                    time.sleep(sleep_time)
+            # Create document
+            boe_id = f"BOE-S-{date_str}"
+            published_at = timezone.make_aware(datetime.datetime.combine(current, datetime.time(0, 0)))
+
+            doc_obj, created = BOEDocument.objects.get_or_create(
+                boe_id=boe_id,
+                defaults={
+                    "title": f"BOE - {date_str}",
+                    "url": f"https://www.boe.es/boe/dias/{current.year}/{current.month:02d}/{current.day:02d}/",
+                    "published_at": published_at,
+                    "raw_html": "",
+                    "raw_text": resp.text,
+                    "source": "boe",
+                },
+            )
+
+            # Index articles
+            indexed_count = 0
+            for art in articles:
+                art_obj, _ = BOEArticle.objects.update_or_create(
+                    document=doc_obj,
+                    article_number=art.get("identificador"),
+                    defaults={
+                        "heading": art.get("titulo"),
+                        "content": art.get("content"),
+                        "source_url": art.get("url_html"),
+                        "indexed": False,
+                        "verified": False,
+                    }
+                )
+
+                # Create embedding (log on failure). Use client_embedding only if properly configured.
+                embedding = []
+                embedding = request_openai_embedding(art_obj.content or "")
+
+                # Prepare OpenSearch doc
+                es_doc = {
+                    "document_id": doc_obj.id,
+                    "boe_id": boe_id,
+                    "title": doc_obj.title,
+                    "article_number": art_obj.article_number,
+                    "heading": art_obj.heading,
+                    "content": art_obj.content,
+                    "embedding": embedding,
+                    "url": art_obj.source_url or doc_obj.url,
+                    "published_at": str(doc_obj.published_at),
+                }
+
+                try:
+                    client.index(index=index_name, body=es_doc)
+                    art_obj.indexed = True
+                    art_obj.save(update_fields=["indexed"])
+                    indexed_count += 1
+                    logger.debug("Indexed article %s (doc_id=%s)", art_obj.article_number, doc_obj.id)
+                except Exception as e:
+                    logger.exception("Failed to index article %s: %s", art_obj.article_number, e)
                     continue
 
-                # Create/save BOEDocument row
-                boe_id = f"BOE-S-{date_str}"
-                published_at = timezone.make_aware(datetime.datetime.combine(current, datetime.time(0, 0))).isoformat()
-
-                raw_text = resp.text if isinstance(resp.text, str) else ""
-                doc_obj, created = BOEDocument.objects.get_or_create(
-                    boe_id=boe_id,
-                    defaults={
-                        "title": f"BOE - {date_str}",
-                        "url": f"https://www.boe.es/boe/dias/{current.year}/{current.month:02d}/{current.day:02d}/",
-                        "published_at": published_at,
-                        "raw_html": "",
-                        "raw_text": raw_text,
-                        "source": "boe",
-                    },
-                )
-                if created:
-                    doc_created = True
-
-                # Index articles into OpenSearch
-                indexed_count = 0
-                es_failures = 0
-                for art in articles:
-                    try:
-                        art_obj = BOEArticle.objects.create(
-                            document=doc_obj,
-                            article_number=art.get("identificador") or None,
-                            heading=art.get("titulo") or "",
-                            content=art.get("content") or "",
-                            section=None,
-                            start_offset=0,
-                            end_offset=0,
-                            indexed=False,
-                            verified=False,
-                            source_url=art.get("url_html") or art.get("url_xml") or ""
-                        )
-                    except Exception as e:
-                        # if DB insertion failed, log and continue
-                        self.stdout.write(self.style.WARNING(f"⚠️ DB create article failed for {date_str}: {e}"))
-                        continue
-
-                    # Prepare OpenSearch doc
-                    es_doc = {
+                # Upsert to semantic cache (do NOT pass embedding= if helper doesn't accept it)
+                try:
+                    entry_id = f"boe:{doc_obj.id}:{art_obj.article_number}"
+                    meta = {
                         "document_id": doc_obj.id,
                         "boe_id": boe_id,
-                        "title": doc_obj.title,
                         "article_number": art_obj.article_number,
-                        "heading": art_obj.heading,
-                        "content": art_obj.content,
-                        "url": art_obj.source_url or doc_obj.url,
-                        "published_at": str(doc_obj.published_at),
+                        "title": art_obj.heading,
+                        "url": es_doc.get("url"),
+                        "published_at": es_doc.get("published_at"),
+                        "source": "boe",
                     }
+                    if _upsert_async:
+                        try:
+                            upsert_entry_async(entry_id, art_obj.content or "", meta)
+                        except TypeError:
+                            upsert_entry(entry_id, art_obj.content or "", meta)
+                    elif upsert_entry:
+                        upsert_entry(entry_id, art_obj.content or "", meta)
+                    else:
+                        logger.debug("No semantic cache upsert function available; embedding stored in OpenSearch only")
+                except Exception as e:
+                    logger.exception("Semantic cache upsert failed for %s: %s", art_obj.article_number, e)
 
-                    # Index to OpenSearch
-                    try:
-                        # use client.index — for higher throughput you can switch to bulk
-                        client.index(index=index_name, body=es_doc)
-                        art_obj.indexed = True
-                        art_obj.save(update_fields=["indexed"])
-                        indexed_count += 1
-                    except Exception as e:
-                        es_failures += 1
-                        self.stdout.write(self.style.WARNING(f"⚠️ OpenSearch index failed for {art_obj.article_number}: {e}"))
-                        # don't break — continue indexing next articles
+            BOEUpdateLog.objects.create(
+                timestamp=timezone.now(),
+                status="success",
+                message=f"Ingested {date_str} ({indexed_count} articles)",
+                articles_ingested=indexed_count
+            )
 
-                # Log success per-day
-                BOEUpdateLog.objects.create(
-                    timestamp=timezone.now(),
-                    status="success",
-                    message=f"Ingested {date_str} ({indexed_count} indexed, {es_failures} es_fail)",
-                    articles_ingested=indexed_count
-                )
+            days_processed += 1
+            if indexed_count > 0:
+                days_indexed += 1
 
-                days_processed += 1
-                if indexed_count > 0:
-                    days_indexed += 1
-
-            except Exception as e:
-                # any outer parsing/indexing error for this date
-                self.stdout.write(self.style.ERROR(f"❌ Failed processing {date_str}: {e}"))
-                IngestLog.objects.create(
-                    status="failed",
-                    message=f"Failed processing {date_str}: {e}",
-                    processed=0
-                )
-
-            # polite sleep between days
+            logger.info("Processed %s — articles=%d indexed=%d", date_str, len(articles), indexed_count)
             time.sleep(sleep_time)
             current += datetime.timedelta(days=1)
 
-        # finalize top-level ingest log
-        ingest_log.mark_done(status="success", message=f"Completed {days_processed} days processed, {days_indexed} had indexed articles")
-        self.stdout.write(self.style.SUCCESS(f"✅ Finished backfill — {days_processed} days processed, {days_indexed} days indexed"))
+        ingest_log.mark_done(status="success", message=f"Completed {days_processed} days, {days_indexed} indexed")
+        self.stdout.write(self.style.SUCCESS(f"✅ Finished backfill — {days_processed} days processed, {days_indexed} indexed"))

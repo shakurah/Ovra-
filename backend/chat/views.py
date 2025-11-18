@@ -36,13 +36,16 @@ def prepare_with_boe_context(user_message, top_k=3):
     hits = []
     try:
         hits = search_boe(user_message, top_k=top_k)
+        print(hits)
     except Exception:
         hits = []
+        print("BOE search failed", hits)
     # prepare context snippets
     context_texts = []
     citations = []
     for h in hits:
         snippet = h['content'][:800] if h.get('content') else ''
+        print(snippet)
         context_texts.append(
             f"Reference ({h['boe_id']} - {h['article_number'] or 'n/a'}): {snippet}"
         )
@@ -51,7 +54,8 @@ def prepare_with_boe_context(user_message, top_k=3):
             "article": h['article_number'],
             "url": h['url']
         })
-
+        print(context_texts)
+        print(citations)
     # Short, strict system prompt (Spanish) to reduce verbosity and token use
     system_prompt = (
         "Eres un asistente experto en contabilidad, fiscalidad, laboral y derecho para el "
