@@ -10,15 +10,9 @@ from boe.opensearch_client import get_opensearch_client, OPENSEARCH_AVAILABLE
 from boe.models import BOEDocument, BOEArticle, IngestLog, BOEUpdateLog
 import logging
 import traceback
-from semantic_cache.services import upsert_entry, upsert_entry_async
+from semantic_cache.services import ingest_entry_for_backfill
 import json
 import inspect
-
-# ensure async upsert handle exists
-try:
-    _upsert_async = upsert_entry_async
-except NameError:
-    _upsert_async = None
 
 # --- ADD: local embedder (sentence-transformers) ---
 try:
@@ -344,9 +338,8 @@ class Command(BaseCommand):
                     logger.exception("Failed to index article %s: %s", art_obj.article_number, e)
                     continue
 
-                # Upsert to semantic cache (use correct semantic_cache.services signature)
+                # Upsert to semantic cache (use ingest helper)
                 try:
-                    entry_id = f"boe:{doc_obj.id}:{art_obj.article_number}"
                     meta = {
                         "document_id": doc_obj.id,
                         "boe_id": boe_id,
@@ -356,15 +349,6 @@ class Command(BaseCommand):
                         "published_at": es_doc.get("published_at"),
                         "source": "boe",
                     }
-                    # semantic_cache.services.upsert_entry signature:
-                    #   upsert_entry(user, conversation_id, query_text, response_text, source=..., tokens=None)
-                    # For ingestion use title as query_text and article content as response_text.
-                    if _upsert_async:
-                        try:
-                            _upsert_async(None, None, art_obj.heading or "", art_obj.content or "", "boe")
-                        except TypeError:
-                            upsert_entry(None, None, art_obj.heading or "", art_obj.content or "", "boe")
-                    else:
-                        upsert_entry(None, None, art_obj.heading or "", art_obj.content or "", "boe")
+                    ingest_entry_for_backfill(art_obj.heading or "", art_obj.content or "", meta=meta, source="boe")
                 except Exception as e:
-                    logger.exception("Semantic cache upsert failed for %s: %s", art_obj.article_number, e)
+                    logger.exception("Semantic cache ingest failed for %s: %s", art_obj.article_number, e)

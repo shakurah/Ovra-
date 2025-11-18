@@ -1,9 +1,10 @@
 import os
-import hashlib
-import logging
 import requests
 from typing import List, Optional, Tuple
 from datetime import timedelta
+import uuid
+import hashlib
+import logging
 from django.utils import timezone
 
 from .models import SemanticCacheEntry
@@ -143,3 +144,44 @@ def prune_expired_entries():
     deleted, _ = SemanticCacheEntry.objects.filter(expires_at__isnull=False, expires_at__lt=now).delete()
     logger.info("pruned %d semantic cache entries", deleted)
     return deleted
+
+def ingest_entry_for_backfill(query_text: str, response_text: str, meta: dict = None, source: str = "boe"):
+    """
+    Create a SemanticCacheEntry from ingestion data and schedule embedding computation.
+    - query_text: short title / query (e.g. article heading)
+    - response_text: full article content
+    - meta: dict with additional metadata (stored in source or fingerprint)
+    - source: string identifier
+    Returns the created SemanticCacheEntry or None on failure.
+    """
+    meta = meta or {}
+    try:
+        fingerprint_source = (str(meta.get("document_id") or "") + "|" + (response_text or ""))[:10000]
+        fingerprint = hashlib.sha256(fingerprint_source.encode("utf-8")).hexdigest()[:64]
+
+        entry = SemanticCacheEntry.objects.create(
+            user=None,
+            conversation_id=None,
+            query_text=query_text or "",
+            response_text=response_text or "",
+            embedding=None,
+            fingerprint=fingerprint,
+            tokens=None,
+            source=source or meta.get("source", ""),
+            created_at=timezone.now(),
+        )
+    except Exception as e:
+        logger.exception("Failed to create SemanticCacheEntry during ingest: %s", e)
+        return None
+
+    # Schedule embedding computation (best-effort)
+    try:
+        # celery task or plain function
+        if hasattr(compute_and_update_embedding, "delay"):
+            compute_and_update_embedding.delay(str(entry.id))
+        else:
+            compute_and_update_embedding(str(entry.id))
+    except Exception as e:
+        logger.exception("Failed to schedule embedding computation for entry %s: %s", getattr(entry, "id", "<unknown>"), e)
+
+    return entry
