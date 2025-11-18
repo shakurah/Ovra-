@@ -12,6 +12,13 @@ import logging
 import traceback
 from semantic_cache.services import upsert_entry, upsert_entry_async
 import json
+import inspect
+
+# ensure async upsert handle exists
+try:
+    _upsert_async = upsert_entry_async
+except NameError:
+    _upsert_async = None
 
 # --- ADD: local embedder (sentence-transformers) ---
 try:
@@ -68,6 +75,59 @@ def safe_parse_xml(content):
     # allow parse recovery for slightly malformed XML pages
     parser = etree.XMLParser(recover=True, remove_blank_text=True, huge_tree=True)
     return etree.fromstring(content, parser=parser)
+
+# Robust upsert caller: adapt to different upsert_entry / upsert_entry_async signatures
+def _call_upsert(func, entry_id, response_text, meta):
+    """
+    Call func with best-effort mapping of arguments.
+    Supports signatures like:
+      (entry_id, response_text, meta)
+      (entry_id, response_text)
+      (entry_id, response_text, meta, user)
+      (entry_id, text, metadata) etc.
+    """
+    if func is None:
+        raise RuntimeError("upsert function not available")
+    sig = inspect.signature(func)
+    params = list(sig.parameters.keys())
+
+    # prefer keyword mapping if names match
+    kw = {}
+    if "entry_id" in params:
+        kw["entry_id"] = entry_id
+    elif len(params) >= 1:
+        # fallback to positional first param
+        pass
+
+    if "response_text" in params:
+        kw["response_text"] = response_text
+    elif "text" in params:
+        kw["text"] = response_text
+    elif "response" in params:
+        kw["response"] = response_text
+
+    if "meta" in params:
+        kw["meta"] = meta
+    elif "metadata" in params:
+        kw["metadata"] = meta
+    elif "meta_info" in params:
+        kw["meta_info"] = meta
+
+    try:
+        if kw:
+            # call using kwargs that exist in signature
+            return func(**{k: v for k, v in kw.items() if k in params})
+        # positional fallback: try common positional orders
+        try:
+            return func(entry_id, response_text, meta)
+        except TypeError:
+            try:
+                return func(entry_id, response_text)
+            except TypeError:
+                return func(entry_id, meta)
+    except TypeError:
+        # last-resort: call with only entry_id and response_text
+        return func(entry_id, response_text)
 
 class Command(BaseCommand):
     help = "Backfill BOE historic summaries with consolidated laws and index articles into OpenSearch with embeddings"
@@ -254,9 +314,12 @@ class Command(BaseCommand):
                     }
                 )
 
-                # Create embedding (log on failure). Use client_embedding only if properly configured.
-                embedding = []
-                embedding = request_openai_embedding(art_obj.content or "")
+                # Create embedding (use local sentence-transformers)
+                try:
+                    embedding = get_local_embedding(art_obj.content or "")
+                except Exception as e:
+                    logger.warning("Local embedding failed for article %s: %s", art_obj.article_number, e)
+                    embedding = []
 
                 # Prepare OpenSearch doc
                 es_doc = {
@@ -281,7 +344,7 @@ class Command(BaseCommand):
                     logger.exception("Failed to index article %s: %s", art_obj.article_number, e)
                     continue
 
-                # Upsert to semantic cache (do NOT pass embedding= if helper doesn't accept it)
+                # Upsert to semantic cache (use correct semantic_cache.services signature)
                 try:
                     entry_id = f"boe:{doc_obj.id}:{art_obj.article_number}"
                     meta = {
@@ -293,32 +356,15 @@ class Command(BaseCommand):
                         "published_at": es_doc.get("published_at"),
                         "source": "boe",
                     }
+                    # semantic_cache.services.upsert_entry signature:
+                    #   upsert_entry(user, conversation_id, query_text, response_text, source=..., tokens=None)
+                    # For ingestion use title as query_text and article content as response_text.
                     if _upsert_async:
                         try:
-                            upsert_entry_async(entry_id, art_obj.content or "", meta)
+                            _upsert_async(None, None, art_obj.heading or "", art_obj.content or "", "boe")
                         except TypeError:
-                            upsert_entry(entry_id, art_obj.content or "", meta)
-                    elif upsert_entry:
-                        upsert_entry(entry_id, art_obj.content or "", meta)
+                            upsert_entry(None, None, art_obj.heading or "", art_obj.content or "", "boe")
                     else:
-                        logger.debug("No semantic cache upsert function available; embedding stored in OpenSearch only")
+                        upsert_entry(None, None, art_obj.heading or "", art_obj.content or "", "boe")
                 except Exception as e:
                     logger.exception("Semantic cache upsert failed for %s: %s", art_obj.article_number, e)
-
-            BOEUpdateLog.objects.create(
-                timestamp=timezone.now(),
-                status="success",
-                message=f"Ingested {date_str} ({indexed_count} articles)",
-                articles_ingested=indexed_count
-            )
-
-            days_processed += 1
-            if indexed_count > 0:
-                days_indexed += 1
-
-            logger.info("Processed %s — articles=%d indexed=%d", date_str, len(articles), indexed_count)
-            time.sleep(sleep_time)
-            current += datetime.timedelta(days=1)
-
-        ingest_log.mark_done(status="success", message=f"Completed {days_processed} days, {days_indexed} indexed")
-        self.stdout.write(self.style.SUCCESS(f"✅ Finished backfill — {days_processed} days processed, {days_indexed} indexed"))
