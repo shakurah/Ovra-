@@ -12,7 +12,6 @@ import logging
 import traceback
 from semantic_cache.services import ingest_entry_for_backfill
 import json
-import inspect
 
 # --- ADD: local embedder (sentence-transformers) ---
 try:
@@ -28,30 +27,6 @@ def get_local_embedding(text: str):
     if _local_embedder is None:
         _local_embedder = SentenceTransformer("all-MiniLM-L6-v2")
     return _local_embedder.encode(text or "").tolist()
-
-# Helper: call OpenAI-compatible embeddings endpoint directly using requests
-def request_openai_embedding(text: str):
-    api_key = getattr(settings, "OPENAI_API_KEY", None)
-    if not api_key:
-        logger.debug("OPENAI_API_KEY not set; skipping remote embedding")
-        return None
-    base = getattr(settings, "OPENAI_API_BASE", "https://api.openai.com/v1").rstrip("/")
-    url = f"{base}/embeddings"
-    headers = {
-        "Authorization": f"Bearer {api_key}",
-        "Content-Type": "application/json",
-    }
-    payload = {"model": "text-embedding-3-small", "input": text or ""}
-    try:
-        resp = requests.post(url, headers=headers, json=payload, timeout=30)
-        if resp.status_code != 200:
-            logger.warning("Embedding HTTP %s: %s", resp.status_code, resp.text[:1000])
-            return None
-        j = resp.json()
-        return j.get("data", [])[0].get("embedding")
-    except Exception:
-        logger.exception("OpenAI embedding request failed")
-        return None
 
 logger = logging.getLogger(__name__)
 
@@ -69,59 +44,6 @@ def safe_parse_xml(content):
     # allow parse recovery for slightly malformed XML pages
     parser = etree.XMLParser(recover=True, remove_blank_text=True, huge_tree=True)
     return etree.fromstring(content, parser=parser)
-
-# Robust upsert caller: adapt to different upsert_entry / upsert_entry_async signatures
-def _call_upsert(func, entry_id, response_text, meta):
-    """
-    Call func with best-effort mapping of arguments.
-    Supports signatures like:
-      (entry_id, response_text, meta)
-      (entry_id, response_text)
-      (entry_id, response_text, meta, user)
-      (entry_id, text, metadata) etc.
-    """
-    if func is None:
-        raise RuntimeError("upsert function not available")
-    sig = inspect.signature(func)
-    params = list(sig.parameters.keys())
-
-    # prefer keyword mapping if names match
-    kw = {}
-    if "entry_id" in params:
-        kw["entry_id"] = entry_id
-    elif len(params) >= 1:
-        # fallback to positional first param
-        pass
-
-    if "response_text" in params:
-        kw["response_text"] = response_text
-    elif "text" in params:
-        kw["text"] = response_text
-    elif "response" in params:
-        kw["response"] = response_text
-
-    if "meta" in params:
-        kw["meta"] = meta
-    elif "metadata" in params:
-        kw["metadata"] = meta
-    elif "meta_info" in params:
-        kw["meta_info"] = meta
-
-    try:
-        if kw:
-            # call using kwargs that exist in signature
-            return func(**{k: v for k, v in kw.items() if k in params})
-        # positional fallback: try common positional orders
-        try:
-            return func(entry_id, response_text, meta)
-        except TypeError:
-            try:
-                return func(entry_id, response_text)
-            except TypeError:
-                return func(entry_id, meta)
-    except TypeError:
-        # last-resort: call with only entry_id and response_text
-        return func(entry_id, response_text)
 
 class Command(BaseCommand):
     help = "Backfill BOE historic summaries with consolidated laws and index articles into OpenSearch with embeddings"

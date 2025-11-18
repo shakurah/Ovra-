@@ -6,10 +6,8 @@ import uuid
 import hashlib
 import logging
 from django.utils import timezone
-
+from django.db import models
 from .models import SemanticCacheEntry
-from .tasks import compute_and_update_embedding
-
 logger = logging.getLogger(__name__)
 
 # config / env
@@ -17,28 +15,60 @@ DEEPSEEK_API_KEY = os.environ.get("DEEPSEEK_API_KEY")
 DEEPSEEK_AGENT_URL = os.environ.get("DEEPSEEK_AGENT_URL")  # optional agent endpoint that can return embeddings
 DEFAULT_TTL_DAYS = int(os.environ.get("SEMANTIC_CACHE_TTL_DAYS", "90"))
 
+# Prefer local embeddings (sentence-transformers). If unavailable, embed_text will return [].
+try:
+    from sentence_transformers import SentenceTransformer
+except Exception:
+    SentenceTransformer = None
+
+_local_embedder = None
+def _get_local_embedding(text: str):
+    global _local_embedder
+    if SentenceTransformer is None:
+        return None
+    if _local_embedder is None:
+        # model choice: small, fast model. Change if you want another.
+        _local_embedder = SentenceTransformer("all-MiniLM-L6-v2")
+    vec = _local_embedder.encode(text or "")
+    return [float(x) for x in vec]
+
+# Import compute task if present so we can schedule embedding computation
+try:
+    from .tasks import compute_and_update_embedding
+except Exception:
+    compute_and_update_embedding = None
+
 def embed_text(text: str) -> List[float]:
     """
-    Try to request an embedding from DEEPSEEK_AGENT_URL or return empty list on failure.
-    Adjust this to call your preferred embedding service.
+    Use local sentence-transformers if available. Return [] on failure or if
+    embedding dimension doesn't match the configured VectorField dimension.
     """
-    if not DEEPSEEK_API_KEY or not DEEPSEEK_AGENT_URL:
-        logger.debug("embed_text: no DEEPSEEK config, returning empty embedding")
-        return []
+    # try local embedding
+    emb = None
     try:
-        resp = requests.post(
-            f"{DEEPSEEK_AGENT_URL.rstrip('/')}/embed",
-            json={"input": text},
-            headers={"Authorization": f"Bearer {DEEPSEEK_API_KEY}"},
-            timeout=10,
-        )
-        resp.raise_for_status()
-        payload = resp.json()
-        # expected payload: {"embedding": [float,...]}
-        return payload.get("embedding", []) or []
-    except Exception:
-        logger.exception("embed_text failed")
+        emb = _get_local_embedding(text)
+    except Exception as e:
+        logger.exception("local embedding error: %s", e)
+
+    if not emb:
+        logger.debug("embed_text: local embedder not available or failed; returning empty embedding")
         return []
+
+    # verify expected dimension from model field to avoid DB errors
+    try:
+        expected_dim = SemanticCacheEntry._meta.get_field("embedding").dimensions
+    except Exception:
+        expected_dim = None
+
+    if expected_dim and len(emb) != expected_dim:
+        logger.warning(
+            "local embedding dim %s != expected %s; skipping embedding store (returning empty)",
+            len(emb),
+            expected_dim,
+        )
+        return []
+
+    return emb
 
 def _fingerprint(query: str, response: str) -> str:
     h = hashlib.sha256()
@@ -147,12 +177,8 @@ def prune_expired_entries():
 
 def ingest_entry_for_backfill(query_text: str, response_text: str, meta: dict = None, source: str = "boe"):
     """
-    Create a SemanticCacheEntry from ingestion data and schedule embedding computation.
-    - query_text: short title / query (e.g. article heading)
-    - response_text: full article content
-    - meta: dict with additional metadata (stored in source or fingerprint)
-    - source: string identifier
-    Returns the created SemanticCacheEntry or None on failure.
+    Create a SemanticCacheEntry for backfill/indexing pipelines and schedule embedding computation.
+    This avoids relying on chat upsert signatures and is robust for offline ingestion.
     """
     meta = meta or {}
     try:
@@ -174,9 +200,8 @@ def ingest_entry_for_backfill(query_text: str, response_text: str, meta: dict = 
         logger.exception("Failed to create SemanticCacheEntry during ingest: %s", e)
         return None
 
-    # Schedule embedding computation (best-effort)
+    # schedule embedding computation (best-effort)
     try:
-        # celery task or plain function
         if hasattr(compute_and_update_embedding, "delay"):
             compute_and_update_embedding.delay(str(entry.id))
         else:
