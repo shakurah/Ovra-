@@ -189,7 +189,7 @@ def chat_api(request):
     try:
         convo_history = []
         # if you have a ChatLog model or request includes history, map it to a simple list:
-        for msg in chatLog.get_last_messages(limit=6):  # replace with your API
+        for msg in ChatLog.get_last_messages(limit=6):  # replace with your API
             convo_history.append({"role": msg.role, "text": msg.text, "ts": msg.created_at.isoformat()})
     except Exception:
         convo_history = []
@@ -199,11 +199,12 @@ def chat_api(request):
 
     payload["context"] = {
         "query": user_message,
-        "conversation": convo_history,
-        "top_snippets": top_snippets,
-        "user": user_context,
+        #"conversation": convo_history,
+        #"top_snippets": top_snippets,
+        #"user": user_context,
     }
 
+    print(convo_history)
     # add top_snippets (grounding material) built from BOE retrieval
     try:
         hits_for_snippets = search_boe(user_message, top_k=6)
@@ -216,7 +217,8 @@ def chat_api(request):
             }
             for h in hits_for_snippets
         ]
-        payload["top_snippets"] = top_snippets
+        print(top_snippets)
+        #payload["top_snippets"] = top_snippets
         logger.debug("Added top_snippets to payload (count=%d)", len(top_snippets))
     except Exception:
         logger.exception("Failed to build top_snippets; continuing without them")
