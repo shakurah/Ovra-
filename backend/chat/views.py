@@ -169,8 +169,8 @@ def chat_api(request):
 
     payload = {
         "messages": [
-            {"role": "system", "content": system_prompt},
-            {"role": "user", "content": user_message}
+            
+            {"role": "user", "content": user_message},
         ],
         "include_functions_info": False,
         "include_retrieval_info": True,
@@ -178,19 +178,23 @@ def chat_api(request):
         "stream": True
     }
 
-    # build top_snippets (you already do this)
-    hits_for_snippets = search_boe(user_message, top_k=6)
-    top_snippets = [
-        {"doc_id": h.get("boe_id"), "text": (h.get("content") or "")[:1200], "url": h.get("url")}
-        for h in hits_for_snippets
-    ]
 
     # build conversation context (last N messages) - adjust as needed
     try:
+        # Build conversation history from ChatLog model (fallback when get_last_messages doesn't exist)
         convo_history = []
-        # if you have a ChatLog model or request includes history, map it to a simple list:
-        for msg in ChatLog.get_last_messages(limit=6):  # replace with your API
-            convo_history.append({"role": msg.role, "text": msg.text, "ts": msg.created_at.isoformat()})
+        limit = 6
+        if conversation_id:
+            logs_qs = ChatLog.objects.filter(user=request.user, conversation_id=conversation_id).order_by("created_at")
+        else:
+            logs_qs = ChatLog.objects.filter(user=request.user).order_by("created_at")
+        msgs = []
+        for log in logs_qs:
+            if log.user_message:
+                msgs.append({"role": "user", "text": log.user_message, "ts": log.created_at.isoformat()})
+            if log.response_text:
+                msgs.append({"role": "assistant", "text": log.response_text, "ts": log.created_at.isoformat()})
+        convo_history = msgs[-limit:]
     except Exception:
         convo_history = []
 
@@ -199,33 +203,16 @@ def chat_api(request):
 
     payload["context"] = {
         "query": user_message,
-        #"conversation": convo_history,
+        "conversation": convo_history,
         #"top_snippets": top_snippets,
-        #"user": user_context,
+        "user": user_context,
     }
 
-    print(convo_history)
+    print(f"Conversation history {0}", convo_history)
     # add top_snippets (grounding material) built from BOE retrieval
-    try:
-        hits_for_snippets = search_boe(user_message, top_k=6)
-        top_snippets = [
-            {
-                "doc_id": h.get("boe_id"),
-                "text": (h.get("content") or "")[:1200],
-                "url": h.get("url"),
-                "article": h.get("article_number")
-            }
-            for h in hits_for_snippets
-        ]
-        print(top_snippets)
-        #payload["top_snippets"] = top_snippets
-        logger.debug("Added top_snippets to payload (count=%d)", len(top_snippets))
-    except Exception:
-        logger.exception("Failed to build top_snippets; continuing without them")
 
     print("[chat_api] payload keys:", list(payload.keys()))
-    print("[chat_api] top_snippets count:", len(payload.get("top_snippets") or []))
-
+    print(list(payload.values()))
     try:
         agent_resp = requests.post(
             AGENT_URL,
@@ -270,7 +257,7 @@ def chat_api(request):
                     # DEBUG: print/log raw SSE chunk from agent
                     try:
                         logger.debug("AGENT RAW CHUNK: %s", chunk[:2000])
-                        print("AGENT RAW CHUNK:", chunk)  # stdout visibility
+                        #print("AGENT RAW CHUNK:", chunk)  # stdout visibility
                     except Exception:
                         # avoid any logging errors breaking the stream
                         pass
@@ -288,7 +275,7 @@ def chat_api(request):
                         data_json = json.loads(data_str)
                         try:
                             logger.debug("AGENT PARSED JSON: %s", json.dumps(data_json)[:2000])
-                            print("AGENT PARSED JSON:", data_json)
+                            #print("AGENT PARSED JSON:", data_json)
                         except Exception:
                             pass
                         delta = data_json.get("choices", [{}])[0].get("delta", {})
@@ -297,7 +284,7 @@ def chat_api(request):
                             # DEBUG: log extracted content chunk
                             try:
                                 logger.debug("AGENT CONTENT CHUNK: %s", content)
-                                print("AGENT CONTENT CHUNK:", content)
+                                #print("AGENT CONTENT CHUNK:", content)
                             except Exception:
                                 pass
                             # --- Filter out <think> blocks ---
@@ -325,7 +312,7 @@ def chat_api(request):
             except Exception as e:
                 logger.exception("Error reading agent stream: %s", e)
                 yield f"data: {{\"error\":\"{str(e)}\"}}\n\n"
-
+            print(convo_history)
             # Save final response
             try:
                 ChatLog.objects.filter(id=log_entry.id).update(
@@ -386,38 +373,7 @@ def chat_api(request):
 _think_re = re.compile(r"<think>.*?</think>", re.IGNORECASE | re.DOTALL)
 _bracket_re = re.compile(r"\[think\].*?\[\/think\]", re.IGNORECASE | re.DOTALL)
 
-def _sanitize_stream_generator(gen):
-    for chunk in gen:
-        try:
-            s = chunk.decode('utf-8') if isinstance(chunk, (bytes, bytearray)) else str(chunk)
-            s = _think_re.sub("", s)
-            s = _bracket_re.sub("", s)
-            yield s.encode('utf-8') if isinstance(chunk, (bytes, bytearray)) else s
-        except Exception:
-            yield chunk
 
-# Example usage in your view:
-# original_gen = agent_stream_generator(...)  # existing streaming generator
-# return StreamingHttpResponse(_sanitize_stream_generator(original_gen), content_type="text/event-stream")
-
-def _sanitize_stream_generator(gen):
-    think_re = re.compile(r"<think>.*?</think>", re.IGNORECASE | re.DOTALL)
-    bracket_re = re.compile(r"\[think\].*?\[\/think\]", re.IGNORECASE | re.DOTALL)
-    for chunk in gen:
-        try:
-            if isinstance(chunk, bytes):
-                s = chunk.decode('utf-8', errors='ignore')
-                s = think_re.sub("", s)
-                s = bracket_re.sub("", s)
-                yield s.encode('utf-8')
-            else:
-                s = str(chunk)
-                s = think_re.sub("", s)
-                s = bracket_re.sub("", s)
-                yield s
-        except Exception:
-            # on error, yield the original chunk
-            yield chunk
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
