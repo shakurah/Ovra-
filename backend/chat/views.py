@@ -203,9 +203,8 @@ def chat_api(request):
 
     payload["context"] = {
         "query": user_message,
-        "conversation": convo_history,
+    
         #"top_snippets": top_snippets,
-        "user": user_context,
     }
 
     print(f"Conversation history {0}", convo_history)
